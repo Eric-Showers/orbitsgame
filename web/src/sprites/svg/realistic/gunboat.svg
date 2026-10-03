@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#d9dde3"/>
+<stop offset="0.5" stop-color="#9aa1ab"/>
+<stop offset="1" stop-color="#5c636e"/>
+</linearGradient>
+<linearGradient id="rad" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#f2f4f7"/>
+<stop offset="1" stop-color="#c4cad3"/>
+</linearGradient>
+<linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8c66a"/>
+<stop offset="1" stop-color="#8f6b22"/>
+</linearGradient>
+</defs>
+<path d="M12 28.0 L5 26.5 L5 37.5 L12 36.0 Z" fill="#3a3f47" stroke="#20252d" stroke-width="0.8"/>
+<rect x="12" y="26" width="40" height="12" rx="2" fill="url(#hull)" stroke="#20252d" stroke-width="0.8"/>
+<path d="M52 26 L58 29 L58 35 L52 38 Z" fill="url(#hull)" stroke="#20252d" stroke-width="0.8"/>
+<g fill="#6e7580" stroke="#20252d" stroke-width="0.8">
+<rect x="30" y="18" width="16" height="3.5" rx="1.5"/>
+<rect x="30" y="21.5" width="16" height="3.5" rx="1.5"/>
+<rect x="30" y="39" width="16" height="3.5" rx="1.5"/>
+<rect x="30" y="42.5" width="16" height="3.5" rx="1.5"/>
+</g>
+<path d="M18 26 L16 16 L24 16 L26 26 Z M18 38 L16 48 L24 48 L26 38 Z" fill="url(#rad)" stroke="#20252d" stroke-width="0.8"/>
+<path d="M28 26 V38 M48 26 V38" stroke="#5c636e" stroke-width="0.6"/>
+<rect x="38" y="26" width="5" height="12" fill="#4da6ff" stroke="#20252d" stroke-width="0.8"/>
+</svg>

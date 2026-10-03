@@ -1,7 +1,14 @@
 import * as THREE from 'three';
-import { EntityKind, type EntityView, type OrbitView, type Vec3 } from '../sim/bridge';
+import {
+  EntityKind,
+  type EntityView,
+  type OrbitView,
+  type SimEvent,
+  type Vec3,
+} from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 import { fmtDistance } from '../ui/format';
+import { MunitionLayer } from './munitions';
 
 const MIN_VIEW = 300; // m across the screen height
 const MAX_VIEW = 6_000_000;
@@ -47,6 +54,7 @@ export class FlightView {
   private apsides: THREE.Points;
   private vectors: THREE.LineSegments;
   private labels = new Map<string, HTMLElement>();
+  private munitions = new MunitionLayer(this.scene);
   /** Screen pixels at the bottom covered by the console; the view centres above them. */
   private bottomInset = 0;
 
@@ -117,6 +125,11 @@ export class FlightView {
     this.resize();
   }
 
+  /** Feeds sim events (detonations, kills) to the effects layer. */
+  showEvents(events: readonly SimEvent[]): void {
+    this.munitions.showEvents(events);
+  }
+
   setBottomInset(px: number): void {
     if (px === this.bottomInset) return;
     this.bottomInset = px;
@@ -183,6 +196,7 @@ export class FlightView {
       }
     }
 
+    this.munitions.update(session.all(), (p) => this.local(p), mpp);
     this.drawVectors(me, target, mpp);
     this.updateLabels(me, target);
     this.renderer.render(this.scene, this.camera);

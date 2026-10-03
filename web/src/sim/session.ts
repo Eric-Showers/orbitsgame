@@ -3,6 +3,8 @@ import {
   Attitude,
   BEACON,
   CORVETTE,
+  DRONE,
+  EntityKind,
   decodeEntities,
   decodeEvents,
   decodeOrbit,
@@ -39,6 +41,12 @@ export class FlightSession {
     // A navigation beacon ~25 km ahead in the same orbit, to practise target modes.
     const r = game.planet_radius() + LOW_ORBIT_ALT;
     game.spawn_ship(BEACON, 2, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 25_000 / r);
+    // Enemy drones: one 15 km ahead in the same orbit (missile practice), one
+    // 3 km lower and 20 km behind that drifts past underneath at ~15 m/s, close
+    // enough to wake a mine dropped near your own position.
+    game.spawn_ship(DRONE, 1, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 15_000 / r);
+    const low = LOW_ORBIT_ALT - 3_000;
+    game.spawn_ship(DRONE, 1, low, low, 0, -20_000 / r);
     this.refresh();
   }
 
@@ -99,11 +107,27 @@ export class FlightSession {
     this.refresh();
   }
 
+  /** Fires a missile at the current target. Returns false if none was fired. */
+  fireMissile(): boolean {
+    const ok = this.game.launch_missile(this.playerId) >= 0;
+    this.pendingEvents.push(...decodeEvents(this.game.take_events()));
+    this.refresh();
+    return ok;
+  }
+
+  /** Leaves a dormant mine on the current orbit. Returns false if none was dropped. */
+  dropMine(): boolean {
+    const ok = this.game.drop_mine(this.playerId) >= 0;
+    this.pendingEvents.push(...decodeEvents(this.game.take_events()));
+    this.refresh();
+    return ok;
+  }
+
   /** Cycles the player's target through other live ships, nearest first. */
   cycleTarget(): void {
     const me = this.player();
     const others = this.entities
-      .filter((e) => e.alive && e.id !== me.id)
+      .filter((e) => e.alive && e.kind === EntityKind.Ship && e.id !== me.id)
       .sort((a, b) => dist2(a, me) - dist2(b, me));
     if (others.length === 0) return this.setTarget(null);
     const i = others.findIndex((e) => e.id === me.target);

@@ -12,12 +12,12 @@
 //! velocity across it. At combat ranges (a few km) the gravity difference
 //! between munition and target is ~1e-5 of g, so this needs no Lambert solve.
 //!
-//! The module works on a plain entity slice so it can be driven by any world:
-//! integrate ships first, then call [`step`] once per tick with the same `dt`.
+//! The module works on a plain entity slice: `World::step` integrates ships,
+//! then calls [`step`] once per tick with the same `dt`.
 
 use crate::vessel::{AttitudeMode, Entity, Kind, MunitionSpec, MINE, MISSILE};
+use crate::world::{Event, EventKind};
 use crate::{Planet, Vec3};
-use serde::{Deserialize, Serialize};
 
 /// Time constant (s) over which guidance tries to remove velocity error.
 const GUIDANCE_TAU: f64 = 0.5;
@@ -36,29 +36,6 @@ const MINE_EJECT_SPEED: f64 = 1.0;
 /// A woken mine gives up and goes dormant again once its target is this many
 /// trigger ranges away.
 const MINE_LOSE_TRACK: f64 = 2.0;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(u8)]
-pub enum WeaponEventKind {
-    MissileLaunched = 0,
-    MineDropped = 1,
-    /// A dormant mine detected an enemy and started its attack run.
-    MineTriggered = 2,
-    Detonation = 3,
-    /// A ship was destroyed by a blast.
-    ShipDestroyed = 4,
-    /// A munition reached the end of its powered lifetime and self-destructed.
-    Expired = 5,
-    /// A munition hit the planet.
-    Crash = 6,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
-pub struct WeaponEvent {
-    pub kind: WeaponEventKind,
-    pub id: u32,
-    pub pos: Vec3,
-}
 
 fn index_of(entities: &[Entity], id: u32) -> Option<usize> {
     entities.iter().position(|e| e.id == id)
@@ -109,7 +86,7 @@ pub fn launch_missile(
     shooter: u32,
     target: u32,
     id: u32,
-    events: &mut Vec<WeaponEvent>,
+    events: &mut Vec<Event>,
 ) -> bool {
     let (Some(si), Some(ti)) = (index_of(entities, shooter), index_of(entities, target)) else {
         return false;
@@ -130,8 +107,8 @@ pub fn launch_missile(
         m.heading = dir;
     }
     entities[si].missiles -= 1;
-    events.push(WeaponEvent {
-        kind: WeaponEventKind::MissileLaunched,
+    events.push(Event {
+        kind: EventKind::MissileLaunched,
         id,
         pos: m.pos,
     });
@@ -141,12 +118,7 @@ pub fn launch_missile(
 
 /// Releases one mine from `layer` onto (very nearly) its current orbit.
 /// Returns false if the layer is not a live ship with mines left.
-pub fn drop_mine(
-    entities: &mut Vec<Entity>,
-    layer: u32,
-    id: u32,
-    events: &mut Vec<WeaponEvent>,
-) -> bool {
+pub fn drop_mine(entities: &mut Vec<Entity>, layer: u32, id: u32, events: &mut Vec<Event>) -> bool {
     let Some(li) = index_of(entities, layer) else {
         return false;
     };
@@ -157,8 +129,8 @@ pub fn drop_mine(
     let out = l.pos.normalize_or_zero();
     let m = new_munition(id, Kind::Mine, l, l.vel + out * MINE_EJECT_SPEED, None);
     entities[li].mines -= 1;
-    events.push(WeaponEvent {
-        kind: WeaponEventKind::MineDropped,
+    events.push(Event {
+        kind: EventKind::MineDropped,
         id,
         pos: m.pos,
     });
@@ -212,7 +184,7 @@ fn update_target(
     entities: &mut [Entity],
     i: usize,
     spec: &MunitionSpec,
-    events: &mut Vec<WeaponEvent>,
+    events: &mut Vec<Event>,
 ) -> Option<usize> {
     let m = &entities[i];
     let current = m
@@ -229,8 +201,8 @@ fn update_target(
             let m = &mut entities[i];
             m.active = true;
             m.target = Some(id);
-            events.push(WeaponEvent {
-                kind: WeaponEventKind::MineTriggered,
+            events.push(Event {
+                kind: EventKind::MineTriggered,
                 id: m.id,
                 pos: m.pos,
             });
@@ -268,7 +240,7 @@ fn gravity(mu: f64, pos: Vec3) -> Vec3 {
 /// Advances every live munition by `dt`: targeting, guidance burns, motion,
 /// lifetime, then proximity fuses. Call after ships have been moved for the
 /// same tick; fuses treat each ship as moving in a straight line over `dt`.
-pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<WeaponEvent>) {
+pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<Event>) {
     let mut moved = Vec::new();
     for i in 0..entities.len() {
         let Some(spec) = entities[i].munition().filter(|_| entities[i].alive) else {
@@ -303,15 +275,15 @@ pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<
 
         if m.pos.length() < planet.radius {
             m.alive = false;
-            events.push(WeaponEvent {
-                kind: WeaponEventKind::Crash,
+            events.push(Event {
+                kind: EventKind::Crash,
                 id: m.id,
                 pos: m.pos,
             });
         } else if m.ai_timer >= spec.lifetime {
             m.alive = false;
-            events.push(WeaponEvent {
-                kind: WeaponEventKind::Expired,
+            events.push(Event {
+                kind: EventKind::Expired,
                 id: m.id,
                 pos: m.pos,
             });
@@ -338,7 +310,7 @@ fn closest_approach(d0: Vec3, u: Vec3) -> (f64, f64) {
 /// Proximity fuse: detonates munition `i` if any enemy ship passed within its
 /// blast radius during the step (swept, so fast munitions cannot tunnel).
 /// The blast damages every ship inside the radius, friend or foe.
-fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<WeaponEvent>) {
+fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<Event>) {
     let m = &entities[i];
     if !m.alive || !m.active || !m.is_armed() {
         return;
@@ -361,8 +333,8 @@ fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<W
     let id = m.id;
     entities[i].alive = false;
     entities[i].throttle = 0.0;
-    events.push(WeaponEvent {
-        kind: WeaponEventKind::Detonation,
+    events.push(Event {
+        kind: EventKind::Detonation,
         id,
         pos: at,
     });
@@ -376,8 +348,8 @@ fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<W
             if s.hp <= 0.0 {
                 s.alive = false;
                 s.throttle = 0.0;
-                events.push(WeaponEvent {
-                    kind: WeaponEventKind::ShipDestroyed,
+                events.push(Event {
+                    kind: EventKind::ShipDestroyed,
                     id: s.id,
                     pos: s.pos,
                 });
@@ -390,7 +362,7 @@ fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<W
 mod tests {
     use super::*;
     use crate::orbit::OrbitSpec;
-    use crate::vessel::{CORVETTE, DRONE, GUNBOAT, SHIP_CLASSES};
+    use crate::vessel::{BEACON, CORVETTE, DRONE, GUNBOAT, SHIP_CLASSES};
 
     const PLANET: Planet = Planet::SCALED;
     const R: f64 = 680_000.0;
@@ -435,7 +407,7 @@ mod tests {
     }
 
     /// Coasts ships under gravity, then steps munitions, for `secs` seconds.
-    fn run(es: &mut [Entity], secs: f64, events: &mut Vec<WeaponEvent>) {
+    fn run(es: &mut [Entity], secs: f64, events: &mut Vec<Event>) {
         for _ in 0..(secs / DT) as usize {
             for s in es.iter_mut().filter(|s| s.alive && s.kind == Kind::Ship) {
                 let v_half = s.vel + gravity(PLANET.mu, s.pos) * (0.5 * DT);
@@ -446,7 +418,7 @@ mod tests {
         }
     }
 
-    fn has(events: &[WeaponEvent], kind: WeaponEventKind, id: u32) -> bool {
+    fn has(events: &[Event], kind: EventKind, id: u32) -> bool {
         events.iter().any(|e| e.kind == kind && e.id == id)
     }
 
@@ -460,8 +432,8 @@ mod tests {
         assert!(launch_missile(&mut es, 1, 2, 10, &mut ev));
         assert_eq!(get(&es, 1).missiles, 3);
         run(&mut es, 120.0, &mut ev);
-        assert!(has(&ev, WeaponEventKind::Detonation, 10), "{ev:?}");
-        assert!(has(&ev, WeaponEventKind::ShipDestroyed, 2));
+        assert!(has(&ev, EventKind::Detonation, 10), "{ev:?}");
+        assert!(has(&ev, EventKind::ShipDestroyed, 2));
         assert!(!get(&es, 2).alive);
         assert!(get(&es, 1).alive, "shooter must survive its own missile");
         let m = get(&es, 10);
@@ -499,8 +471,8 @@ mod tests {
         let mut ev = Vec::new();
         assert!(drop_mine(&mut es, 1, 10, &mut ev));
         run(&mut es, 900.0, &mut ev);
-        assert!(has(&ev, WeaponEventKind::MineTriggered, 10), "{ev:?}");
-        assert!(has(&ev, WeaponEventKind::ShipDestroyed, 2), "{ev:?}");
+        assert!(has(&ev, EventKind::MineTriggered, 10), "{ev:?}");
+        assert!(has(&ev, EventKind::ShipDestroyed, 2), "{ev:?}");
         assert!(get(&es, 1).alive);
     }
 
@@ -513,7 +485,7 @@ mod tests {
         let mut ev = Vec::new();
         drop_mine(&mut es, 1, 10, &mut ev);
         run(&mut es, 900.0, &mut ev);
-        assert!(!has(&ev, WeaponEventKind::MineTriggered, 10));
+        assert!(!has(&ev, EventKind::MineTriggered, 10));
         assert!(get(&es, 2).alive);
         assert_eq!(get(&es, 10).dv_left, MINE.delta_v);
     }
@@ -534,8 +506,8 @@ mod tests {
         let mut ev = Vec::new();
         drop_mine(&mut es, 1, 10, &mut ev);
         run(&mut es, 60.0, &mut ev);
-        assert!(has(&ev, WeaponEventKind::MineTriggered, 10));
-        assert!(!has(&ev, WeaponEventKind::Detonation, 10));
+        assert!(has(&ev, EventKind::MineTriggered, 10));
+        assert!(!has(&ev, EventKind::Detonation, 10));
         let g = get(&es, 2);
         assert!(g.alive && g.hp == SHIP_CLASSES[GUNBOAT as usize].hp);
         let m = get(&es, 10);
@@ -553,7 +525,7 @@ mod tests {
         launch_missile(&mut es, 1, 2, 10, &mut ev);
         run(&mut es, MISSILE.lifetime + 1.0, &mut ev);
         assert!(get(&es, 2).alive);
-        assert!(has(&ev, WeaponEventKind::Expired, 10));
+        assert!(has(&ev, EventKind::Expired, 10));
         assert_eq!(get(&es, 10).dv_left, 0.0);
     }
 
@@ -614,5 +586,33 @@ mod tests {
             (m.pos.x.to_bits(), m.vel.y.to_bits(), m.dv_left.to_bits())
         };
         assert_eq!(go(), go());
+    }
+
+    #[test]
+    fn world_fires_at_target_and_flies_munitions_once() {
+        use crate::World;
+        let mut w = World::new(PLANET);
+        let me = w.spawn_ship_in_orbit(CORVETTE, 0, OrbitSpec::circular(R, 0.0));
+        let drone = w.spawn_ship_in_orbit(DRONE, 1, OrbitSpec::circular(R, 10_000.0 / R));
+        assert_eq!(w.launch_missile(me), None, "no target selected");
+        w.set_target(me, Some(drone));
+        let missile = w.launch_missile(me).unwrap();
+        let mine = w.drop_mine(me).unwrap();
+        // A sleeping mine must coast exactly like a ship on the same orbit would.
+        let (p0, v0) = (w.get(mine).unwrap().pos, w.get(mine).unwrap().vel);
+        let mut probe = vec![ship(99, BEACON, 2, p0, v0)];
+        for _ in 0..600 {
+            w.step(DT);
+            run(&mut probe, DT, &mut Vec::new());
+        }
+        assert_eq!(w.get(mine).unwrap().pos, probe[0].pos);
+        for _ in 0..(120.0 / DT) as usize {
+            w.step(DT);
+        }
+        let ev = w.take_events();
+        assert!(has(&ev, EventKind::Detonation, missile), "{ev:?}");
+        assert!(!w.get(drone).unwrap().alive);
+        assert_eq!(w.get(me).unwrap().missiles, 3);
+        assert_eq!(w.get(me).unwrap().mines, 2);
     }
 }

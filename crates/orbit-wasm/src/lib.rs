@@ -82,6 +82,17 @@ impl Game {
         self.world.set_target(id, u32::try_from(target).ok());
     }
 
+    /// Fires a missile from `id` at its current target. Returns the missile's
+    /// id, or -1 without a target or missiles left.
+    pub fn launch_missile(&mut self, id: u32) -> i32 {
+        self.world.launch_missile(id).map_or(-1, |m| m as i32)
+    }
+
+    /// Drops a mine from `id` onto its orbit. Returns the mine's id, or -1.
+    pub fn drop_mine(&mut self, id: u32) -> i32 {
+        self.world.drop_mine(id).map_or(-1, |m| m as i32)
+    }
+
     /// Advances `n` fixed steps of `dt` seconds.
     pub fn step(&mut self, n: u32, dt: f64) {
         for _ in 0..n {

@@ -165,6 +165,22 @@ export const ACTIONS: ControlAction[] = [
     keyHint: '⌫',
   },
   {
+    id: 'fire-missile',
+    group: 'target',
+    label: 'MISSILE',
+    title: 'Launch a missile at the target. It guides itself until its delta-v runs out.',
+    keys: ['KeyF'],
+    keyHint: 'F',
+  },
+  {
+    id: 'drop-mine',
+    group: 'target',
+    label: 'MINE',
+    title: 'Leave a mine on your orbit. It sleeps until an enemy passes within 5 km.',
+    keys: ['KeyM'],
+    keyHint: 'M',
+  },
+  {
     id: 'pause',
     group: 'time',
     label: 'PAUSE',
@@ -268,6 +284,12 @@ export function applyAction(
       return session.cycleTarget();
     case 'target-clear':
       return session.setTarget(null);
+    case 'fire-missile':
+      session.fireMissile();
+      return;
+    case 'drop-mine':
+      session.dropMine();
+      return;
     case 'pause':
       session.paused = !session.paused;
       return;

@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     const dt = (now - last) / 1000;
     last = now;
     session.update(dt);
-    session.takeEvents();
+    view.showEvents(session.takeEvents());
     view.setBottomInset(consoleEl?.offsetHeight ?? 0);
     view.render(session);
     panel.update();

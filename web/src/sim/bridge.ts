@@ -26,6 +26,7 @@ export enum EntityKind {
 /** Mirrors the class indices of `SHIP_CLASSES` in `orbit-sim`. */
 export const SHIP_CLASS_NAMES = ['Corvette', 'Drone', 'Gunboat', 'Minelayer', 'Beacon'];
 export const CORVETTE = 0;
+export const DRONE = 1;
 export const BEACON = 4;
 
 export interface Vec3 {
@@ -109,6 +110,12 @@ export function decodeOrbit(flat: Float64Array): OrbitView | null {
 export enum SimEventKind {
   Crash = 0,
   FuelOut = 1,
+  MissileLaunched = 2,
+  MineDropped = 3,
+  MineTriggered = 4,
+  Detonation = 5,
+  ShipDestroyed = 6,
+  Expired = 7,
 }
 
 export interface SimEvent {

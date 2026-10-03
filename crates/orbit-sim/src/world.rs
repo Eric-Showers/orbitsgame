@@ -2,7 +2,7 @@
 
 use crate::orbit::{self, OrbitSpec};
 use crate::vessel::{AttitudeMode, Entity, Kind, G0, SHIP_CLASSES};
-use crate::{Planet, Vec3};
+use crate::{weapons, Planet, Vec3};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -12,6 +12,16 @@ pub enum EventKind {
     Crash = 0,
     /// A ship burned its last fuel.
     FuelOut = 1,
+    MissileLaunched = 2,
+    MineDropped = 3,
+    /// A dormant mine detected an enemy and started its attack run.
+    MineTriggered = 4,
+    /// A munition's proximity fuse fired; `pos` is the blast centre.
+    Detonation = 5,
+    /// A ship was destroyed by a blast.
+    ShipDestroyed = 6,
+    /// A munition reached the end of its powered lifetime and self-destructed.
+    Expired = 7,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -48,8 +58,7 @@ impl World {
     /// its heading along prograde. Returns its id.
     pub fn spawn_ship(&mut self, class: u8, team: u8, pos: Vec3, vel: Vec3) -> u32 {
         let c = &SHIP_CLASSES[class as usize];
-        let id = self.next_id;
-        self.next_id += 1;
+        let id = self.alloc_id();
         self.entities.push(Entity {
             id,
             kind: Kind::Ship,
@@ -127,6 +136,28 @@ impl World {
                 e.mode = AttitudeMode::Hold;
             }
         }
+    }
+
+    fn alloc_id(&mut self) -> u32 {
+        let id = self.next_id;
+        self.next_id += 1;
+        id
+    }
+
+    /// Fires a missile from `shooter` at its current target. Returns the
+    /// missile's id, or None without a live target or missiles left.
+    pub fn launch_missile(&mut self, shooter: u32) -> Option<u32> {
+        let target = self.get(shooter)?.target?;
+        let id = self.alloc_id();
+        weapons::launch_missile(&mut self.entities, shooter, target, id, &mut self.events)
+            .then_some(id)
+    }
+
+    /// Drops a mine from `layer` onto its orbit. Returns the mine's id, or
+    /// None if it has no mines left.
+    pub fn drop_mine(&mut self, layer: u32) -> Option<u32> {
+        let id = self.alloc_id();
+        weapons::drop_mine(&mut self.entities, layer, id, &mut self.events).then_some(id)
     }
 
     pub fn take_events(&mut self) -> Vec<Event> {
@@ -210,10 +241,11 @@ impl World {
     }
 
     /// Advances the world by `dt` seconds. Thrust is applied as a constant
-    /// acceleration across a velocity Verlet step.
+    /// acceleration across a velocity Verlet step. Munitions fly themselves
+    /// (see `weapons::step`) after the ships have moved.
     pub fn step(&mut self, dt: f64) {
         for i in 0..self.entities.len() {
-            if !self.entities[i].alive {
+            if !self.entities[i].alive || self.entities[i].kind != Kind::Ship {
                 continue;
             }
             self.update_attitude(i, dt);
@@ -238,6 +270,7 @@ impl World {
                 });
             }
         }
+        weapons::step(&mut self.entities, &self.planet, dt, &mut self.events);
         self.time += dt;
     }
 }

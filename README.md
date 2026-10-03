@@ -77,6 +77,7 @@ Every console button has a keyboard key (shown in its corner).
 | Engine   | Throttle up / down (hold)                            | `Shift`/`W`, `Ctrl`/`S`    |
 |          | Full throttle / Cut                                  | `Z` / `X`                  |
 | Target   | Next target / Clear                                  | `T` or `Tab` / `Backspace` |
+| Weapons  | Fire missile at target / Drop mine on your orbit     | `F` / `M`                  |
 | Time     | Pause                                                | `P` or `Space`             |
 |          | Time warp down / up (max 4x while burning)           | `,` / `.`                  |
 |          | Reset flight                                         | `R`                        |

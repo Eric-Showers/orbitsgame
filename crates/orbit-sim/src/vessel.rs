@@ -182,6 +182,14 @@ pub struct MunitionSpec {
     pub trigger_range: f64,
     /// Self-destruct after this many seconds of flight once active.
     pub lifetime: f64,
+    /// Proportional navigation constant (design doc sec. 3.5: N = 3-5).
+    /// Higher steers harder late in the run and spends delta-v sooner.
+    pub nav_gain: f64,
+    /// Release speed (m/s): missiles toward the target, mines radially out.
+    pub eject_speed: f64,
+    /// An active mine gives up when its target is this many trigger ranges
+    /// away (missiles never give up).
+    pub lose_track: f64,
 }
 
 pub const MISSILE: MunitionSpec = MunitionSpec {
@@ -194,6 +202,9 @@ pub const MISSILE: MunitionSpec = MunitionSpec {
     arm_time: 1.0,
     trigger_range: 0.0,
     lifetime: 600.0,
+    nav_gain: 3.0,
+    eject_speed: 5.0,
+    lose_track: 0.0,
 };
 
 pub const MINE: MunitionSpec = MunitionSpec {
@@ -206,6 +217,9 @@ pub const MINE: MunitionSpec = MunitionSpec {
     arm_time: 5.0,
     trigger_range: 5_000.0,
     lifetime: 300.0,
+    nav_gain: 3.0,
+    eject_speed: 1.0,
+    lose_track: 2.0,
 };
 
 /// One simulated object: a ship, a missile or a mine.

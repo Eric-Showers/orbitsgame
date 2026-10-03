@@ -23,19 +23,8 @@ use crate::{Planet, Vec3};
 const GUIDANCE_TAU: f64 = 0.5;
 /// Closing-speed errors below this (m/s) are not worth a burn.
 const GUIDANCE_DEADBAND: f64 = 0.05;
-/// Proportional navigation constant (design doc sec. 3.5: N = 3-5).
-const NAV_GAIN: f64 = 3.0;
 /// Predicted misses under this fraction of the blast radius need no correction.
 const ZEM_TOLERANCE: f64 = 0.25;
-/// Missiles leave the rail toward the target at this relative speed (m/s).
-const MISSILE_EJECT_SPEED: f64 = 5.0;
-/// Mines are pushed radially outward at this speed (m/s). A radial kick gives
-/// a closed relative ellipse, so the mine stays near where it was dropped
-/// instead of drifting along the orbit.
-const MINE_EJECT_SPEED: f64 = 1.0;
-/// A woken mine gives up and goes dormant again once its target is this many
-/// trigger ranges away.
-const MINE_LOSE_TRACK: f64 = 2.0;
 
 fn index_of(entities: &[Entity], id: u32) -> Option<usize> {
     entities.iter().position(|e| e.id == id)
@@ -100,7 +89,7 @@ pub fn launch_missile(
         id,
         Kind::Missile,
         s,
-        s.vel + dir * MISSILE_EJECT_SPEED,
+        s.vel + dir * MISSILE.eject_speed,
         Some(target),
     );
     if dir != Vec3::ZERO {
@@ -127,7 +116,9 @@ pub fn drop_mine(entities: &mut Vec<Entity>, layer: u32, id: u32, events: &mut V
         return false;
     }
     let out = l.pos.normalize_or_zero();
-    let m = new_munition(id, Kind::Mine, l, l.vel + out * MINE_EJECT_SPEED, None);
+    // A radial kick gives a closed relative ellipse, so the mine stays near
+    // the drop point instead of drifting along the orbit.
+    let m = new_munition(id, Kind::Mine, l, l.vel + out * MINE.eject_speed, None);
     entities[li].mines -= 1;
     events.push(Event {
         kind: EventKind::MineDropped,
@@ -174,7 +165,7 @@ fn guidance_accel(m: &Entity, spec: &MunitionSpec, target: &Entity) -> Vec3 {
     let zem = rel_p + rel_v * t_go;
     let zem_perp = zem - los * zem.dot(los);
     if zem_perp.length() > spec.blast_radius * ZEM_TOLERANCE {
-        accel += zem_perp * (NAV_GAIN / (t_go * t_go));
+        accel += zem_perp * (spec.nav_gain / (t_go * t_go));
     }
     accel
 }
@@ -209,7 +200,7 @@ fn update_target(
             Some(t)
         }
         Kind::Mine => {
-            let lose = spec.trigger_range * MINE_LOSE_TRACK;
+            let lose = spec.trigger_range * spec.lose_track;
             let t = current
                 .filter(|&t| (entities[t].pos - m.pos).length() <= lose)
                 .or_else(|| nearest_enemy(entities, m.team, m.pos, spec.trigger_range));

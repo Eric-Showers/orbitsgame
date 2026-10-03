@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Mine: spiked sphere with a team-colored arming light. -->
+  <g stroke="#0b0f18" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M32 6 V58 M6 32 H58 M13.6 13.6 L50.4 50.4 M50.4 13.6 L13.6 50.4" stroke-width="3.5"/>
+    <path d="M32 6 V58 M6 32 H58 M13.6 13.6 L50.4 50.4 M50.4 13.6 L13.6 50.4" stroke="#8a93a3" stroke-width="1.5"/>
+    <circle cx="32" cy="32" r="15" fill="#4a5262"/>
+    <circle cx="32" cy="32" r="10" fill="#6b7383"/>
+    <circle cx="32" cy="32" r="4.5" fill="#4da6ff"/>
+  </g>
+</svg>

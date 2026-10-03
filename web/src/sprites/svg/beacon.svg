@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Beacon: passive navigation buoy with antenna spokes. -->
+  <g stroke="#0b0f18" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M32 4 V60 M4 32 H60" stroke-width="2.5"/>
+    <path d="M32 4 V60 M4 32 H60" stroke="#8a93a3" stroke-width="1"/>
+    <circle cx="32" cy="32" r="13" fill="#b8c0cc"/>
+    <circle cx="32" cy="32" r="8" fill="#4da6ff"/>
+    <circle cx="32" cy="32" r="3" fill="#f4f8ff"/>
+    <circle cx="60" cy="32" r="2.5" fill="#7dff9a"/>
+  </g>
+</svg>

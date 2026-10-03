@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Drone: small unarmed bus with solar wings. -->
+  <g stroke="#0b0f18" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="22" y="4" width="14" height="20" fill="#2c4a7a"/>
+    <rect x="22" y="40" width="14" height="20" fill="#2c4a7a"/>
+    <path d="M22 14 H36 M22 50 H36 M29 4 V24 M29 40 V60" stroke="#6b8cc4" stroke-width="1"/>
+    <rect x="27" y="24" width="4" height="16" fill="#5b6475"/>
+    <rect x="18" y="24" width="24" height="16" rx="2" fill="#b8c0cc"/>
+    <rect x="21" y="28" width="10" height="8" fill="#4da6ff"/>
+    <path d="M42 29 L48 32 L42 35 Z" fill="#5b6475"/>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+[package]
+name = "orbit-wasm"
+description = "wasm-bindgen bindings exposing orbit-sim to the browser."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+orbit-sim = { workspace = true }
+wasm-bindgen = "0.2"
+
+[lints]
+workspace = true

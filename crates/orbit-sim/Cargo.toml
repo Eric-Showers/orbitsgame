@@ -1,0 +1,14 @@
+[package]
+name = "orbit-sim"
+description = "Deterministic orbital mechanics core shared by the server and the WASM client."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+libm = "0.2"
+serde = { workspace = true }
+
+[lints]
+workspace = true

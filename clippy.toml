@@ -1,0 +1,12 @@
+# Determinism: transcendental std float functions (sin, cos, exp, ...) may differ
+# between platforms. Use the `libm` crate inside orbit-sim instead.
+disallowed-methods = [
+  { path = "f64::sin", reason = "use libm::sin for cross-platform determinism" },
+  { path = "f64::cos", reason = "use libm::cos for cross-platform determinism" },
+  { path = "f64::tan", reason = "use libm::tan for cross-platform determinism" },
+  { path = "f64::atan2", reason = "use libm::atan2 for cross-platform determinism" },
+  { path = "f64::exp", reason = "use libm::exp for cross-platform determinism" },
+  { path = "f64::ln", reason = "use libm::log for cross-platform determinism" },
+  { path = "f64::powf", reason = "use libm::pow for cross-platform determinism" },
+  { path = "f64::mul_add", reason = "fused ops are not guaranteed identical across targets" },
+]

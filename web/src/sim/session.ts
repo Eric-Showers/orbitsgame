@@ -36,17 +36,12 @@ export class FlightSession {
   private entities: EntityView[] = [];
   private pendingEvents: SimEvent[] = [];
 
-  constructor(readonly game: Game) {
-    this.playerId = game.spawn_ship(CORVETTE, 0, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 0);
-    // A navigation beacon ~25 km ahead in the same orbit, to practise target modes.
-    const r = game.planet_radius() + LOW_ORBIT_ALT;
-    game.spawn_ship(BEACON, 2, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 25_000 / r);
-    // Enemy drones: one 15 km ahead in the same orbit (missile practice), one
-    // 3 km lower and 20 km behind that drifts past underneath at ~15 m/s, close
-    // enough to wake a mine dropped near your own position.
-    game.spawn_ship(DRONE, 1, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 15_000 / r);
-    const low = LOW_ORBIT_ALT - 3_000;
-    game.spawn_ship(DRONE, 1, low, low, 0, -20_000 / r);
+  /** `setup` populates the world and returns the player's ship id. */
+  constructor(
+    readonly game: Game,
+    setup: (game: Game) => number = spawnSandbox,
+  ) {
+    this.playerId = setup(game);
     this.refresh();
   }
 
@@ -157,9 +152,31 @@ export class FlightSession {
     return ev;
   }
 
-  private refresh(): void {
+  /** Missiles and mines the ship still carries. */
+  munitionsLeft(id: number): { missiles: number; mines: number } {
+    const [missiles = 0, mines = 0] = this.game.munitions_left(id);
+    return { missiles, mines };
+  }
+
+  /** Re-reads entities after commands issued straight to `game`. */
+  refresh(): void {
     this.entities = decodeEntities(this.game.entities());
   }
+}
+
+/** Free-flight sandbox: corvette, a beacon and two practice drones. */
+export function spawnSandbox(game: Game): number {
+  const player = game.spawn_ship(CORVETTE, 0, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 0);
+  // A navigation beacon ~25 km ahead in the same orbit, to practise target modes.
+  const r = game.planet_radius() + LOW_ORBIT_ALT;
+  game.spawn_ship(BEACON, 2, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 25_000 / r);
+  // Enemy drones: one 15 km ahead in the same orbit (missile practice), one
+  // 3 km lower and 20 km behind that drifts past underneath at ~15 m/s, close
+  // enough to wake a mine dropped near your own position.
+  game.spawn_ship(DRONE, 1, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 15_000 / r);
+  const low = LOW_ORBIT_ALT - 3_000;
+  game.spawn_ship(DRONE, 1, low, low, 0, -20_000 / r);
+  return player;
 }
 
 function dist2(a: EntityView, b: EntityView): number {

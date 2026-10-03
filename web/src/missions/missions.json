@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "missions": [
+    {
+      "id": "first-burn",
+      "title": "First Burn",
+      "summary": "Raise your orbit to 120 km.",
+      "briefing": [
+        "Command wants you parked higher before the exercise starts. Raise your orbit from 80 km to a circular 120 km.",
+        "Burn PROGRADE to lift the far side of the orbit. Coast half an orbit to the new apoapsis, then burn PROGRADE again to lift the periapsis to match."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 80000 },
+        "loadout": { "missiles": 0, "mines": 0, "fuel": 1 }
+      },
+      "ships": [],
+      "objectives": [
+        {
+          "id": "circularize",
+          "type": "orbit",
+          "label": "Reach a 115-125 km circular orbit",
+          "pe": [115000, 125000],
+          "ap": [115000, 125000],
+          "hold": 10
+        }
+      ],
+      "score": { "parTime": 1300, "fuelReserve": 0.9 }
+    },
+    {
+      "id": "beacon-rendezvous",
+      "title": "Rendezvous",
+      "summary": "Catch the beacon 25 km ahead and match its speed.",
+      "briefing": [
+        "A navigation beacon shares your orbit 25 km ahead. Bring the ship within 300 m of it and hold relative speed under 2 m/s for 10 seconds.",
+        "Speeding up raises your orbit and slows you down. To catch something ahead, drop slightly lower, let it come to you, then burn TGT RETROGRADE to match speed."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 80000 },
+        "loadout": { "missiles": 0, "mines": 0, "fuel": 1 }
+      },
+      "ships": [
+        {
+          "tag": "beacon",
+          "name": "Nav Beacon",
+          "class": "beacon",
+          "team": "neutral",
+          "orbit": { "pe": 80000, "lead": 25000 }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "dock",
+          "type": "rendezvous",
+          "label": "Hold within 300 m of the beacon under 2 m/s",
+          "target": "beacon",
+          "range": 300,
+          "maxRelSpeed": 2,
+          "hold": 10
+        }
+      ],
+      "fail": { "timeLimit": 5400 },
+      "score": { "parTime": 2400, "fuelReserve": 0.85 }
+    },
+    {
+      "id": "live-fire",
+      "title": "Live Fire",
+      "summary": "Two target drones. Missiles only.",
+      "briefing": [
+        "Weapons are hot. A target drone sits 15 km ahead in your orbit. Select it with T and fire a missile with F.",
+        "A second drone will show up lower and behind you once the first is down. Missiles hold a 400 m/s closing speed until their 800 m/s of delta-v runs out, so long shots work. You carry three."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 80000 },
+        "loadout": { "missiles": 3, "mines": 0, "fuel": 1 }
+      },
+      "ships": [
+        {
+          "tag": "drone1",
+          "name": "Drone A",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": { "pe": 80000, "lead": 15000 }
+        },
+        {
+          "tag": "drone2",
+          "name": "Drone B",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": { "pe": 76000, "lead": -25000 },
+          "spawn": { "afterObjective": "first" }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "first",
+          "type": "destroy",
+          "label": "Destroy Drone A with a missile",
+          "targets": ["drone1"],
+          "by": "missile"
+        },
+        {
+          "id": "second",
+          "type": "destroy",
+          "label": "Destroy Drone B with a missile",
+          "targets": ["drone2"],
+          "by": "missile",
+          "after": "first"
+        }
+      ],
+      "fail": { "timeLimit": 1800 },
+      "score": { "parTime": 400, "fuelReserve": 0.95 }
+    },
+    {
+      "id": "mine-corridor",
+      "title": "Mine the Corridor",
+      "summary": "Seed the 88-91 km lane, then let the convoy find it.",
+      "briefing": [
+        "A two-drone convoy, flying 1.5 km apart, will run the 86.5 km lane. Climb into the 88-91 km corridor above it and lay three mines there. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
+        "Mines sleep until an enemy passes within 5 km. Lower orbits are faster, so the convoy will overtake your field from behind and below."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 80000 },
+        "loadout": { "missiles": 0, "mines": 3, "fuel": 1 }
+      },
+      "ships": [
+        {
+          "tag": "convoy1",
+          "name": "Convoy Lead",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": { "pe": 86500, "lead": -15000 },
+          "spawn": { "afterObjective": "lay" }
+        },
+        {
+          "tag": "convoy2",
+          "name": "Convoy Tail",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": { "pe": 86500, "lead": -16500 },
+          "spawn": { "afterObjective": "lay" }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "lay",
+          "type": "mineZone",
+          "label": "Lay 3 mines with orbits inside 88-91 km",
+          "count": 3,
+          "altitude": [88000, 91000]
+        },
+        {
+          "id": "ambush",
+          "type": "destroy",
+          "label": "Let the mines destroy the convoy",
+          "targets": ["convoy1", "convoy2"],
+          "by": "mine",
+          "after": "lay"
+        }
+      ],
+      "fail": { "timeLimit": 6000 },
+      "score": { "parTime": 3000, "fuelReserve": 0.9 }
+    },
+    {
+      "id": "minelayer",
+      "title": "Minelayer",
+      "summary": "Kill a minelayer before you drift into its field.",
+      "briefing": [
+        "An enemy minelayer is 40 km ahead and 4 km above you, seeding mines once you come within 20 km. Its mines wake inside 5 km.",
+        "Your lower orbit carries you forward underneath it. Three missile hits will break its hull. Shoot early, or drop lower to pass beneath the field with room to spare."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 76000 },
+        "loadout": { "missiles": 4, "mines": 0, "fuel": 1 }
+      },
+      "ships": [
+        {
+          "tag": "layer",
+          "name": "Minelayer",
+          "class": "minelayer",
+          "team": "enemy",
+          "orbit": { "pe": 80000, "lead": 40000 },
+          "ai": {
+            "miner": { "range": 20000, "cooldown": 20 },
+            "evade": { "warnRange": 6000, "burnSeconds": 15, "throttle": 1 }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy the minelayer",
+          "targets": ["layer"]
+        }
+      ],
+      "fail": { "timeLimit": 3000 },
+      "score": { "parTime": 900, "fuelReserve": 0.9 }
+    },
+    {
+      "id": "gunboat-duel",
+      "title": "Gunboat Duel",
+      "summary": "It shoots back. Outrange it.",
+      "briefing": [
+        "A gunboat holds station 35 km ahead, 3 km above your orbit. Its fire control locks on inside 14 km and it carries two missiles. Two hits will kill you.",
+        "Your missiles have no such limit. It takes two hits and dodges when a missile closes inside 5 km, so make each shot count. When it is gone, a second gunboat will move in."
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": { "pe": 77000 },
+        "loadout": { "missiles": 5, "mines": 2, "fuel": 1 }
+      },
+      "ships": [
+        {
+          "tag": "gunboat1",
+          "name": "Gunboat Alpha",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": { "pe": 80000, "lead": 35000 },
+          "loadout": { "missiles": 2 },
+          "ai": {
+            "gunner": { "range": 14000, "cooldown": 45, "firstShotDelay": 20 },
+            "evade": { "warnRange": 5000, "burnSeconds": 12, "throttle": 1 }
+          }
+        },
+        {
+          "tag": "gunboat2",
+          "name": "Gunboat Bravo",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": { "pe": 82000, "lead": 30000 },
+          "loadout": { "missiles": 2 },
+          "spawn": { "afterObjective": "alpha" },
+          "ai": {
+            "gunner": { "range": 16000, "cooldown": 40, "firstShotDelay": 10 },
+            "evade": { "warnRange": 6000, "burnSeconds": 12, "throttle": 1 }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "alpha",
+          "type": "destroy",
+          "label": "Destroy Gunboat Alpha",
+          "targets": ["gunboat1"]
+        },
+        {
+          "id": "bravo",
+          "type": "destroy",
+          "label": "Destroy Gunboat Bravo",
+          "targets": ["gunboat2"],
+          "after": "alpha"
+        }
+      ],
+      "fail": { "timeLimit": 3600 },
+      "score": { "parTime": 900, "fuelReserve": 0.8 }
+    }
+  ]
+}

@@ -91,6 +91,16 @@ impl World {
         self.spawn_ship(class, team, pos, vel)
     }
 
+    /// Overrides a ship's carried munitions and fuel (fraction of its class
+    /// tank, clamped to [0, 1]). Used by missions to set the loadout.
+    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32, fuel_fraction: f64) {
+        if let Some(e) = self.get_mut(id).filter(|e| e.kind == Kind::Ship) {
+            e.missiles = missiles;
+            e.mines = mines;
+            e.fuel = e.ship_class().fuel_mass * fuel_fraction.clamp(0.0, 1.0);
+        }
+    }
+
     pub fn get(&self, id: u32) -> Option<&Entity> {
         self.entities.iter().find(|e| e.id == id)
     }
@@ -431,6 +441,17 @@ mod tests {
         }
         assert!(crashed);
         assert!(!w.get(id).unwrap().alive);
+    }
+
+    #[test]
+    fn loadout_override_sets_munitions_and_clamps_fuel() {
+        let (mut w, id) = world_with_corvette();
+        w.set_loadout(id, 1, 0, 0.5);
+        let s = w.get(id).unwrap();
+        assert_eq!((s.missiles, s.mines), (1, 0));
+        assert_eq!(s.fuel, s.ship_class().fuel_mass * 0.5);
+        w.set_loadout(id, 0, 0, 3.0);
+        assert_eq!(w.get(id).unwrap().fuel, w.get(id).unwrap().ship_class().fuel_mass);
     }
 
     #[test]

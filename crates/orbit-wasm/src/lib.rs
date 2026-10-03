@@ -64,6 +64,18 @@ impl Game {
         self.world.spawn_ship_in_orbit(class, team, spec)
     }
 
+    /// Sets a ship's missiles, mines and fuel (fraction of a full tank).
+    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32, fuel_fraction: f64) {
+        self.world.set_loadout(id, missiles, mines, fuel_fraction);
+    }
+
+    /// Missiles and mines a ship carries: `[missiles, mines]`, empty if unknown.
+    pub fn munitions_left(&self, id: u32) -> Vec<f64> {
+        self.world
+            .get(id)
+            .map_or_else(Vec::new, |e| vec![e.missiles as f64, e.mines as f64])
+    }
+
     pub fn set_throttle(&mut self, id: u32, throttle: f64) {
         self.world.set_throttle(id, throttle);
     }

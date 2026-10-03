@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#d9dde3"/>
+<stop offset="0.5" stop-color="#9aa1ab"/>
+<stop offset="1" stop-color="#5c636e"/>
+</linearGradient>
+<linearGradient id="rad" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#f2f4f7"/>
+<stop offset="1" stop-color="#c4cad3"/>
+</linearGradient>
+<linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8c66a"/>
+<stop offset="1" stop-color="#8f6b22"/>
+</linearGradient>
+</defs>
+<path d="M10 29.0 L4 27.5 L4 36.5 L10 35.0 Z" fill="#3a3f47" stroke="#20252d" stroke-width="0.8"/>
+<rect x="10" y="29" width="44" height="6" fill="url(#hull)" stroke="#20252d" stroke-width="0.8"/>
+<g fill="#7d848f" stroke="#20252d" stroke-width="0.8">
+<circle cx="22" cy="23" r="4"/>
+<circle cx="31" cy="23" r="4"/>
+<circle cx="40" cy="23" r="4"/>
+<circle cx="22" cy="41" r="4"/>
+<circle cx="31" cy="41" r="4"/>
+<circle cx="40" cy="41" r="4"/>
+</g>
+<g fill="#c9a24a">
+<circle cx="22" cy="23" r="1.3"/>
+<circle cx="31" cy="23" r="1.3"/>
+<circle cx="40" cy="23" r="1.3"/>
+<circle cx="22" cy="41" r="1.3"/>
+<circle cx="31" cy="41" r="1.3"/>
+<circle cx="40" cy="41" r="1.3"/>
+</g>
+<path d="M54 27 L60 29 L60 35 L54 37 Z" fill="url(#hull)" stroke="#20252d" stroke-width="0.8"/>
+<rect x="46" y="29" width="5" height="6" fill="#4da6ff" stroke="#20252d" stroke-width="0.8"/>
+</svg>

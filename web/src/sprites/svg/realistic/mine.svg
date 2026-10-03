@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#d9dde3"/>
+<stop offset="0.5" stop-color="#9aa1ab"/>
+<stop offset="1" stop-color="#5c636e"/>
+</linearGradient>
+<linearGradient id="rad" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#f2f4f7"/>
+<stop offset="1" stop-color="#c4cad3"/>
+</linearGradient>
+<linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8c66a"/>
+<stop offset="1" stop-color="#8f6b22"/>
+</linearGradient>
+</defs>
+<polygon points="32,16 46,24 46,40 32,48 18,40 18,24" fill="url(#hull)" stroke="#20252d" stroke-width="0.8"/>
+<path d="M32 16 V32 L46 40 M32 32 L18 40" stroke="#5c636e" stroke-width="0.6" fill="none"/>
+<path d="M46 24 L52 20 M18 24 L12 20 M32 48 V55" stroke="#8a919b" stroke-width="1.2"/>
+<circle cx="32" cy="32" r="5" fill="#4da6ff" stroke="#20252d" stroke-width="0.8"/>
+</svg>

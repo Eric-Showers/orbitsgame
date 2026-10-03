@@ -9,10 +9,12 @@ pub mod orbit;
 pub mod planet;
 pub mod vec3;
 pub mod vessel;
+pub mod weapons;
 pub mod world;
 
 pub use orbit::{elements, Elements, OrbitSpec};
 pub use planet::Planet;
 pub use vec3::Vec3;
 pub use vessel::{AttitudeMode, Entity, Kind};
+pub use weapons::{WeaponEvent, WeaponEventKind};
 pub use world::{Event, EventKind, World};

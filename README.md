@@ -5,12 +5,12 @@ vessels whose balance comes from their designed capabilities and weapons.
 
 ## Architecture
 
-| Path                  | What it is                                                                 |
-| --------------------- | -------------------------------------------------------------------------- |
-| `crates/orbit-sim`    | Deterministic physics core (pure Rust, `f64`, `Vec3` everywhere).           |
-| `crates/orbit-wasm`   | `wasm-bindgen` wrapper so the browser runs the exact same sim.             |
-| `crates/orbit-server` | Authoritative multiplayer server (axum + websockets) using the same sim.   |
-| `web/`                | TypeScript + Vite + Three.js client.                                        |
+| Path                  | What it is                                                               |
+| --------------------- | ------------------------------------------------------------------------ |
+| `crates/orbit-sim`    | Deterministic physics core (pure Rust, `f64`, `Vec3` everywhere).        |
+| `crates/orbit-wasm`   | `wasm-bindgen` wrapper so the browser runs the exact same sim.           |
+| `crates/orbit-server` | Authoritative multiplayer server (axum + websockets) using the same sim. |
+| `web/`                | TypeScript + Vite + Three.js client.                                     |
 
 Design decisions:
 
@@ -56,6 +56,33 @@ npm run format       # or format:check
 npm run wasm         # rebuild only the WASM package (release)
 ```
 
-`npm run dev` shows the smoke test: a body on a circular orbit around a
-central mass, integrated in Rust/WASM and drawn by Three.js. Rebuild the WASM
+`npm run dev` opens a free-flight sandbox: your corvette in an 80 km circular
+orbit around a 600 km planet, with a navigation beacon 25 km ahead to
+practise rendezvous on. Rebuild the WASM
 (`npm run wasm:dev`) after changing Rust code; Vite reloads automatically.
+
+## Flight controls
+
+Every console button has a keyboard key (shown in its corner).
+
+| Group    | Action                                               | Keys                       |
+| -------- | ---------------------------------------------------- | -------------------------- |
+| Attitude | Prograde / Retrograde                                | `1` / `2`                  |
+|          | Radial out / Radial in                               | `3` / `4`                  |
+|          | Normal / Anti-normal (locked while flight is planar) | `5` / `6`                  |
+|          | Target / Anti-target                                 | `7` / `8`                  |
+|          | Target prograde / Target retrograde                  | `9` / `0`                  |
+|          | Hold heading                                         | `H`                        |
+|          | Rotate left / right (hold)                           | `A` / `D`                  |
+| Engine   | Throttle up / down (hold)                            | `Shift`/`W`, `Ctrl`/`S`    |
+|          | Full throttle / Cut                                  | `Z` / `X`                  |
+| Target   | Next target / Clear                                  | `T` or `Tab` / `Backspace` |
+| Time     | Pause                                                | `P` or `Space`             |
+|          | Time warp down / up (max 4x while burning)           | `,` / `.`                  |
+|          | Reset flight                                         | `R`                        |
+| Camera   | Zoom in / out (or mouse wheel)                       | `+` / `-`                  |
+|          | Toggle focus ship / planet                           | `C`                        |
+
+Attitude modes turn the ship at its slew rate; the engine pushes along the
+ship's heading, so point first, then burn. Fuel use follows the rocket
+equation, and the console shows remaining delta-v.

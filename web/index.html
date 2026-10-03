@@ -5,25 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orbits</title>
     <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Share+Tech+Mono&display=swap"
+    />
     <style>
       html,
       body {
         margin: 0;
         height: 100%;
-        background: #000;
+        background:
+          radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 51%),
+          radial-gradient(1px 1px at 70% 80%, #fff6 50%, transparent 51%),
+          radial-gradient(1px 1px at 40% 60%, #fff5 50%, transparent 51%),
+          radial-gradient(1px 1px at 85% 15%, #fff7 50%, transparent 51%), #000;
+        background-size:
+          230px 190px,
+          310px 270px,
+          170px 210px,
+          390px 330px,
+          auto;
         overflow: hidden;
-      }
-      #hud {
-        position: fixed;
-        top: 8px;
-        left: 8px;
-        color: #9cf;
-        font: 12px monospace;
       }
     </style>
   </head>
   <body>
-    <div id="hud"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

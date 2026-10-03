@@ -76,3 +76,36 @@ impl Neg for Vec3 {
         Self::new(-self.x, -self.y, -self.z)
     }
 }
+
+impl Vec3 {
+    pub const Z: Self = Self::new(0.0, 0.0, 1.0);
+
+    /// Unit vector in the same direction, or zero for a zero vector.
+    pub fn normalize_or_zero(self) -> Self {
+        let len = self.length();
+        if len > 0.0 {
+            self * (1.0 / len)
+        } else {
+            Self::ZERO
+        }
+    }
+
+    /// Rotates `self` by `angle` radians about the unit `axis` (Rodrigues).
+    pub fn rotate_about(self, axis: Self, angle: f64) -> Self {
+        let (s, c) = (libm::sin(angle), libm::cos(angle));
+        self * c + axis.cross(self) * s + axis * (axis.dot(self) * (1.0 - c))
+    }
+
+    /// Angle in radians between two vectors.
+    pub fn angle_to(self, o: Self) -> f64 {
+        let denom = self.length() * o.length();
+        if denom == 0.0 {
+            return 0.0;
+        }
+        libm::acos((self.dot(o) / denom).clamp(-1.0, 1.0))
+    }
+
+    pub fn with_z(self, z: f64) -> Self {
+        Self::new(self.x, self.y, z)
+    }
+}

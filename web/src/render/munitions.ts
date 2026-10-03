@@ -6,15 +6,11 @@ const MINE_TRIGGER_RANGE = 5_000;
 const FLASH_SECONDS = 0.8;
 
 const TEAM_COLORS = [0x3fd2ff, 0xff4d5e, 0x5dffa8];
-const FLAME = 0xffb547;
 const BLAST = 0xfff1c2;
 
-interface Marker {
-  group: THREE.Group;
-  body: THREE.Mesh;
-  flame: THREE.Mesh;
+interface Ring {
   /** Trigger-range ring, shown while a mine sleeps. */
-  ring: THREE.LineLoop | null;
+  ring: THREE.LineLoop;
 }
 
 interface Flash {
@@ -26,11 +22,11 @@ interface Flash {
 }
 
 /**
- * Draws missiles, mines and blast flashes. Placeholder shapes in pixels,
- * scaled by metres-per-pixel each frame like the ship markers.
+ * Munition overlays: mine trigger-range rings and blast flashes. The missiles
+ * and mines themselves are drawn by the vessel sprite layer.
  */
 export class MunitionLayer {
-  private markers = new Map<number, Marker>();
+  private rings = new Map<number, Ring>();
   private flashes: Flash[] = [];
 
   constructor(private scene: THREE.Scene) {}
@@ -39,31 +35,19 @@ export class MunitionLayer {
     const seen = new Set<number>();
     const now = performance.now() / 1000;
     for (const e of entities) {
-      if (e.kind === EntityKind.Ship || !e.alive) continue;
+      if (e.kind !== EntityKind.Mine || !e.alive) continue;
       seen.add(e.id);
-      const m = this.marker(e);
+      const { ring } = this.ring(e);
       const [x, y] = local(e.pos);
-      m.group.position.set(x, y, 1.5);
-      m.group.scale.setScalar(mpp);
-      m.group.rotation.z = Math.atan2(e.heading.y, e.heading.x);
-      m.flame.visible = e.throttle > 0.01;
-      m.flame.scale.set(0.5 + e.throttle * (0.8 + 0.3 * Math.random()), 1, 1);
-      if (e.kind === EntityKind.Mine) {
-        // A sleeping mine reports no target; once awake it chases one and pulses.
-        const awake = e.target !== null;
-        const mat = m.body.material as THREE.MeshBasicMaterial;
-        mat.opacity = awake ? 0.6 + 0.4 * Math.sin(now * 12) : 0.55;
-        if (m.ring) {
-          m.ring.visible = !awake;
-          // The ring is in metres: undo the group's pixel scale.
-          m.ring.scale.setScalar(1 / mpp);
-        }
-      }
+      ring.position.set(x, y, 1.4);
+      // A sleeping mine reports no target; once awake it chases one and the ring goes.
+      ring.visible = e.target === null;
     }
-    for (const [id, m] of this.markers) {
+    for (const [id, r] of this.rings) {
       if (!seen.has(id)) {
-        this.scene.remove(m.group);
-        this.markers.delete(id);
+        this.scene.remove(r.ring);
+        r.ring.geometry.dispose();
+        this.rings.delete(id);
       }
     }
 
@@ -96,40 +80,19 @@ export class MunitionLayer {
     }
   }
 
-  private marker(e: EntityView): Marker {
-    let m = this.markers.get(e.id);
-    if (m) return m;
+  private ring(e: EntityView): Ring {
+    let r = this.rings.get(e.id);
+    if (r) return r;
     const color = TEAM_COLORS[e.team] ?? TEAM_COLORS[2];
-    const shape = new THREE.Shape();
-    if (e.kind === EntityKind.Missile) {
-      shape.moveTo(6, 0).lineTo(-4, 2.5).lineTo(-4, -2.5).closePath();
-    } else {
-      shape.moveTo(4, 0).lineTo(0, 4).lineTo(-4, 0).lineTo(0, -4).closePath();
-    }
-    const body = new THREE.Mesh(
-      new THREE.ShapeGeometry(shape),
-      new THREE.MeshBasicMaterial({ color, transparent: true }),
+    const ring = new THREE.LineLoop(
+      unitCircle(96),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.18 }),
     );
-    const flame = new THREE.Mesh(
-      new THREE.ShapeGeometry(new THREE.Shape().moveTo(0, 1.8).lineTo(-8, 0).lineTo(0, -1.8)),
-      new THREE.MeshBasicMaterial({ color: FLAME, transparent: true, opacity: 0.85 }),
-    );
-    flame.position.x = -4;
-    const group = new THREE.Group();
-    group.add(flame, body);
-    let ring: THREE.LineLoop | null = null;
-    if (e.kind === EntityKind.Mine) {
-      ring = new THREE.LineLoop(
-        unitCircle(96),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.18 }),
-      );
-      ring.geometry.scale(MINE_TRIGGER_RANGE, MINE_TRIGGER_RANGE, 1);
-      group.add(ring);
-    }
-    this.scene.add(group);
-    m = { group, body, flame, ring };
-    this.markers.set(e.id, m);
-    return m;
+    ring.geometry.scale(MINE_TRIGGER_RANGE, MINE_TRIGGER_RANGE, 1);
+    this.scene.add(ring);
+    r = { ring };
+    this.rings.set(e.id, r);
+    return r;
   }
 }
 

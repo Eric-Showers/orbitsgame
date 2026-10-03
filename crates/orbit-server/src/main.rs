@@ -9,7 +9,7 @@ use axum::{
     routing::get,
     Router,
 };
-use orbit_sim::World;
+use orbit_sim::{vessel, OrbitSpec, Planet, World};
 
 const TICK: Duration = Duration::from_millis(50);
 
@@ -24,8 +24,9 @@ async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
 }
 
 async fn stream_sim(mut socket: WebSocket) {
-    let mut world = World::new(1.0);
-    world.add_circular_orbit(1.0);
+    let mut world = World::new(Planet::SCALED);
+    let r = world.planet.radius + 80_000.0;
+    world.spawn_ship_in_orbit(vessel::CORVETTE, 0, OrbitSpec::circular(r, 0.0));
     let mut interval = tokio::time::interval(TICK);
     loop {
         interval.tick().await;

@@ -61,7 +61,10 @@ impl AttitudeMode {
 
     pub fn needs_target(self) -> bool {
         use AttitudeMode::*;
-        matches!(self, Target | AntiTarget | TargetPrograde | TargetRetrograde)
+        matches!(
+            self,
+            Target | AntiTarget | TargetPrograde | TargetRetrograde
+        )
     }
 }
 

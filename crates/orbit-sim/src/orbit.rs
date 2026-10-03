@@ -69,7 +69,12 @@ pub struct OrbitSpec {
 
 impl OrbitSpec {
     pub fn circular(radius: f64, angle: f64) -> Self {
-        Self { periapsis: radius, apoapsis: radius, arg_periapsis: 0.0, true_anomaly: angle }
+        Self {
+            periapsis: radius,
+            apoapsis: radius,
+            arg_periapsis: 0.0,
+            true_anomaly: angle,
+        }
     }
 
     pub fn state(&self, mu: f64) -> (Vec3, Vec3) {
@@ -81,7 +86,10 @@ impl OrbitSpec {
         let vs = (mu / p).sqrt();
         let pos = Vec3::new(r * c, r * s, 0.0);
         let vel = Vec3::new(-vs * s, vs * (e + c), 0.0);
-        (pos.rotate_about(Vec3::Z, self.arg_periapsis), vel.rotate_about(Vec3::Z, self.arg_periapsis))
+        (
+            pos.rotate_about(Vec3::Z, self.arg_periapsis),
+            vel.rotate_about(Vec3::Z, self.arg_periapsis),
+        )
     }
 }
 

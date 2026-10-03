@@ -11,7 +11,10 @@ pub struct Planet {
 
 impl Planet {
     /// Default game world: a 600 km body with Kerbin's mu (design doc sec. 2.1).
-    pub const SCALED: Planet = Planet { mu: 3.5316e12, radius: 600_000.0 };
+    pub const SCALED: Planet = Planet {
+        mu: 3.5316e12,
+        radius: 600_000.0,
+    };
 
     pub fn circular_speed(&self, r: f64) -> f64 {
         (self.mu / r).sqrt()

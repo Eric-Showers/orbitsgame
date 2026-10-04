@@ -4,22 +4,22 @@ Deterministic scripts (no learned models) that fly the player's ship on the comm
 
 ## Layers
 
-| Layer | Files | Job |
-| --- | --- | --- |
-| Math | `orbitmath.ts` | Kepler propagation, time to apsis, phase angles, closest approach. Planar, prograde orbits. |
+| Layer      | Files                                           | Job                                                                                                                                                                       |
+| ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Math       | `orbitmath.ts`                                  | Kepler propagation, time to apsis, phase angles, closest approach. Planar, prograde orbits.                                                                               |
 | Primitives | `maneuvers/burn.ts`, `orient.ts`, `sequence.ts` | `BurnManeuver`: wait for node, align, burn with tapering throttle to a measured goal. `Sequence`: stages built lazily so later stages plan from where earlier ones ended. |
-| Scripts | `maneuvers/*.ts` | `circularize`, `changeAltitude` (Hohmann), `MatchVelocity`, `StationKeep`, `Rendezvous` (also the intercept approach), `Evade`, `LaunchMissile`, `DropMine`, `Orient`. |
-| Driver | `pilot.ts` | Holds one proposal and one running maneuver, ticks it from the sim step hook, auto-warps coasts, aborts on manual input. |
-| Commander | `intents.ts`, `speech.ts`, `ui/pilot.ts` | Intent catalogue, ARGUS lines (`ap.*` in `advisor/voice.json`), confirm / cancel / abort card. |
+| Scripts    | `maneuvers/*.ts`                                | `circularize`, `changeAltitude` (Hohmann), `MatchVelocity`, `StationKeep`, `Rendezvous` (also the intercept approach), `Evade`, `LaunchMissile`, `DropMine`, `Orient`.    |
+| Driver     | `pilot.ts`                                      | Holds one proposal and one running maneuver, ticks it from the sim step hook, auto-warps coasts, aborts on manual input.                                                  |
+| Commander  | `intents.ts`, `speech.ts`, `ui/pilot.ts`        | Intent catalogue, ARGUS lines (`ap.*` in `advisor/voice.json`), confirm / cancel / abort card.                                                                            |
 
 ## Contract
 
 ```ts
 interface Maneuver {
-  plan(ctx): Plan;      // pure: burn nodes, dv, eta, feasibility with a reason
-  start(ctx): void;     // latch decisions (node times, targets)
+  plan(ctx): Plan; // pure: burn nodes, dv, eta, feasibility with a reason
+  start(ctx): void; // latch decisions (node times, targets)
   execute(ctx): Status; // one control tick: helm commands + progress + `coast` seconds
-  abort(ctx): void;     // engine cut
+  abort(ctx): void; // engine cut
 }
 ```
 

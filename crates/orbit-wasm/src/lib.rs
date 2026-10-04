@@ -95,7 +95,8 @@ impl Game {
 
     /// Static stats of a munition (1 = missile, 2 = mine): mass, delta-v,
     /// accel, closing speed, blast radius, damage, arm time, trigger range,
-    /// lifetime, eject speed. Empty for other kinds.
+    /// lifetime, eject speed, RCS delta-v, RCS accel, RCS turn rate, RCS
+    /// turn cost. Empty for other kinds.
     pub fn munition_stats(kind: u8) -> Vec<f64> {
         let m = match kind {
             1 => &MISSILE,
@@ -113,6 +114,10 @@ impl Game {
             m.trigger_range,
             m.lifetime,
             m.eject_speed,
+            m.rcs_dv,
+            m.rcs_accel,
+            m.rcs_turn_rate,
+            m.rcs_turn_cost,
         ]
     }
 
@@ -121,6 +126,31 @@ impl Game {
         self.world
             .get(id)
             .map_or_else(Vec::new, |e| vec![e.missiles as f64, e.mines as f64])
+    }
+
+    /// RCS delta-v left on munition `id` (m/s), -1 if unknown or not a munition.
+    pub fn rcs_delta_v(&self, id: u32) -> f64 {
+        self.world
+            .get(id)
+            .filter(|e| e.munition().is_some())
+            .map_or(-1.0, |e| e.rcs_dv_left)
+    }
+
+    /// Motor state of munition `id`: 0 idle (dormant or no target), 1 main
+    /// motor burning, 2 coasting or RCS only, 3 out of all delta-v, 4 unknown.
+    pub fn motor_status(&self, id: u32) -> u8 {
+        let Some(e) = self.world.get(id).filter(|e| e.munition().is_some()) else {
+            return 4;
+        };
+        if e.main_dv_left <= 0.0 && e.rcs_dv_left <= 0.0 {
+            3
+        } else if e.throttle > 0.0 {
+            1
+        } else if e.active {
+            2
+        } else {
+            0
+        }
     }
 
     pub fn set_throttle(&mut self, id: u32, throttle: f64) {

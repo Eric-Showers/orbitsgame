@@ -220,6 +220,14 @@ pub struct MunitionSpec {
     /// An active mine gives up when its target is this many trigger ranges
     /// away (missiles never give up).
     pub lose_track: f64,
+    /// RCS delta-v budget (m/s), separate from the main motor's `delta_v`.
+    pub rcs_dv: f64,
+    /// RCS translation acceleration (m/s^2), spent from `rcs_dv`.
+    pub rcs_accel: f64,
+    /// Attitude slew rate (rad/s). Near-instant on a missile.
+    pub rcs_turn_rate: f64,
+    /// RCS delta-v spent per radian of attitude change (m/s/rad).
+    pub rcs_turn_cost: f64,
 }
 
 pub const MISSILE: MunitionSpec = MunitionSpec {
@@ -235,6 +243,10 @@ pub const MISSILE: MunitionSpec = MunitionSpec {
     nav_gain: 3.0,
     eject_speed: 5.0,
     lose_track: 0.0,
+    rcs_dv: 60.0,
+    rcs_accel: 1.5,
+    rcs_turn_rate: 6.0,
+    rcs_turn_cost: 4.0,
 };
 
 pub const MINE: MunitionSpec = MunitionSpec {
@@ -250,6 +262,10 @@ pub const MINE: MunitionSpec = MunitionSpec {
     nav_gain: 3.0,
     eject_speed: 1.0,
     lose_track: 2.0,
+    rcs_dv: 100.0,
+    rcs_accel: 3.0,
+    rcs_turn_rate: 3.0,
+    rcs_turn_cost: 1.0,
 };
 
 /// One simulated object: a ship, a missile or a mine.
@@ -277,8 +293,10 @@ pub struct Entity {
     pub mines: u32,
     pub ai: u8,
     pub ai_timer: f64,
-    /// Munitions: remaining delta-v, time since release, whether a mine woke up.
-    pub dv_left: f64,
+    /// Munitions: remaining main-motor and RCS delta-v, time since release,
+    /// whether a mine woke up.
+    pub main_dv_left: f64,
+    pub rcs_dv_left: f64,
     pub age: f64,
     pub active: bool,
     pub owner: Option<u32>,
@@ -312,7 +330,7 @@ impl Entity {
     pub fn delta_v(&self) -> f64 {
         match self.kind {
             Kind::Ship => 0.0,
-            _ => self.dv_left,
+            _ => self.main_dv_left,
         }
     }
 

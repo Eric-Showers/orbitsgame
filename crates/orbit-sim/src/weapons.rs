@@ -60,7 +60,8 @@ fn new_munition(id: u32, kind: Kind, owner: &Entity, vel: Vec3, target: Option<u
         ai: 0,
         // Seconds spent active (powered flight); drives the lifetime limit.
         ai_timer: 0.0,
-        dv_left: spec.delta_v,
+        main_dv_left: spec.delta_v,
+        rcs_dv_left: spec.rcs_dv,
         age: 0.0,
         active: kind == Kind::Missile,
         owner: Some(owner.id),
@@ -228,6 +229,43 @@ fn gravity(mu: f64, pos: Vec3) -> Vec3 {
     pos * (-mu / (r2 * r2.sqrt()))
 }
 
+/// Turns the munition toward `want` on RCS, then burns the main motor along
+/// its heading and covers any residual with RCS translation. Returns the
+/// acceleration applied this tick.
+fn fly(m: &mut Entity, spec: &MunitionSpec, want: Vec3, dt: f64) -> Vec3 {
+    let dir = want.normalize_or_zero();
+    let cos = m.heading.dot(dir).clamp(-1.0, 1.0);
+    let angle = cos.acos();
+    if dir != Vec3::ZERO && angle > 0.0 && m.rcs_dv_left > 0.0 {
+        let turn = angle
+            .min(spec.rcs_turn_rate * dt)
+            .min(m.rcs_dv_left / spec.rcs_turn_cost);
+        let perp = (dir - m.heading * cos).normalize_or_zero();
+        m.heading = (m.heading * libm::cos(turn) + perp * libm::sin(turn)).normalize_or_zero();
+        m.rcs_dv_left = (m.rcs_dv_left - turn * spec.rcs_turn_cost).max(0.0);
+    }
+
+    let thrust = m
+        .heading
+        .dot(want)
+        .max(0.0)
+        .min(spec.accel)
+        .min(m.main_dv_left / dt);
+    m.main_dv_left = (m.main_dv_left - thrust * dt).max(0.0);
+    m.throttle = thrust / spec.accel;
+    let main = m.heading * thrust;
+
+    let residual = want - main;
+    let r = residual.length();
+    let mut trans = Vec3::ZERO;
+    if r > 0.0 && m.rcs_dv_left > 0.0 {
+        let a = r.min(spec.rcs_accel).min(m.rcs_dv_left / dt);
+        trans = residual * (a / r);
+        m.rcs_dv_left = (m.rcs_dv_left - a * dt).max(0.0);
+    }
+    main + trans
+}
+
 /// Advances every live munition by `dt`: targeting, guidance burns, motion,
 /// lifetime, then proximity fuses. Call after ships have been moved for the
 /// same tick; fuses treat each ship as moving in a straight line over `dt`.
@@ -239,22 +277,12 @@ pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<
         };
         let target = update_target(entities, i, spec, events);
         let m = &entities[i];
-        let mut accel = Vec3::ZERO;
-        if let (true, Some(t)) = (m.active && m.dv_left > 0.0, target) {
-            let want = guidance_accel(m, spec, &entities[t]);
-            let need = want.length();
-            if need > 0.0 {
-                accel = want * (need.min(spec.accel).min(m.dv_left / dt) / need);
-            }
+        let mut want = Vec3::ZERO;
+        if let (true, Some(t)) = (m.active, target) {
+            want = guidance_accel(m, spec, &entities[t]);
         }
-
         let m = &mut entities[i];
-        let a = accel.length();
-        m.dv_left = (m.dv_left - a * dt).max(0.0);
-        m.throttle = a / spec.accel;
-        if a > 0.0 {
-            m.heading = accel * (1.0 / a);
-        }
+        let accel = fly(m, spec, want, dt);
         let start = m.pos;
         let v_half = m.vel + (gravity(planet.mu, m.pos) + accel) * (0.5 * dt);
         m.pos += v_half * dt;
@@ -380,7 +408,8 @@ mod tests {
             mines: c.mines,
             ai: 0,
             ai_timer: 0.0,
-            dv_left: 0.0,
+            main_dv_left: 0.0,
+            rcs_dv_left: 0.0,
             age: 0.0,
             active: false,
             owner: None,
@@ -428,7 +457,7 @@ mod tests {
         assert!(!get(&es, 2).alive);
         assert!(get(&es, 1).alive, "shooter must survive its own missile");
         let m = get(&es, 10);
-        assert!(!m.alive && m.dv_left < MISSILE.delta_v && m.dv_left >= 0.0);
+        assert!(!m.alive && m.main_dv_left < MISSILE.delta_v && m.main_dv_left >= 0.0);
     }
 
     #[test]
@@ -444,7 +473,10 @@ mod tests {
         }
         let m = get(&es, 10);
         assert!(m.alive && !m.active);
-        assert_eq!(m.dv_left, MINE.delta_v, "a sleeping mine spends nothing");
+        assert_eq!(
+            m.main_dv_left, MINE.delta_v,
+            "a sleeping mine spends nothing"
+        );
         // 1 m/s radial kick at n = 3.4e-3 rad/s: relative ellipse ~ 2v/n = 600 m.
         assert!(
             max_sep > 50.0 && max_sep < 1_500.0,
@@ -478,7 +510,7 @@ mod tests {
         run(&mut es, 900.0, &mut ev);
         assert!(!has(&ev, EventKind::MineTriggered, 10));
         assert!(get(&es, 2).alive);
-        assert_eq!(get(&es, 10).dv_left, MINE.delta_v);
+        assert_eq!(get(&es, 10).main_dv_left, MINE.delta_v);
     }
 
     #[test]
@@ -502,7 +534,7 @@ mod tests {
         let g = get(&es, 2);
         assert!(g.alive && g.hp == SHIP_CLASSES[GUNBOAT as usize].hp);
         let m = get(&es, 10);
-        assert!(m.dv_left >= 0.0 && m.dv_left < MINE.delta_v);
+        assert!(m.main_dv_left >= 0.0 && m.main_dv_left < MINE.delta_v);
     }
 
     #[test]
@@ -517,7 +549,7 @@ mod tests {
         run(&mut es, MISSILE.lifetime + 1.0, &mut ev);
         assert!(get(&es, 2).alive);
         assert!(has(&ev, EventKind::Expired, 10));
-        assert_eq!(get(&es, 10).dv_left, 0.0);
+        assert_eq!(get(&es, 10).main_dv_left, 0.0);
     }
 
     #[test]
@@ -574,7 +606,11 @@ mod tests {
             launch_missile(&mut es, 1, 2, 10, &mut ev);
             run(&mut es, 20.0, &mut ev);
             let m = get(&es, 10).clone();
-            (m.pos.x.to_bits(), m.vel.y.to_bits(), m.dv_left.to_bits())
+            (
+                m.pos.x.to_bits(),
+                m.vel.y.to_bits(),
+                m.main_dv_left.to_bits(),
+            )
         };
         assert_eq!(go(), go());
     }

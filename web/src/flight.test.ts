@@ -8,7 +8,16 @@ import { Game, initSync } from './wasm-pkg/orbit_wasm.js';
 // Runs the real WASM build of the sim in Node.
 initSync({ module: readFileSync(new URL('./wasm-pkg/orbit_wasm_bg.wasm', import.meta.url)) });
 
-const noClient: ClientControl = { zoomBy: () => {}, toggleFocus: () => {}, restart: () => {} };
+const noClient: ClientControl = {
+  zoomBy: () => {},
+  toggleFocus: () => {},
+  cycleFocus: () => {},
+  focusOnTarget: () => false,
+  toggleFreeCamera: () => {},
+  recentre: () => {},
+  setPan: () => {},
+  restart: () => {},
+};
 
 function run(session: FlightSession, seconds: number): void {
   for (let t = 0; t < seconds; t += 0.1) session.update(0.1);

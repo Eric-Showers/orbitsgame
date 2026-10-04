@@ -1,7 +1,7 @@
 import { Attitude } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 
-export type ControlGroup = 'attitude' | 'rotate' | 'engine' | 'target' | 'time' | 'camera';
+export type ControlGroup = 'attitude' | 'rotate' | 'engine' | 'target' | 'time' | 'camera' | 'pan';
 
 export interface ControlAction {
   id: string;
@@ -236,6 +236,64 @@ export const ACTIONS: ControlAction[] = [
     keys: ['KeyC'],
     keyHint: 'C',
   },
+  {
+    id: 'focus-next',
+    group: 'camera',
+    label: 'NEXT VIEW',
+    title: 'Focus the next object: ship, planet, then other ships and beacons.',
+    keys: ['BracketRight'],
+    keyHint: ']',
+  },
+  {
+    id: 'focus-prev',
+    group: 'camera',
+    label: 'PREV VIEW',
+    title: 'Focus the previous object.',
+    keys: ['BracketLeft'],
+    keyHint: '[',
+  },
+  {
+    id: 'focus-target',
+    group: 'camera',
+    label: 'VIEW TGT',
+    title: 'Focus the selected target.',
+    keys: ['KeyN'],
+    keyHint: 'N',
+  },
+  {
+    id: 'camera-free',
+    group: 'camera',
+    label: 'FREE CAM',
+    title:
+      'Float the camera free of every object; arrow keys or dragging move it. Press again to return to your ship.',
+    keys: ['KeyG'],
+    keyHint: 'G',
+  },
+  {
+    id: 'camera-recentre',
+    group: 'camera',
+    label: 'RECENTRE',
+    title:
+      'Clear the offset from the focus. Arrow keys or dragging offset the view; around a ship it is radial (up = away from the planet) so it follows the orbit.',
+    keys: ['Backslash'],
+    keyHint: '\\',
+  },
+  ...(
+    [
+      ['pan-up', 'ArrowUp', 'Offset the view up.'],
+      ['pan-down', 'ArrowDown', 'Offset the view down.'],
+      ['pan-left', 'ArrowLeft', 'Offset the view left.'],
+      ['pan-right', 'ArrowRight', 'Offset the view right.'],
+    ] as const
+  ).map(([id, key, title]): ControlAction => ({
+    id,
+    group: 'pan',
+    label: id,
+    title,
+    keys: [key],
+    keyHint: key.replace('Arrow', ''),
+    hold: true,
+  })),
 ];
 
 const BY_KEY = new Map<string, ControlAction>(ACTIONS.flatMap((a) => a.keys.map((k) => [k, a])));
@@ -248,6 +306,11 @@ export function actionForKey(code: string): ControlAction | undefined {
 export interface ClientControl {
   zoomBy(factor: number): void;
   toggleFocus(): void;
+  cycleFocus(dir: 1 | -1): void;
+  focusOnTarget(): boolean;
+  toggleFreeCamera(): void;
+  recentre(): void;
+  setPan(x: number | null, y: number | null): void;
   restart(): void;
   /** Told about every pressed action after it is applied; `ok` is false if the ship refused it. */
   onAction?(action: ControlAction, ok: boolean): void;
@@ -275,6 +338,14 @@ function dispatch(
     return;
   }
   switch (action.id) {
+    case 'pan-up':
+      return client.setPan(null, pressed ? 1 : 0);
+    case 'pan-down':
+      return client.setPan(null, pressed ? -1 : 0);
+    case 'pan-left':
+      return client.setPan(pressed ? -1 : 0, null);
+    case 'pan-right':
+      return client.setPan(pressed ? 1 : 0, null);
     case 'rotate-left':
       return session.setRotate(pressed ? 1 : 0);
     case 'rotate-right':
@@ -313,6 +384,16 @@ function dispatch(
       return client.zoomBy(2);
     case 'focus':
       return client.toggleFocus();
+    case 'focus-next':
+      return client.cycleFocus(1);
+    case 'focus-prev':
+      return client.cycleFocus(-1);
+    case 'focus-target':
+      return client.focusOnTarget();
+    case 'camera-free':
+      return client.toggleFreeCamera();
+    case 'camera-recentre':
+      return client.recentre();
     case 'restart':
       return client.restart();
   }

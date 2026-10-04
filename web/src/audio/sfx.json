@@ -1,0 +1,302 @@
+{
+  "buses": {
+    "master": 0.8,
+    "physical": 0.8,
+    "cockpit": 0.7
+  },
+  "distance": {
+    "refMeters": 5000,
+    "minGain": 0.15
+  },
+  "simEvents": {
+    "Crash": "crash",
+    "FuelOut": "fuel.out",
+    "MissileLaunched": "missile.launch",
+    "MineDropped": "mine.drop",
+    "MineTriggered": "mine.trigger",
+    "Detonation": "detonation",
+    "ShipDestroyed": "ship.destroyed",
+    "Expired": "munition.expired"
+  },
+  "advisory": {
+    "priorities": {
+      "critical": "alarm.critical",
+      "warning": "alarm.warning"
+    },
+    "lines": {
+      "threat.missile": "alarm.missile",
+      "hazard.impact_imminent": "alarm.impact",
+      "hazard.impact": "alarm.impact",
+      "ack.attitude.fail": "ack.fail",
+      "ack.attitude.planar": "ack.fail",
+      "ack.fire-missile.no_target": "ack.fail",
+      "ack.fire-missile.fail": "ack.fail",
+      "ack.drop-mine.fail": "ack.fail"
+    },
+    "ackPrefix": "ack.",
+    "ackSound": "ack",
+    "ignorePrefixes": ["ap.", "status."]
+  },
+  "pilot": {
+    "proposed": "ap.propose",
+    "cancelled": "ap.cancel",
+    "started": "ap.confirm",
+    "done": "ap.done",
+    "failed": "ap.failed",
+    "refused": "ap.refused",
+    "aborted": "ap.abort",
+    "assistOn": "ap.confirm",
+    "assistOff": "ap.cancel",
+    "burnPhase": "timer.go"
+  },
+  "timer": {
+    "countdownSeconds": 10,
+    "tickEverySeconds": 1,
+    "urgentBelowSeconds": 3,
+    "tick": "timer.tick",
+    "urgentTick": "timer.tick.urgent",
+    "maxWarp": 1
+  },
+  "cooldown": {
+    "default": 0.08,
+    "alarm.critical": 2.5,
+    "alarm.warning": 1.5,
+    "alarm.missile": 2.5,
+    "alarm.impact": 2.0,
+    "mine.trigger": 0.5,
+    "munition.expired": 0.3
+  },
+  "loops": {
+    "engine": {
+      "maxWarp": 4,
+      "smoothing": 0.08,
+      "baseFreq": 48,
+      "freqRange": 34,
+      "noiseLowpass": 380,
+      "noiseLowpassRange": 900,
+      "gain": 0.5
+    },
+    "rcs": {
+      "maxWarp": 4,
+      "smoothing": 0.05,
+      "fullRateRadPerSec": 0.35,
+      "deadRadPerSec": 0.01,
+      "bandpass": 3200,
+      "q": 0.8,
+      "gain": 0.28
+    }
+  },
+  "sounds": {
+    "missile.launch": {
+      "bus": "physical",
+      "layers": [
+        {
+          "wave": "noise",
+          "dur": 0.7,
+          "gain": 0.5,
+          "attack": 0.02,
+          "filter": { "type": "bandpass", "freq": 400, "freqEnd": 2600, "q": 0.9 }
+        },
+        { "wave": "sawtooth", "freq": 95, "freqEnd": 38, "dur": 0.5, "gain": 0.32 }
+      ]
+    },
+    "mine.drop": {
+      "bus": "physical",
+      "layers": [
+        { "wave": "sine", "freq": 170, "freqEnd": 60, "dur": 0.25, "gain": 0.5 },
+        { "wave": "triangle", "freq": 900, "dur": 0.05, "gain": 0.2, "delay": 0.05 }
+      ]
+    },
+    "mine.trigger": {
+      "bus": "physical",
+      "layers": [
+        { "wave": "square", "freq": 220, "dur": 0.07, "gain": 0.2 },
+        { "wave": "square", "freq": 220, "dur": 0.07, "gain": 0.2, "delay": 0.11 },
+        { "wave": "square", "freq": 330, "dur": 0.12, "gain": 0.2, "delay": 0.22 }
+      ]
+    },
+    "detonation": {
+      "bus": "physical",
+      "layers": [
+        {
+          "wave": "noise",
+          "dur": 1.1,
+          "gain": 0.8,
+          "filter": { "type": "lowpass", "freq": 1800, "freqEnd": 120, "q": 0.7 }
+        },
+        { "wave": "sine", "freq": 70, "freqEnd": 25, "dur": 1.0, "gain": 0.7 }
+      ]
+    },
+    "ship.destroyed": {
+      "bus": "physical",
+      "layers": [
+        {
+          "wave": "noise",
+          "dur": 1.8,
+          "gain": 0.9,
+          "filter": { "type": "lowpass", "freq": 2500, "freqEnd": 80, "q": 0.7 }
+        },
+        { "wave": "sawtooth", "freq": 110, "freqEnd": 30, "dur": 1.6, "gain": 0.45 },
+        { "wave": "sine", "freq": 55, "freqEnd": 20, "dur": 1.6, "gain": 0.8 }
+      ]
+    },
+    "crash": {
+      "bus": "physical",
+      "layers": [
+        {
+          "wave": "noise",
+          "dur": 2.2,
+          "gain": 0.9,
+          "filter": { "type": "lowpass", "freq": 900, "freqEnd": 60, "q": 0.7 }
+        },
+        { "wave": "sine", "freq": 45, "freqEnd": 18, "dur": 2.0, "gain": 0.9 }
+      ]
+    },
+    "fuel.out": {
+      "bus": "physical",
+      "layers": [
+        { "wave": "sawtooth", "freq": 140, "freqEnd": 30, "dur": 0.9, "gain": 0.3 },
+        {
+          "wave": "noise",
+          "dur": 0.5,
+          "gain": 0.2,
+          "delay": 0.3,
+          "filter": { "type": "lowpass", "freq": 600, "q": 0.7 }
+        }
+      ]
+    },
+    "munition.expired": {
+      "bus": "physical",
+      "layers": [
+        {
+          "wave": "noise",
+          "dur": 0.3,
+          "gain": 0.15,
+          "filter": { "type": "bandpass", "freq": 1200, "freqEnd": 300, "q": 1 }
+        }
+      ]
+    },
+    "alarm.critical": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "square", "freq": 880, "dur": 0.14, "gain": 0.3 },
+        { "wave": "square", "freq": 660, "dur": 0.14, "gain": 0.3, "delay": 0.16 },
+        { "wave": "square", "freq": 880, "dur": 0.14, "gain": 0.3, "delay": 0.32 },
+        { "wave": "square", "freq": 660, "dur": 0.14, "gain": 0.3, "delay": 0.48 }
+      ]
+    },
+    "alarm.warning": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sine", "freq": 740, "dur": 0.2, "gain": 0.3 },
+        { "wave": "sine", "freq": 740, "dur": 0.2, "gain": 0.3, "delay": 0.3 }
+      ]
+    },
+    "alarm.missile": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sawtooth", "freq": 1000, "freqEnd": 1400, "dur": 0.15, "gain": 0.26 },
+        {
+          "wave": "sawtooth",
+          "freq": 1000,
+          "freqEnd": 1400,
+          "dur": 0.15,
+          "gain": 0.26,
+          "delay": 0.2
+        },
+        {
+          "wave": "sawtooth",
+          "freq": 1000,
+          "freqEnd": 1400,
+          "dur": 0.15,
+          "gain": 0.26,
+          "delay": 0.4
+        },
+        {
+          "wave": "sawtooth",
+          "freq": 1000,
+          "freqEnd": 1400,
+          "dur": 0.15,
+          "gain": 0.26,
+          "delay": 0.6
+        }
+      ]
+    },
+    "alarm.impact": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "square", "freq": 520, "dur": 0.1, "gain": 0.3 },
+        { "wave": "square", "freq": 520, "dur": 0.1, "gain": 0.3, "delay": 0.12 },
+        { "wave": "square", "freq": 520, "dur": 0.1, "gain": 0.3, "delay": 0.24 },
+        { "wave": "square", "freq": 400, "dur": 0.3, "gain": 0.3, "delay": 0.4 }
+      ]
+    },
+    "ack": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sine", "freq": 1200, "dur": 0.06, "gain": 0.18 },
+        { "wave": "sine", "freq": 1600, "dur": 0.08, "gain": 0.18, "delay": 0.07 }
+      ]
+    },
+    "ack.fail": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "square", "freq": 200, "dur": 0.18, "gain": 0.2 }]
+    },
+    "ap.propose": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sine", "freq": 660, "dur": 0.1, "gain": 0.22 },
+        { "wave": "sine", "freq": 990, "dur": 0.12, "gain": 0.22, "delay": 0.11 }
+      ]
+    },
+    "ap.confirm": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sine", "freq": 880, "dur": 0.08, "gain": 0.24 },
+        { "wave": "sine", "freq": 1320, "dur": 0.14, "gain": 0.24, "delay": 0.09 }
+      ]
+    },
+    "ap.cancel": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "sine", "freq": 990, "freqEnd": 660, "dur": 0.15, "gain": 0.22 }]
+    },
+    "ap.abort": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "triangle", "freq": 700, "freqEnd": 300, "dur": 0.3, "gain": 0.3 },
+        { "wave": "triangle", "freq": 700, "freqEnd": 300, "dur": 0.3, "gain": 0.3, "delay": 0.35 }
+      ]
+    },
+    "ap.done": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "sine", "freq": 660, "dur": 0.09, "gain": 0.24 },
+        { "wave": "sine", "freq": 880, "dur": 0.09, "gain": 0.24, "delay": 0.1 },
+        { "wave": "sine", "freq": 1100, "dur": 0.2, "gain": 0.24, "delay": 0.2 }
+      ]
+    },
+    "ap.failed": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "square", "freq": 300, "freqEnd": 150, "dur": 0.4, "gain": 0.25 }]
+    },
+    "ap.refused": {
+      "bus": "cockpit",
+      "layers": [
+        { "wave": "square", "freq": 180, "dur": 0.15, "gain": 0.22 },
+        { "wave": "square", "freq": 180, "dur": 0.15, "gain": 0.22, "delay": 0.2 }
+      ]
+    },
+    "timer.tick": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "sine", "freq": 1000, "dur": 0.04, "gain": 0.2 }]
+    },
+    "timer.tick.urgent": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "sine", "freq": 1300, "dur": 0.07, "gain": 0.28 }]
+    },
+    "timer.go": {
+      "bus": "cockpit",
+      "layers": [{ "wave": "sine", "freq": 1500, "dur": 0.35, "gain": 0.26 }]
+    }
+  }
+}

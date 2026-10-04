@@ -4,6 +4,8 @@ import { Pilot } from './autopilot/pilot';
 import { pilotCue } from './autopilot/speech';
 import { AdvisoryChannel } from './advisor/channel';
 import { findPersona } from './advisor/personas';
+import { SoundDirector } from './audio/director';
+import { AudioMixer } from './audio/mixer';
 import { playerSnapshot } from './advisor/snapshot';
 import { LOCK_PROGRESSION, loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
@@ -17,6 +19,7 @@ import { TtsPlayer } from './ui/tts';
 import { VoiceBar } from './ui/voicebar';
 import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
+import { AudioPanel } from './ui/audio';
 import { PilotPanel } from './ui/pilot';
 
 async function main(): Promise<void> {
@@ -42,12 +45,18 @@ async function main(): Promise<void> {
     advisor.setPersona(persona);
   });
   const clock = (): number => performance.now() / 1000;
+  // Sound: shipboard and cockpit buses, driven by sim events, the AI's voice and the pilot.
+  const mixer = new AudioMixer();
+  const sound = new SoundDirector(mixer);
+  voice.subscribe((ev) => sound.onAdvisory(ev));
+  new AudioPanel(document.body, mixer);
 
   // Ship AI hands: flies confirmed maneuvers and speaks through the same advisor.
   let unlistenPilot = (): void => {};
   const attachPilot = (): Pilot => {
     const p = new Pilot(session);
     unlistenPilot = p.subscribe((ev) => {
+      sound.onPilot(ev);
       const cue = pilotCue(ev, p.speechVars());
       if (cue) advisor.announce(cue, playerSnapshot(session, []), clock());
     });
@@ -65,6 +74,7 @@ async function main(): Promise<void> {
     pilot = attachPilot();
     advisor.reset();
     comms.clear();
+    sound.reset();
   };
   const startMission = (index: number): void => {
     run = new MissionRun(new Game(), missions[index]);
@@ -118,8 +128,21 @@ async function main(): Promise<void> {
         events = session.takeEvents();
       }
       view.showEvents(events);
+      sound.onSimEvents(events);
       advisor.observe(playerSnapshot(session, events), now / 1000);
     }
+    const me = session.player();
+    sound.onFrame({
+      dt,
+      simTime: session.time,
+      paused: session.paused || screens.open,
+      alive: me.alive,
+      warp: session.effectiveWarp(),
+      throttle: me.throttle,
+      heading: me.heading,
+      pos: me.pos,
+      pilotStatus: pilot.status,
+    });
     if (run && run.outcome !== 'running' && !debriefed) {
       debriefed = true;
       progress.record(run.def.id, run.stars());

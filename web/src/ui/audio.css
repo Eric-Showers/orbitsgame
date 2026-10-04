@@ -1,0 +1,40 @@
+.audio-mix {
+  position: fixed;
+  right: 8px;
+  bottom: calc(var(--console-h, 240px) + 8px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-edge);
+  font: 11px/1 var(--font-ui);
+  color: var(--c-text);
+  user-select: none;
+}
+
+.audio-mix .audio-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.audio-mix button {
+  padding: 2px 6px;
+  font: inherit;
+  color: var(--c-text);
+  background: transparent;
+  border: 1px solid var(--c-edge);
+  cursor: pointer;
+}
+
+.audio-mix button.muted {
+  color: var(--c-red);
+  border-color: var(--c-red);
+}
+
+.audio-mix input[type='range'] {
+  width: 64px;
+  accent-color: var(--c-glow);
+}

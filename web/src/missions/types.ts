@@ -31,6 +31,8 @@ export interface LoadoutDef {
 
 /** Hostile behaviours, driven client-side against the player. Combine freely. */
 export interface AiDef {
+  /** Tag of the ship this AI hunts and shoots at; defaults to the player. */
+  prey?: string;
   /** Fires missiles at the player when in range. */
   gunner?: {
     range: number;
@@ -123,6 +125,19 @@ export interface ScoreDef {
   fuelReserve: number;
 }
 
+/** A line ARGUS speaks during a mission, at the moment its trigger fires. */
+export interface CoachDef {
+  when: { start: true } | { objective: string; status: 'active' | 'done' } | { atTime: number };
+  /** Plain-language line; keep it a sentence or two. */
+  text: string;
+}
+
+/** The idea a mission teaches, shown on the briefing. */
+export interface LessonDef {
+  concept: string;
+  points: string[];
+}
+
 export interface MissionDef {
   id: string;
   title: string;
@@ -130,6 +145,8 @@ export interface MissionDef {
   summary: string;
   /** Briefing paragraphs. */
   briefing: string[];
+  lesson?: LessonDef;
+  coach?: CoachDef[];
   player: { class: ShipClassName; orbit: OrbitDef; loadout?: LoadoutDef; name?: string };
   ships: ShipDef[];
   objectives: ObjectiveDef[];

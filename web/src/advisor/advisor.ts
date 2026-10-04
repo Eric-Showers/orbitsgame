@@ -152,7 +152,9 @@ export class VesselAdvisor {
   private say(requested: Cue, snap: VesselSnapshot, now: number): void {
     let cue = requested;
     if (!this.cfg.lines[cue.id] && cue.fallback) cue = { ...cue, id: cue.fallback };
-    const spec = this.cfg.lines[cue.id];
+    const spec = cue.text
+      ? { priority: 'advise' as const, text: [cue.text] }
+      : this.cfg.lines[cue.id];
     if (!spec || spec.text.length === 0) return;
     const variants = this.persona.lines[cue.id] ?? spec.text;
     const turn = this.rotation.get(cue.id) ?? 0;

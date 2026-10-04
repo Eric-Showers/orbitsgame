@@ -42,6 +42,8 @@ export class MissionRun {
   private unspawned: ShipDef[];
   private ais: HostileAi[] = [];
   private kills = new Map<number, KillCause>();
+  private coachSaid = new Set<number>();
+  private coachLines: string[] = [];
 
   constructor(
     game: Game,
@@ -67,6 +69,14 @@ export class MissionRun {
     this.unspawned = [...def.ships];
     this.spawnDue();
     this.activate();
+    this.coach();
+  }
+
+  /** Coaching lines that fired since the last call; ARGUS speaks them. */
+  takeCoach(): string[] {
+    const lines = this.coachLines;
+    this.coachLines = [];
+    return lines;
   }
 
   /** Display name of a ship (mission name, else its tag). */
@@ -81,7 +91,10 @@ export class MissionRun {
       s.throttleRamp = 0;
       return s.takeEvents();
     }
-    for (const ai of this.ais) ai.act(s, s.playerId);
+    for (const ai of this.ais) {
+      const quarry = ai.prey === undefined ? s.playerId : (this.ids.get(ai.prey) ?? -1);
+      ai.act(s, quarry);
+    }
     s.refresh();
     const t0 = s.time;
     s.update(realDt);
@@ -91,6 +104,7 @@ export class MissionRun {
     this.progress(s.time - t0);
     this.spawnDue();
     this.activate();
+    this.coach();
     this.checkEnd();
     return events;
   }
@@ -177,6 +191,25 @@ export class MissionRun {
         o.detail = `LAST MINE OFF BAND · PE ${fmtDistance(pe)} AP ${fmtDistance(ap)}`;
       }
     }
+  }
+
+  private coach(): void {
+    (this.def.coach ?? []).forEach((c, i) => {
+      if (this.coachSaid.has(i)) return;
+      const w = c.when;
+      const hit =
+        'start' in w ||
+        ('atTime' in w && this.session.time >= w.atTime) ||
+        ('objective' in w &&
+          this.objectives.some(
+            (o) =>
+              o.def.id === w.objective &&
+              (w.status === 'done' ? o.status === 'done' : o.status !== 'waiting'),
+          ));
+      if (!hit) return;
+      this.coachSaid.add(i);
+      this.coachLines.push(c.text);
+    });
   }
 
   private activate(): void {

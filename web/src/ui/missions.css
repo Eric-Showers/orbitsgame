@@ -261,3 +261,17 @@
   margin-top: 6px;
   text-align: left;
 }
+
+.mission-lesson {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 2px solid var(--accent, #4fd);
+  background: rgba(80, 220, 200, 0.06);
+}
+.mission-lesson .mission-sub {
+  margin-top: 0;
+}
+.mission-points {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}

@@ -129,7 +129,10 @@ async function main(): Promise<void> {
       }
       view.showEvents(events);
       sound.onSimEvents(events);
-      advisor.observe(playerSnapshot(session, events), now / 1000);
+      const snap = playerSnapshot(session, events);
+      advisor.observe(snap, now / 1000);
+      for (const text of run?.takeCoach() ?? [])
+        advisor.announce({ id: 'coach', text }, snap, now / 1000);
     }
     const me = session.player();
     sound.onFrame({

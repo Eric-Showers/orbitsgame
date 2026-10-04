@@ -1,0 +1,192 @@
+{
+  "callsigns": {
+    "Corvette": "ARGUS",
+    "Gunboat": "BASTION",
+    "Minelayer": "SEXTANT",
+    "Drone": "DRONE CORE",
+    "Beacon": "BEACON"
+  },
+  "defaultCallsign": "SHIP",
+  "speech": {
+    "wordsPerMinute": 165,
+    "gapSeconds": 0.6,
+    "minSeconds": 1.0,
+    "maxQueue": 6
+  },
+  "priorities": {
+    "critical": { "rank": 0, "ttl": 10, "interrupt": true },
+    "warning": { "rank": 1, "ttl": 8 },
+    "ack": { "rank": 2, "ttl": 4 },
+    "advise": { "rank": 3, "ttl": 6 },
+    "status": { "rank": 4, "ttl": 6 }
+  },
+  "thresholds": {
+    "fuelLowFraction": 0.25,
+    "fuelBingoFraction": 0.1,
+    "fuelHysteresis": 0.03,
+    "lowPeriapsisAlt": 15000,
+    "lowPeriapsisClearAlt": 20000,
+    "impactImminentSeconds": 60,
+    "missileThreatRange": 40000,
+    "mineNearRange": 6500,
+    "mineNearClearRange": 8000,
+    "missileEnvelope": 25000,
+    "missileEnvelopeClear": 28000,
+    "matchVelocityRange": 12000,
+    "matchVelocityRelSpeed": 60,
+    "matchVelocityClearRelSpeed": 30,
+    "burnReportMinSeconds": 3,
+    "neutralTeams": [2]
+  },
+  "lines": {
+    "status.online": {
+      "priority": "status",
+      "text": ["{callsign} online. All systems nominal. The ship is yours, Commander."]
+    },
+    "hazard.impact": {
+      "priority": "critical",
+      "cooldown": 20,
+      "text": [
+        "Commander, this orbit intersects the surface. Impact in {t}. Recommend a prograde burn.",
+        "Our periapsis is below ground. Contact in {t}. A prograde burn will lift it."
+      ]
+    },
+    "hazard.impact_imminent": {
+      "priority": "critical",
+      "repeat": 12,
+      "text": ["Impact in {t}. I need that burn, Commander.", "{t} to surface. Burn prograde now."]
+    },
+    "hazard.low_periapsis": {
+      "priority": "warning",
+      "cooldown": 30,
+      "text": [
+        "Periapsis {pe}. Lower than I like. Recommend a prograde burn at apoapsis.",
+        "We will skim {pe} at periapsis. Advise raising it."
+      ]
+    },
+    "threat.missile": {
+      "priority": "critical",
+      "repeat": 8,
+      "text": [
+        "Missile inbound. Range {range}, closing {closing}. Contact in {t}.",
+        "Hostile missile has us. {range} and closing. Contact in {t}."
+      ]
+    },
+    "threat.mine_active": {
+      "priority": "critical",
+      "repeat": 10,
+      "text": ["A mine has woken and is hunting us. Range {range}."]
+    },
+    "threat.mine_near": {
+      "priority": "warning",
+      "cooldown": 30,
+      "text": [
+        "Dormant mine at {range}. I would not linger near its trigger radius.",
+        "Mine on the scope, {range}. Still asleep. Let us keep it that way."
+      ]
+    },
+    "fuel.low": {
+      "priority": "warning",
+      "cooldown": 60,
+      "text": ["Fuel at {pct}. {dv} of delta-v in hand. Spend it carefully."]
+    },
+    "fuel.bingo": {
+      "priority": "warning",
+      "cooldown": 60,
+      "text": ["Bingo fuel. {dv} remaining. I would keep enough to come home."]
+    },
+    "fuel.out": {
+      "priority": "critical",
+      "text": ["Tanks dry. We are ballistic now, Commander.", "Fuel exhausted. We ride this orbit."]
+    },
+    "damage.hull": {
+      "priority": "warning",
+      "cooldown": 4,
+      "text": ["We are hit. Hull integrity {hp}.", "Hull damage. Integrity {hp}. Systems holding."]
+    },
+    "status.lost": {
+      "priority": "critical",
+      "text": ["Hull integrity failing. It has been an honour, Commander."]
+    },
+    "advise.target_in_range": {
+      "priority": "advise",
+      "cooldown": 45,
+      "text": [
+        "{target} inside missile envelope at {range}. Weapons are yours, Commander.",
+        "Firing solution on {target}, {range}. On your word."
+      ]
+    },
+    "advise.match_velocity": {
+      "priority": "advise",
+      "cooldown": 40,
+      "text": [
+        "Relative velocity {relv} at {range}. A target-retrograde burn would match {target}.",
+        "We are overrunning {target}, {relv}. Suggest target-retrograde to match."
+      ]
+    },
+    "status.orbit": {
+      "priority": "status",
+      "cooldown": 5,
+      "text": ["Burn complete. Periapsis {pe}, apoapsis {ap}.", "Engine off. Orbit {pe} by {ap}."]
+    },
+    "status.splash": {
+      "priority": "status",
+      "text": ["Splash. {target} destroyed.", "{target} is gone. Good shooting, Commander."]
+    },
+    "status.missile_lost": {
+      "priority": "status",
+      "text": ["Our missile has gone dark.", "Missile spent. No contact."]
+    },
+    "status.mine_hunting": {
+      "priority": "status",
+      "text": ["One of our mines has a contact."]
+    },
+    "status.hostile_launch": {
+      "priority": "warning",
+      "cooldown": 5,
+      "text": ["Launch detected. {range} out."]
+    },
+    "ack.prograde": { "priority": "ack", "text": ["Prograde.", "Aligning prograde."] },
+    "ack.retrograde": { "priority": "ack", "text": ["Retrograde.", "Coming about, retrograde."] },
+    "ack.radial-out": { "priority": "ack", "text": ["Radial out."] },
+    "ack.radial-in": { "priority": "ack", "text": ["Radial in."] },
+    "ack.target": { "priority": "ack", "text": ["Nose on target."] },
+    "ack.anti-target": { "priority": "ack", "text": ["Anti-target."] },
+    "ack.target-prograde": { "priority": "ack", "text": ["Target prograde."] },
+    "ack.target-retrograde": {
+      "priority": "ack",
+      "text": ["Target retrograde. Ready to match velocity."]
+    },
+    "ack.hold": { "priority": "ack", "text": ["Holding attitude."] },
+    "ack.attitude.fail": {
+      "priority": "ack",
+      "text": ["Unable. That mode needs a target.", "Negative. No target for that mode."]
+    },
+    "ack.attitude.planar": {
+      "priority": "ack",
+      "text": ["Unable. Plane changes are locked out."]
+    },
+    "ack.throttle-full": { "priority": "ack", "text": ["Main engine, full.", "Full burn."] },
+    "ack.throttle-cut": { "priority": "ack", "text": ["Engine cut.", "Main engine off."] },
+    "ack.target-next": {
+      "priority": "ack",
+      "text": ["Tracking {target}, {range}.", "{target} designated. {range}."]
+    },
+    "ack.target-clear": { "priority": "ack", "text": ["Track released."] },
+    "ack.fire-missile": {
+      "priority": "ack",
+      "text": ["Missile away.", "Bird away. Guidance nominal."]
+    },
+    "ack.fire-missile.no_target": {
+      "priority": "ack",
+      "text": ["No target designated. Holding fire."]
+    },
+    "ack.fire-missile.fail": { "priority": "ack", "text": ["Launch inhibited. Magazine is dry."] },
+    "ack.drop-mine": {
+      "priority": "ack",
+      "text": ["Mine released. It will sleep until something hostile passes."]
+    },
+    "ack.drop-mine.fail": { "priority": "ack", "text": ["Mine rack is empty, Commander."] },
+    "ack.restart": { "priority": "ack", "text": ["Systems reset. {callsign} standing by."] }
+  }
+}

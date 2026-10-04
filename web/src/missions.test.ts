@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Attitude, dot, EntityKind, len } from './sim/bridge';
+import { Attitude, dot, EntityKind } from './sim/bridge';
 import { loadMissions, validateMissions } from './missions/load';
 import { MissionRun } from './missions/run';
 import type { MissionDef, MissionFile } from './missions/types';
@@ -145,7 +145,15 @@ describe('mission rules', () => {
       custom({
         ships: [{ tag: 'b', class: 'beacon', team: 'neutral', orbit: { pe: 80_000, lead: 100 } }],
         objectives: [
-          { id: 'r', type: 'rendezvous', label: '', target: 'b', range: 300, maxRelSpeed: 1, hold: 5 },
+          {
+            id: 'r',
+            type: 'rendezvous',
+            label: '',
+            target: 'b',
+            range: 300,
+            maxRelSpeed: 1,
+            hold: 5,
+          },
         ],
       }),
     );
@@ -185,13 +193,17 @@ describe('mission rules', () => {
   });
 
   it('survive completes after its duration', () => {
-    const run = start(custom({ objectives: [{ id: 's', type: 'survive', label: '', seconds: 5 }] }));
+    const run = start(
+      custom({ objectives: [{ id: 's', type: 'survive', label: '', seconds: 5 }] }),
+    );
     fly(run, 6);
     expect(run.outcome).toBe('won');
   });
 
   it('crashing into the planet loses', () => {
-    const run = start(custom({ objectives: [{ id: 's', type: 'survive', label: '', seconds: 1e6 }] }));
+    const run = start(
+      custom({ objectives: [{ id: 's', type: 'survive', label: '', seconds: 1e6 }] }),
+    );
     run.session.setAttitude(Attitude.Retrograde);
     fly(run, 30);
     run.session.setThrottle(1);

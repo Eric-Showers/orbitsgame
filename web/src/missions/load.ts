@@ -60,7 +60,8 @@ export function validateMissions(file: MissionFile): string[] {
 function checkOrbit(o: OrbitDef, who: string, at: (msg: string) => void): void {
   if (!(o.pe > 0)) at(`${who}: orbit pe must be a positive altitude`);
   if (o.ap !== undefined && o.ap < o.pe) at(`${who}: orbit ap is below pe`);
-  if (o.phaseDeg !== undefined && o.lead !== undefined) at(`${who}: give phaseDeg or lead, not both`);
+  if (o.phaseDeg !== undefined && o.lead !== undefined)
+    at(`${who}: give phaseDeg or lead, not both`);
 }
 
 function objectiveTags(o: ObjectiveDef): string[] {

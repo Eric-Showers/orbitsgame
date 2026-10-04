@@ -271,7 +271,9 @@ export class MissionRun {
     if (o.status !== 'active' || (d.by !== 'missile' && d.by !== 'mine')) return;
     const kind = d.by === 'missile' ? EntityKind.Missile : EntityKind.Mine;
     const left = s.munitionsLeft(s.playerId)[d.by === 'missile' ? 'missiles' : 'mines'];
-    const inFlight = s.all().some((e) => e.alive && e.kind === kind && e.team === TEAM_INDEX.player);
+    const inFlight = s
+      .all()
+      .some((e) => e.alive && e.kind === kind && e.team === TEAM_INDEX.player);
     if (left === 0 && !inFlight) this.failObjective(o, `Out of ${d.by}s`);
   }
 
@@ -293,7 +295,10 @@ export class MissionRun {
     const failed = this.objectives.find((o) => o.status === 'failed');
     let why = '';
     if (!me.alive) {
-      why = this.kills.get(me.id) === 'crash' ? 'You crashed into the planet' : 'Your vessel was destroyed';
+      why =
+        this.kills.get(me.id) === 'crash'
+          ? 'You crashed into the planet'
+          : 'Your vessel was destroyed';
     } else if (failed) {
       why = failed.detail;
     } else if (fail?.timeLimit !== undefined && s.time > fail.timeLimit) {
@@ -303,7 +308,8 @@ export class MissionRun {
     } else {
       for (const tag of fail?.protect ?? []) {
         const id = this.ids.get(tag);
-        if (id !== undefined && s.entity(id)?.alive === false) why = `${this.names.get(id)} was lost`;
+        if (id !== undefined && s.entity(id)?.alive === false)
+          why = `${this.names.get(id)} was lost`;
       }
     }
     if (why) {

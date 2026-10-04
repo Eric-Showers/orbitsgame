@@ -29,6 +29,11 @@ const COLORS = {
 
 type Focus = 'ship' | 'planet';
 
+/** Extra scene content owned elsewhere (e.g. mission zones), updated every frame. */
+export interface ViewLayer {
+  update(session: FlightSession, local: (p: Vec3) => [number, number], mpp: number): void;
+}
+
 interface Marker {
   group: THREE.Group;
   hull: THREE.Mesh;
@@ -55,6 +60,7 @@ export class FlightView {
   private vectors: THREE.LineSegments;
   private labels = new Map<string, HTMLElement>();
   private munitions = new MunitionLayer(this.scene);
+  private layers: ViewLayer[] = [];
   /** Screen pixels at the bottom covered by the console; the view centres above them. */
   private bottomInset = 0;
 
@@ -123,6 +129,17 @@ export class FlightView {
     this.focus = this.focus === 'ship' ? 'planet' : 'ship';
     if (this.focus === 'planet') this.viewHeight = Math.max(this.viewHeight, 2_000_000);
     this.resize();
+  }
+
+  /** Adds a layer that draws into this view's scene. */
+  addLayer(make: (scene: THREE.Scene) => ViewLayer): void {
+    this.layers.push(make(this.scene));
+  }
+
+  /** Drops per-entity ship markers; call when switching to a different world. */
+  reset(): void {
+    for (const m of this.markers.values()) this.scene.remove(m.group);
+    this.markers.clear();
   }
 
   /** Feeds sim events (detonations, kills) to the effects layer. */
@@ -197,6 +214,7 @@ export class FlightView {
     }
 
     this.munitions.update(session.all(), (p) => this.local(p), mpp);
+    for (const layer of this.layers) layer.update(session, (p) => this.local(p), mpp);
     this.drawVectors(me, target, mpp);
     this.updateLabels(me, target);
     this.renderer.render(this.scene, this.camera);

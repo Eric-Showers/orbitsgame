@@ -106,11 +106,7 @@ export interface SurviveObjective extends ObjectiveBase {
 }
 
 export type ObjectiveDef =
-  | OrbitObjective
-  | RendezvousObjective
-  | DestroyObjective
-  | MineZoneObjective
-  | SurviveObjective;
+  OrbitObjective | RendezvousObjective | DestroyObjective | MineZoneObjective | SurviveObjective;
 
 export interface FailDef {
   /** Mission time limit. */

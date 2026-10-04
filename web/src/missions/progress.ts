@@ -6,7 +6,11 @@ const KEY = 'orbits.missions.v1';
 export class Progress {
   private best: Record<string, number> = {};
 
-  constructor(private storage: Pick<Storage, 'getItem' | 'setItem'> | null = safeStorage()) {
+  constructor(
+    /** Gate each mission on winning the previous one; false opens them all. */
+    private lockProgression = true,
+    private storage: Pick<Storage, 'getItem' | 'setItem'> | null = safeStorage(),
+  ) {
     try {
       this.best = JSON.parse(this.storage?.getItem(KEY) ?? '{}') ?? {};
     } catch {
@@ -18,9 +22,9 @@ export class Progress {
     return this.best[id] ?? 0;
   }
 
-  /** The first mission is always open; each later one opens when the previous is won. */
+  /** The first mission is always open; with progression locked, each later one opens when the previous is won. */
   unlocked(missions: readonly MissionDef[], index: number): boolean {
-    return index === 0 || this.stars(missions[index - 1]?.id) > 0;
+    return !this.lockProgression || index === 0 || this.stars(missions[index - 1]?.id) > 0;
   }
 
   record(id: string, stars: number): void {

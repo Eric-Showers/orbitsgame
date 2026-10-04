@@ -90,8 +90,10 @@ equation, and the console shows remaining delta-v.
 
 ## Missions
 
-The game opens on the mission board (`Esc` reopens it in flight). Missions
-unlock in order and remember their best 1-3 star rating in the browser: one
+The game opens on the mission board (`Esc` reopens it in flight). All missions
+are open during development; set `"lockProgression": true` in
+`missions.json` to unlock them in order. Each remembers its best 1-3 star
+rating in the browser: one
 star for winning, one for beating the par time, one for finishing with the par
 fuel reserve.
 

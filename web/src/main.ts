@@ -2,7 +2,7 @@ import init, { Game } from './wasm-pkg/orbit_wasm.js';
 import { VesselAdvisor } from './advisor/advisor';
 import { AdvisoryChannel } from './advisor/channel';
 import { playerSnapshot } from './advisor/snapshot';
-import { loadMissions } from './missions/load';
+import { LOCK_PROGRESSION, loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
 import { MissionRun } from './missions/run';
 import { FlightView } from './render/view';
@@ -16,7 +16,7 @@ import { ControlPanel } from './ui/panel';
 async function main(): Promise<void> {
   await init();
   const missions = loadMissions();
-  const progress = new Progress();
+  const progress = new Progress(LOCK_PROGRESSION);
   let session = new FlightSession(new Game());
   /** The mission being flown, or null in free flight. */
   let run: MissionRun | null = null;

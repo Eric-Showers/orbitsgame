@@ -81,6 +81,9 @@ function objectiveRanges(o: ObjectiveDef): [string, [number, number]][] {
   return [];
 }
 
+/** Whether missions unlock in order (`lockProgression` in missions.json; default open). */
+export const LOCK_PROGRESSION = (data as MissionFile).lockProgression ?? false;
+
 /** The campaign ladder from `missions.json`, in order. Throws if the data is invalid. */
 export function loadMissions(file: MissionFile = data as MissionFile): MissionDef[] {
   const problems = validateMissions(file);

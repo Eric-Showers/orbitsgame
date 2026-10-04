@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Attitude, dot, EntityKind } from './sim/bridge';
-import { loadMissions, validateMissions } from './missions/load';
+import { LOCK_PROGRESSION, loadMissions, validateMissions } from './missions/load';
+import { Progress } from './missions/progress';
 import { MissionRun } from './missions/run';
 import type { MissionDef, MissionFile } from './missions/types';
 import { Game, initSync } from './wasm-pkg/orbit_wasm.js';
@@ -66,6 +67,17 @@ describe('mission data', () => {
     expect(problems.join('\n')).toMatch(/unknown ship tag nobody/);
     expect(problems.join('\n')).toMatch(/"after" must name an earlier objective/);
     expect(() => loadMissions({ version: 1, missions: [bad] })).toThrow(/Invalid mission data/);
+  });
+
+  it('keeps every mission open during development unless progression is locked', () => {
+    expect(LOCK_PROGRESSION).toBe(false);
+    const open = new Progress(false, null);
+    expect(MISSIONS.every((_, i) => open.unlocked(MISSIONS, i))).toBe(true);
+    const locked = new Progress(true, null);
+    expect(locked.unlocked(MISSIONS, 0)).toBe(true);
+    expect(locked.unlocked(MISSIONS, 1)).toBe(false);
+    locked.record(MISSIONS[0].id, 1);
+    expect(locked.unlocked(MISSIONS, 1)).toBe(true);
   });
 
   it('applies the player loadout from data', () => {

@@ -139,5 +139,10 @@ export interface MissionDef {
 
 export interface MissionFile {
   version: 1;
+  /**
+   * When true, each mission unlocks only after the previous one is won.
+   * Off (everything open) during development.
+   */
+  lockProgression?: boolean;
   missions: MissionDef[];
 }

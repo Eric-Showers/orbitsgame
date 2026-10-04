@@ -43,6 +43,9 @@ function loadAssist(): boolean {
   }
 }
 
+/** Phases where the ship turns or burns; warped to a modest level so they do not drag. */
+const WORK_PHASES = new Set(['align', 'burn']);
+
 /**
  * The ship AI's hands. Holds at most one running maneuver, ticks it with the
  * sim, and gives the commander confirm / cancel / abort. Manual flight orders
@@ -174,7 +177,7 @@ export class Pilot implements StepHook {
 
   warpCap(): number {
     if (!this.active) return Infinity;
-    return !this.status || this.status.coast < 2 ? MAX_WARP_UNDER_THRUST : Infinity;
+    return !this.status || this.status.coast <= 0 ? MAX_WARP_UNDER_THRUST : Infinity;
   }
 
   afterSteps(): void {
@@ -212,8 +215,12 @@ export class Pilot implements StepHook {
     }
     const levels = this.cfg.autoWarp.levels;
     let pick = 0;
-    for (let i = 0; i < levels.length; i++) {
-      if (st.coast / levels[i] >= this.cfg.autoWarp.minRealSeconds) pick = i;
+    if (st.coast > 0) {
+      for (let i = 0; i < levels.length; i++) {
+        if (st.coast / levels[i] >= this.cfg.autoWarp.minRealSeconds) pick = i;
+      }
+    } else if (WORK_PHASES.has(st.phase.split('.').pop() ?? '')) {
+      pick = Math.max(0, levels.indexOf(this.cfg.autoWarp.workLevel));
     }
     s.setWarp(pick);
     this.warpSet = s.warpIndex;

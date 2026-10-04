@@ -8,9 +8,9 @@
   },
   "defaultCallsign": "SHIP",
   "speech": {
-    "wordsPerMinute": 165,
-    "gapSeconds": 0.6,
-    "minSeconds": 1.0,
+    "wordsPerMinute": 250,
+    "gapSeconds": 0.15,
+    "minSeconds": 0.6,
     "maxQueue": 6
   },
   "priorities": {

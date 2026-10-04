@@ -1,5 +1,6 @@
 import { fillTemplate, VOICE } from '../advisor/config';
 import { PERSONAS } from '../advisor/personas';
+import type { CommanderName } from '../commander';
 import type { TtsPlayer } from './tts';
 
 /** Voice toggle and persona picker, docked under the comms log. */
@@ -12,6 +13,7 @@ export class VoiceBar {
     parent: HTMLElement,
     private tts: TtsPlayer,
     private onPersona: (id: string) => void,
+    commander?: CommanderName,
   ) {
     const bar = document.createElement('div');
     bar.className = 'voicebar';
@@ -30,6 +32,28 @@ export class VoiceBar {
       this.onPersona(this.select.value);
       if (tts.enabled) tts.say(this.sample());
     });
+    if (commander) {
+      const field = document.createElement('input');
+      field.type = 'text';
+      field.className = 'voicebar-name';
+      field.maxLength = 24;
+      field.placeholder = 'Your name';
+      field.autocomplete = 'off';
+      field.spellcheck = false;
+      field.setAttribute('aria-label', 'Your name, as the AI says it');
+      field.value = commander.custom ? commander.name : '';
+      // Typing must not reach the flight keys, and Enter commits the name.
+      field.addEventListener('keydown', (ev) => {
+        ev.stopPropagation();
+        if (ev.key === 'Enter' || ev.key === 'Escape') field.blur();
+      });
+      field.addEventListener('change', () => {
+        commander.set(field.value);
+        field.value = commander.custom ? commander.name : '';
+        if (tts.enabled) tts.say(`Aye, ${commander.name}.`);
+      });
+      bar.append(text('span', 'voicebar-label', 'NAME'), field);
+    }
     this.blurb = document.createElement('p');
     this.blurb.className = 'voicebar-blurb';
     bar.append(this.toggle, this.select, this.blurb);
@@ -56,4 +80,11 @@ export class VoiceBar {
         : 'VOICE OFF';
     this.toggle.setAttribute('aria-pressed', String(this.tts.enabled));
   }
+}
+
+function text(tag: string, cls: string, content: string): HTMLElement {
+  const e = document.createElement(tag);
+  e.className = cls;
+  e.textContent = content;
+  return e;
 }

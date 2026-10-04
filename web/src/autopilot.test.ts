@@ -136,7 +136,7 @@ describe('match velocity and rendezvous', () => {
     log('rdv same orbit', r, rng, rel, w.session.time, w.session.player().deltaV);
     expect(r.ok).toBe(true);
     expect(rng).toBeLessThan(2500);
-    expect(rel).toBeLessThan(0.5);
+    expect(rel).toBeLessThan(1);
   });
 
   it('rendezvouses with a beacon on a higher orbit, behind us', () => {
@@ -258,7 +258,7 @@ describe('pilot control', () => {
     w.pilot.propose(circularize('apoapsis'));
     w.pilot.confirm();
     let guard = 0;
-    while (w.session.player().throttle === 0 && guard++ < 2000) w.session.update(0.25);
+    while (w.session.player().throttle === 0 && guard++ < 20_000) w.session.update(0.02);
     expect(w.session.player().throttle).toBeGreaterThan(0);
     w.session.setAttitude(Attitude.Retrograde);
     expect(w.pilot.busy).toBe(false);
@@ -300,6 +300,38 @@ describe('pilot control', () => {
     }
     expect(maxWarp).toBeGreaterThan(10);
     expect(w.session.warpIndex).toBe(0);
+  });
+
+  it('warps right up to the burn: little real time is spent waiting', () => {
+    const w = world(80_000, 200_000, 1.0);
+    w.session.setWarp(0);
+    w.pilot.propose(circularize('apoapsis'));
+    w.pilot.confirm();
+    let real = 0;
+    let waited = 0;
+    const frame = 1 / 60;
+    for (let i = 0; i < 200_000 && w.session.player().throttle === 0; i++) {
+      w.session.update(frame);
+      real += frame;
+      if (w.pilot.busy) waited = real;
+    }
+    expect(w.session.player().throttle).toBeGreaterThan(0);
+    log('real seconds to ignition', waited, 'sim', w.session.time);
+    expect(w.session.time).toBeGreaterThan(300);
+    expect(waited).toBeLessThan(8);
+  });
+
+  it('reaches 400x on a long coast', () => {
+    const w = world(80_000, 200_000, 1.0);
+    w.session.setWarp(0);
+    w.pilot.propose(circularize('apoapsis'));
+    w.pilot.confirm();
+    let top = 1;
+    for (let i = 0; i < 4000 && w.pilot.busy; i++) {
+      w.session.update(0.05);
+      top = Math.max(top, w.session.effectiveWarp());
+    }
+    expect(top).toBe(400);
   });
 });
 

@@ -3,12 +3,16 @@ import { findPersona, type Persona } from '../advisor/personas';
 
 const ENABLED_KEY = 'orbits.tts';
 const PERSONA_KEY = 'orbits.voicePersona';
+/** Lines this unimportant (advise, status) are skipped while speech is backed up. */
+const BACKLOG_RANK = 3;
 
 /** The slice of `speechSynthesis` this player uses, so tests can stand in a fake. */
 export interface Synth {
   speak(u: SpeechSynthesisUtterance): void;
   cancel(): void;
   getVoices(): SpeechSynthesisVoice[];
+  /** True while lines are queued behind the one being spoken. */
+  readonly pending?: boolean;
   addEventListener?(type: 'voiceschanged', fn: () => void): void;
 }
 
@@ -107,6 +111,7 @@ export class TtsPlayer {
   private hear(ev: AdvisoryEvent): void {
     if (!this.on || !this.synth) return;
     if (ev.interrupt) this.synth.cancel();
+    else if (this.synth.pending && ev.rank >= BACKLOG_RANK) return; // the voice is behind: drop chatter, keep warnings
     this.utter(ev.text);
   }
 

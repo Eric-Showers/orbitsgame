@@ -16,6 +16,7 @@ import { FlightSession } from './sim/session';
 import { bindKeyboard, type ClientControl } from './ui/controls';
 import { CommsLog } from './ui/comms';
 import { TtsPlayer } from './ui/tts';
+import { CommanderName } from './commander';
 import { VoiceBar } from './ui/voicebar';
 import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
@@ -39,11 +40,19 @@ async function main(): Promise<void> {
   const comms = new CommsLog(document.body, voice);
   const tts = new TtsPlayer(voice);
   advisor.setPersona(tts.persona);
-  new VoiceBar(comms.box, tts, (id) => {
-    const persona = findPersona(id);
-    tts.setPersona(persona);
-    advisor.setPersona(persona);
-  });
+  const commander = new CommanderName();
+  advisor.setCommander(commander.name);
+  commander.subscribe((name) => advisor.setCommander(name));
+  new VoiceBar(
+    comms.box,
+    tts,
+    (id) => {
+      const persona = findPersona(id);
+      tts.setPersona(persona);
+      advisor.setPersona(persona);
+    },
+    commander,
+  );
   const clock = (): number => performance.now() / 1000;
   // Sound: shipboard and cockpit buses, driven by sim events, the AI's voice and the pilot.
   const mixer = new AudioMixer();

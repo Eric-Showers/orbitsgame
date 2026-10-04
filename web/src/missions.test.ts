@@ -196,19 +196,19 @@ describe('mission rules', () => {
     expect(run.reason).toMatch(/destroyed by missile, not by mine/);
   });
 
-  it('fails on the time limit and freezes the sim', () => {
+  it('has no time limit: slow play is never cut off, only unrewarded', () => {
     const run = start(
       custom({
         objectives: [{ id: 's', type: 'survive', label: '', seconds: 100 }],
-        fail: { timeLimit: 10 },
+        score: { parTime: 10, fuelReserve: 0 },
       }),
     );
-    fly(run, 20);
-    expect(run.outcome).toBe('lost');
-    expect(run.reason).toBe('Out of time');
-    const t = run.session.time;
-    run.update(1);
-    expect(run.session.time).toBe(t);
+    fly(run, 50);
+    expect(run.outcome).toBe('running');
+    fly(run, 100);
+    expect(run.outcome).toBe('won');
+    expect(run.stars()).toBe(2); // completion + fuel; par time missed
+    expect(run.wallSeconds).toBeGreaterThan(0);
   });
 
   it('survive completes after its duration', () => {

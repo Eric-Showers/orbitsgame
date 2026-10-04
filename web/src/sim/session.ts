@@ -15,7 +15,7 @@ import {
 
 /** Fixed sim timestep (design doc sec. 2.3). Never feed frame dt into the sim. */
 export const SIM_DT = 1 / 60;
-export const WARP_LEVELS = [1, 2, 4, 10, 50, 100];
+export const WARP_LEVELS = [1, 2, 4, 10, 50, 100, 200, 400];
 /** Physics warp cap while an engine is firing. */
 export const MAX_WARP_UNDER_THRUST = 4;
 /** Throttle change per real second while a throttle key is held. */

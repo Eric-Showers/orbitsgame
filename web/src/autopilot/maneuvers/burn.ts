@@ -103,9 +103,11 @@ export abstract class BurnManeuver implements Maneuver {
       const wait = n.time - dur / 2 - ctx.time;
       const aligned = headingError(ctx, n.mode) <= cfg.attitude.alignTolerance;
       this.alignedFor = aligned ? this.alignedFor + dt : 0;
-      if (wait > cfg.burn.ignitionAlignSeconds) {
-        return status('coast', 0, 'Coasting to burn', wait - cfg.burn.ignitionAlignSeconds);
-      }
+      // Coast right up to the burn; only leave time to turn if the ship is not yet pointing.
+      const slew = ctx.classStats(ctx.self.shipClass).slewRate;
+      const turn = aligned || slew <= 0 ? 0 : headingError(ctx, n.mode) / slew;
+      const lead = Math.max(cfg.burn.ignitionAlignSeconds, turn + cfg.attitude.settleSeconds + 0.5);
+      if (wait > lead) return status('coast', 0, 'Coasting to burn', wait - lead);
       if (wait > 0 || this.alignedFor < cfg.attitude.settleSeconds) {
         this.phase = 'align';
         return status('align', 0, 'Aligning');

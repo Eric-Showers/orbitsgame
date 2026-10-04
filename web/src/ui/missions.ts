@@ -105,7 +105,6 @@ export class MissionScreens {
     fact('MISSILES', l.missiles === undefined ? 'standard' : String(l.missiles));
     fact('MINES', l.mines === undefined ? 'standard' : String(l.mines));
     fact('FUEL', fmtPercent(l.fuel ?? 1));
-    fact('TIME LIMIT', m.fail?.timeLimit ? fmtDuration(m.fail.timeLimit) : 'none');
     fact('PAR', `${fmtDuration(m.score.parTime)} · ${fmtPercent(m.score.fuelReserve)} fuel left`);
     card.appendChild(facts);
 
@@ -134,6 +133,7 @@ export class MissionScreens {
       'MISSION TIME',
       `${fmtDuration(run.session.time)} (par ${fmtDuration(run.def.score.parTime)})`,
     );
+    fact('WALL CLOCK', fmtDuration(run.wallSeconds));
     fact(
       'FUEL LEFT',
       `${fmtPercent(me.fuelMax > 0 ? me.fuel / me.fuelMax : 0)} (par ${fmtPercent(run.def.score.fuelReserve)})`,
@@ -250,13 +250,13 @@ export class MissionHud {
     this.box.classList.toggle('show', run !== null);
     if (!run) return;
     const s = run.session;
-    const left = run.timeLeft();
     const ammo = s.munitionsLeft(s.playerId);
     const lines = run.objectives.map(
       (o) => `${o.status}|${o.def.label}|${o.detail}|${o.progress.toFixed(2)}`,
     );
-    const clock = left === null ? `MET ${fmtDuration(s.time)}` : `T− ${fmtDuration(left)}`;
-    const sig = [run.def.title, clock, ammo.missiles, ammo.mines, ...lines].join('#');
+    const clock = `MET ${fmtDuration(s.time)}`;
+    const wall = `REAL ${fmtDuration(run.wallSeconds)}`;
+    const sig = [run.def.title, clock, wall, ammo.missiles, ammo.mines, ...lines].join('#');
     if (sig === this.sig) return;
     this.sig = sig;
 
@@ -265,7 +265,8 @@ export class MissionHud {
     );
     const head = el('div', 'hud-head');
     head.append(
-      text('span', `hud-clock${left !== null && left < 60 ? ' urgent' : ''}`, clock),
+      text('span', 'hud-clock', clock),
+      text('span', 'hud-wall', wall),
       text('span', 'hud-ammo', `MSL ${ammo.missiles} · MINE ${ammo.mines}`),
     );
     this.box.appendChild(head);

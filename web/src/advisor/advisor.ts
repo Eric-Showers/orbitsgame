@@ -1,4 +1,5 @@
 import { len, SHIP_CLASS_NAMES, sub } from '../sim/bridge';
+import { DEFAULT_COMMANDER, addressCommander } from '../commander';
 import { fmtDistance } from '../ui/format';
 import type { AdvisoryChannel } from './channel';
 import { fillTemplate, VOICE, type VoiceConfig } from './config';
@@ -39,6 +40,7 @@ export class VesselAdvisor {
   private hullMax = 0;
   private greeted = false;
   private persona: Persona = DEFAULT_PERSONA;
+  private commander = DEFAULT_COMMANDER;
 
   constructor(
     private channel: AdvisoryChannel,
@@ -61,6 +63,11 @@ export class VesselAdvisor {
   setPersona(persona: Persona): void {
     this.persona = persona;
     this.queue.setWordsPerMinute(persona.speech.wordsPerMinute);
+  }
+
+  /** What the AI calls the player in place of "Commander". */
+  setCommander(name: string): void {
+    this.commander = name;
   }
 
   /** Feeds one snapshot; `now` is real time in seconds. Speaks if the voice is free. */
@@ -160,10 +167,10 @@ export class VesselAdvisor {
     const turn = this.rotation.get(cue.id) ?? 0;
     this.rotation.set(cue.id, turn + 1);
     const speaker = this.callsign(snap.self.shipClass);
-    const text = fillTemplate(variants[turn % variants.length], {
-      callsign: speaker,
-      ...cue.vars,
-    });
+    const text = addressCommander(
+      fillTemplate(variants[turn % variants.length], { callsign: speaker, ...cue.vars }),
+      this.commander,
+    );
     this.queue.push(
       {
         id: cue.id,

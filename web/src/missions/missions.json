@@ -102,9 +102,6 @@
           "hold": 10
         }
       ],
-      "fail": {
-        "timeLimit": 5400
-      },
       "score": {
         "parTime": 2400,
         "fuelReserve": 0.85
@@ -217,9 +214,6 @@
           "after": "front"
         }
       ],
-      "fail": {
-        "timeLimit": 9000
-      },
       "score": {
         "parTime": 5000,
         "fuelReserve": 0.7
@@ -286,9 +280,6 @@
           "after": "first"
         }
       ],
-      "fail": {
-        "timeLimit": 1800
-      },
       "score": {
         "parTime": 400,
         "fuelReserve": 0.95
@@ -393,9 +384,6 @@
           "by": "missile"
         }
       ],
-      "fail": {
-        "timeLimit": 4200
-      },
       "score": {
         "parTime": 2700,
         "fuelReserve": 0.98
@@ -457,9 +445,6 @@
           "by": "missile"
         }
       ],
-      "fail": {
-        "timeLimit": 5400
-      },
       "score": {
         "parTime": 2200,
         "fuelReserve": 0.6
@@ -529,9 +514,6 @@
           "after": "lay"
         }
       ],
-      "fail": {
-        "timeLimit": 6000
-      },
       "score": {
         "parTime": 3000,
         "fuelReserve": 0.9
@@ -604,9 +586,6 @@
           "targets": ["layer"]
         }
       ],
-      "fail": {
-        "timeLimit": 3000
-      },
       "score": {
         "parTime": 900,
         "fuelReserve": 0.9
@@ -693,9 +672,6 @@
           "seconds": 360
         }
       ],
-      "fail": {
-        "timeLimit": 900
-      },
       "score": {
         "parTime": 365,
         "fuelReserve": 0.6
@@ -790,9 +766,6 @@
           "after": "alpha"
         }
       ],
-      "fail": {
-        "timeLimit": 3600
-      },
       "score": {
         "parTime": 900,
         "fuelReserve": 0.8
@@ -896,7 +869,6 @@
         }
       ],
       "fail": {
-        "timeLimit": 3600,
         "protect": ["freighter"]
       },
       "score": {
@@ -1035,7 +1007,6 @@
         }
       ],
       "fail": {
-        "timeLimit": 4800,
         "protect": ["wing"]
       },
       "score": {

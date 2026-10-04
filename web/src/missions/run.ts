@@ -38,6 +38,8 @@ export class MissionRun {
   reason = '';
   /** Ship id for each tag, once spawned. */
   readonly ids = new Map<string, number>();
+  /** Real seconds spent flying (not paused, not after the end). */
+  wallSeconds = 0;
   private names = new Map<number, string>();
   private unspawned: ShipDef[];
   private ais: HostileAi[] = [];
@@ -97,6 +99,7 @@ export class MissionRun {
     }
     s.refresh();
     const t0 = s.time;
+    if (!s.paused) this.wallSeconds += realDt;
     s.update(realDt);
     const events = s.takeEvents();
     this.observe(events);
@@ -119,12 +122,6 @@ export class MissionRun {
       (this.session.time <= this.def.score.parTime ? 1 : 0) +
       (fuel >= this.def.score.fuelReserve ? 1 : 0)
     );
-  }
-
-  /** Seconds left before the time limit, if there is one. */
-  timeLeft(): number | null {
-    const limit = this.def.fail?.timeLimit;
-    return limit === undefined ? null : Math.max(0, limit - this.session.time);
   }
 
   private spawnDue(): void {
@@ -334,8 +331,6 @@ export class MissionRun {
           : 'Your vessel was destroyed';
     } else if (failed) {
       why = failed.detail;
-    } else if (fail?.timeLimit !== undefined && s.time > fail.timeLimit) {
-      why = 'Out of time';
     } else if (fail?.fuelOut && me.fuel <= 0) {
       why = 'Fuel exhausted';
     } else {

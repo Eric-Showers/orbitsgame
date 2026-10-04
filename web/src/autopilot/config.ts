@@ -72,7 +72,14 @@ export interface PilotConfig {
     /** A hostile must pass within this fraction of the mine's trigger range. */
     mineRangeFraction: number;
   };
-  autoWarp: { enabled: boolean; minRealSeconds: number; levels: number[] };
+  autoWarp: {
+    enabled: boolean;
+    /** A coast level is used while it still leaves at least this many real seconds. */
+    minRealSeconds: number;
+    levels: number[];
+    /** Warp while aligning or burning (the engine cap applies on top). */
+    workLevel: number;
+  };
 }
 
 export const PILOT_CONFIG = data as PilotConfig;

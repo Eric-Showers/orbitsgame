@@ -111,15 +111,13 @@ export type ObjectiveDef =
   OrbitObjective | RendezvousObjective | DestroyObjective | MineZoneObjective | SurviveObjective;
 
 export interface FailDef {
-  /** Mission time limit. */
-  timeLimit?: number;
   /** Tags of ships that must survive. */
   protect?: string[];
   /** Fail when the player's tank runs dry. */
   fuelOut?: boolean;
 }
 
-/** Stars: 1 for completing, +1 within `parTime`, +1 with at least `fuelReserve` of the tank left. */
+/** Stars: 1 for completing, +1 within `parTime` of mission time, +1 with at least `fuelReserve` of the tank left. Time never ends a mission. */
 export interface ScoreDef {
   parTime: number;
   fuelReserve: number;

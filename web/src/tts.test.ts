@@ -129,6 +129,17 @@ describe('TtsPlayer', () => {
     expect(spoken[0].pitch).toBe(findPersona('halcyon').speech.pitch);
   });
 
+  it('drops low-priority chatter while speech is backed up, keeps warnings', () => {
+    const ch = new AdvisoryChannel();
+    const { synth, spoken } = fakeSynth();
+    (synth as { pending?: boolean }).pending = true;
+    const tts = new TtsPlayer(ch, synth, utter);
+    tts.setEnabled(true);
+    ch.publish(event({ text: 'chatter', rank: 4 }));
+    ch.publish(event({ text: 'warning', rank: 1 }));
+    expect(spoken.map((u) => u.text)).toEqual(['warning']);
+  });
+
   it('cancels on interrupt lines and when switched off', () => {
     const ch = new AdvisoryChannel();
     const { synth, state } = fakeSynth();

@@ -5,7 +5,7 @@
       "id": "argus",
       "name": "Argus",
       "blurb": "Crisp and professional. The shipped wording, spoken plainly.",
-      "speech": { "rate": 1.05, "pitch": 1.0, "volume": 1, "wordsPerMinute": 175 },
+      "speech": { "rate": 1.45, "pitch": 1.0, "volume": 1, "wordsPerMinute": 255 },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Male", "Daniel", "Microsoft Ryan", "Male"]
@@ -16,7 +16,7 @@
       "id": "halcyon",
       "name": "Halcyon",
       "blurb": "Calm and warm. Talks you through trouble as if nothing could go wrong.",
-      "speech": { "rate": 0.9, "pitch": 1.1, "volume": 1, "wordsPerMinute": 150 },
+      "speech": { "rate": 1.25, "pitch": 1.1, "volume": 1, "wordsPerMinute": 220 },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Female", "Samantha", "Microsoft Sonia", "Zira", "Female"]
@@ -105,7 +105,7 @@
       "id": "marshal",
       "name": "Marshal",
       "blurb": "Gruff old naval officer. Short fuse, long memory, secretly on your side.",
-      "speech": { "rate": 0.95, "pitch": 0.7, "volume": 1, "wordsPerMinute": 160 },
+      "speech": { "rate": 1.35, "pitch": 0.7, "volume": 1, "wordsPerMinute": 235 },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Male", "Microsoft David", "Alex", "Fred", "Male"]
@@ -188,7 +188,7 @@
       "id": "quill",
       "name": "Quill",
       "blurb": "Dry wit and an unflappable tone. Treats disaster as a mild inconvenience.",
-      "speech": { "rate": 1.0, "pitch": 1.25, "volume": 1, "wordsPerMinute": 165 },
+      "speech": { "rate": 1.5, "pitch": 1.25, "volume": 1, "wordsPerMinute": 260 },
       "voice": {
         "lang": "en",
         "hints": ["Google US English", "Microsoft Aria", "Karen", "Moira", "Female"]

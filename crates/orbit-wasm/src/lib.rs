@@ -1,6 +1,7 @@
 //! Thin wasm-bindgen facade over `orbit_sim::World`. JS sends commands and
 //! reads flat `Float64Array` snapshots; it never mutates sim state directly.
 
+use orbit_sim::vessel::{MINE, MISSILE, SHIP_CLASSES};
 use orbit_sim::{elements, AttitudeMode, OrbitSpec, Planet, World};
 use wasm_bindgen::prelude::*;
 
@@ -67,6 +68,46 @@ impl Game {
     /// Sets a ship's missiles, mines and fuel (fraction of a full tank).
     pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32, fuel_fraction: f64) {
         self.world.set_loadout(id, missiles, mines, fuel_fraction);
+    }
+
+    /// Static stats of ship class `class`: dry mass, fuel mass, isp, thrust,
+    /// slew rate, hp, missiles, mines. Empty if the class is unknown.
+    pub fn class_stats(class: u8) -> Vec<f64> {
+        SHIP_CLASSES.get(class as usize).map_or_else(Vec::new, |c| {
+            vec![
+                c.dry_mass,
+                c.fuel_mass,
+                c.isp,
+                c.thrust,
+                c.slew_rate,
+                c.hp,
+                c.missiles as f64,
+                c.mines as f64,
+            ]
+        })
+    }
+
+    /// Static stats of a munition (1 = missile, 2 = mine): mass, delta-v,
+    /// accel, closing speed, blast radius, damage, arm time, trigger range,
+    /// lifetime, eject speed. Empty for other kinds.
+    pub fn munition_stats(kind: u8) -> Vec<f64> {
+        let m = match kind {
+            1 => &MISSILE,
+            2 => &MINE,
+            _ => return Vec::new(),
+        };
+        vec![
+            m.mass,
+            m.delta_v,
+            m.accel,
+            m.closing_speed,
+            m.blast_radius,
+            m.damage,
+            m.arm_time,
+            m.trigger_range,
+            m.lifetime,
+            m.eject_speed,
+        ]
     }
 
     /// Missiles and mines a ship carries: `[missiles, mines]`, empty if unknown.

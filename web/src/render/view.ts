@@ -14,6 +14,7 @@ import {
   type SpriteStyle,
   type VesselDrawState,
 } from '../sprites';
+import { CameraRig } from './camera';
 import { MunitionLayer } from './munitions';
 
 const MIN_VIEW = 300; // m across the screen height
@@ -31,8 +32,6 @@ const COLORS = {
   orbit: 0x3fd2ff,
   targetOrbit: 0xff7ce5,
 };
-
-type Focus = 'ship' | 'planet';
 
 /** Extra scene content owned elsewhere (e.g. mission zones), updated every frame. */
 export interface ViewLayer {
@@ -57,7 +56,10 @@ export class FlightView {
   private scene = new THREE.Scene();
   private camera = new THREE.OrthographicCamera();
   private viewHeight = 400_000;
-  private focus: Focus = 'ship';
+  private rig = new CameraRig();
+  private session: FlightSession | null = null;
+  private lastFrame = performance.now();
+  private focusToast = 0;
   private origin: Vec3 = { x: 0, y: 0, z: 0 };
   private planet: THREE.Group;
   // Team 1 is the enemy; team 2 (drones, beacons) is neutral, not hostile.
@@ -131,6 +133,29 @@ export class FlightView {
       },
       { passive: false },
     );
+    this.renderer.domElement.addEventListener('pointerdown', (ev) => {
+      if (ev.button !== 0 && ev.button !== 1) return;
+      const el = this.renderer.domElement;
+      el.setPointerCapture(ev.pointerId);
+      let x = ev.clientX;
+      let y = ev.clientY;
+      const move = (m: PointerEvent): void => {
+        if (this.session) {
+          const mpp = this.metersPerPixel;
+          this.rig.panBy(this.session, -(m.clientX - x) * mpp, (m.clientY - y) * mpp);
+        }
+        x = m.clientX;
+        y = m.clientY;
+      };
+      const up = (): void => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        el.removeEventListener('pointercancel', up);
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    });
     this.resize();
   }
 
@@ -139,10 +164,61 @@ export class FlightView {
     this.resize();
   }
 
+  /** Ship <-> planet, the quick two-way switch. */
   toggleFocus(): void {
-    this.focus = this.focus === 'ship' ? 'planet' : 'ship';
-    if (this.focus === 'planet') this.viewHeight = Math.max(this.viewHeight, 2_000_000);
+    const toPlanet = this.rig.focus.kind !== 'planet';
+    this.rig.set({ kind: toPlanet ? 'planet' : 'ship' });
+    if (toPlanet) this.viewHeight = Math.max(this.viewHeight, 2_000_000);
+    this.focusChanged();
+  }
+
+  /** Steps focus through ship, planet and every other ship or beacon. */
+  cycleFocus(dir: 1 | -1): void {
+    if (!this.session) return;
+    this.rig.cycle(this.session, dir);
+    this.focusChanged();
+  }
+
+  focusOnTarget(): boolean {
+    const ok = this.session !== null && this.rig.focusTarget(this.session);
+    if (ok) this.focusChanged();
+    return ok;
+  }
+
+  toggleFreeCamera(): void {
+    if (!this.session) return;
+    this.rig.toggleFree(this.session);
+    this.focusChanged();
+  }
+
+  /** Drops any radial/pan offset (and re-centres a free camera on the planet). */
+  recentre(): void {
+    if (!this.session) return;
+    this.rig.recentre(this.session);
+    this.focusChanged();
+  }
+
+  /** Held pan key: `x` right, `y` up (screen axes); null leaves that axis alone. */
+  setPan(x: number | null, y: number | null): void {
+    if (x !== null) this.rig.pan.x = x;
+    if (y !== null) this.rig.pan.y = y;
+  }
+
+  /** Back to the player's ship, e.g. when a new flight starts. */
+  resetCamera(): void {
+    this.rig.set({ kind: 'ship' });
+    this.rig.pan.x = this.rig.pan.y = 0;
+  }
+
+  private focusChanged(): void {
     this.resize();
+    if (!this.session) return;
+    const toast = this.label('camera-focus');
+    Object.assign(toast.style, { left: '50%', top: '40px', transform: 'translateX(-50%)' });
+    toast.textContent = `CAM ${this.rig.describe(this.session)}`;
+    toast.hidden = false;
+    window.clearTimeout(this.focusToast);
+    this.focusToast = window.setTimeout(() => (toast.hidden = true), 1500);
   }
 
   /** Adds a layer that draws into this view's scene. */
@@ -201,7 +277,11 @@ export class FlightView {
 
   render(session: FlightSession): void {
     const me = session.player();
-    this.origin = this.focus === 'ship' ? me.pos : { x: 0, y: 0, z: 0 };
+    const now = performance.now();
+    this.rig.step(session, (now - this.lastFrame) / 1000, this.viewHeight);
+    this.lastFrame = now;
+    this.session = session;
+    this.origin = this.rig.center(session);
     const mpp = this.metersPerPixel;
 
     const [px, py] = this.local({ x: 0, y: 0, z: 0 });

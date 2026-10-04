@@ -87,8 +87,9 @@ export class ControlPanel {
     const timeRow = el('div', 'row');
     time.appendChild(timeRow);
     this.addButtons(timeRow, 'time', client);
+    const view = module(console_, 'VIEW', 'view');
     const camRow = el('div', 'row');
-    time.appendChild(camRow);
+    view.appendChild(camRow);
     this.addButtons(camRow, 'camera', client);
 
     this.alert = el('div', 'alert');

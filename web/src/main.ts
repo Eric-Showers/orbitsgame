@@ -61,6 +61,7 @@ async function main(): Promise<void> {
     pilot.dispose();
     session.game.free();
     session = next;
+    view.resetCamera();
     pilot = attachPilot();
     advisor.reset();
     comms.clear();
@@ -79,6 +80,11 @@ async function main(): Promise<void> {
   const client: ClientControl = {
     zoomBy: (f) => view.zoomBy(f),
     toggleFocus: () => view.toggleFocus(),
+    cycleFocus: (d) => view.cycleFocus(d),
+    focusOnTarget: () => view.focusOnTarget(),
+    toggleFreeCamera: () => view.toggleFreeCamera(),
+    recentre: () => view.recentre(),
+    setPan: (x, y) => view.setPan(x, y),
     restart: () => (run ? startMission(runIndex) : freeFlight()),
     onAction: (action, ok) =>
       advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock()),

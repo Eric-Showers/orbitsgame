@@ -7,7 +7,16 @@ import { Game, initSync } from './wasm-pkg/orbit_wasm.js';
 
 initSync({ module: readFileSync(new URL('./wasm-pkg/orbit_wasm_bg.wasm', import.meta.url)) });
 
-const noClient: ClientControl = { zoomBy: () => {}, toggleFocus: () => {}, restart: () => {} };
+const noClient: ClientControl = {
+  zoomBy: () => {},
+  toggleFocus: () => {},
+  cycleFocus: () => {},
+  focusOnTarget: () => false,
+  toggleFreeCamera: () => {},
+  recentre: () => {},
+  setPan: () => {},
+  restart: () => {},
+};
 
 function step(s: FlightSession, seconds: number): SimEvent[] {
   s.game.step(Math.round(seconds / SIM_DT), SIM_DT);

@@ -1,0 +1,68 @@
+{
+  "attitude": {
+    "alignTolerance": 0.03,
+    "settleSeconds": 0.5
+  },
+  "burn": {
+    "taperSeconds": 1.0,
+    "minThrottle": 0.02,
+    "dvTolerance": 0.08,
+    "minDvToBurn": 0.25,
+    "maxBurnSeconds": 900,
+    "ignitionAlignSeconds": 2
+  },
+  "safety": {
+    "minAltitude": 30000,
+    "maxAltitude": 1500000,
+    "reserveDvFraction": 0.05,
+    "circularEcc": 0.004
+  },
+  "altitude": {
+    "tolerance": 400
+  },
+  "rendezvous": {
+    "standoff": 1000,
+    "interceptStandoff": 6000,
+    "maxEccentricity": 0.02,
+    "altitudeTolerance": 300,
+    "closeRange": 1500,
+    "rangeTolerance": 600,
+    "maxRevolutions": 8,
+    "maxAttempts": 3,
+    "finalRelSpeed": 0.3
+  },
+  "matchVelocity": {
+    "tolerance": 0.25
+  },
+  "stationKeep": {
+    "deadband": 0.6,
+    "holdRange": 4000,
+    "recaptureStandoff": 1000
+  },
+  "evade": {
+    "warnRange": 40000,
+    "burnSeconds": 6,
+    "throttle": 1,
+    "clearSeconds": 8,
+    "altitudeMargin": 15000
+  },
+  "weapons": {
+    "missileRange": 25000,
+    "missileDvMargin": 1.25,
+    "mineHorizon": 300,
+    "mineSampleSeconds": 5,
+    "mineRangeFraction": 0.8
+  },
+  "autoWarp": {
+    "enabled": true,
+    "minRealSeconds": 1.5,
+    "levels": [
+      1,
+      2,
+      4,
+      10,
+      50,
+      100
+    ]
+  }
+}

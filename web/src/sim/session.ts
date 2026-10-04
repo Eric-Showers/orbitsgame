@@ -23,6 +23,15 @@ const THROTTLE_RAMP = 0.5;
 
 export const LOW_ORBIT_ALT = 80_000;
 
+/** An observer that rides along with the sim steps (the autopilot). */
+export interface StepHook {
+  /** Most sim steps to take before `afterSteps` must run again (at least 1 is taken). */
+  maxSteps(): number;
+  afterSteps(): void;
+  /** Highest time warp the hook allows right now. */
+  warpCap(): number;
+}
+
 /**
  * One flight: the WASM world, the player's ship, and the client-side time
  * controls (pause, warp, fixed-step accumulator).
@@ -32,6 +41,10 @@ export class FlightSession {
   paused = false;
   warpIndex = 0;
   throttleRamp = 0;
+  /** Rides along with sim steps; set by the autopilot. */
+  hook: StepHook | null = null;
+  /** Called when the commander gives a flight order by hand (not via the helm). */
+  onManualInput: (() => void) | null = null;
   private acc = 0;
   private entities: EntityView[] = [];
   private pendingEvents: SimEvent[] = [];
@@ -73,7 +86,7 @@ export class FlightSession {
 
   /** Warp actually applied: requested level, capped while thrusting. */
   effectiveWarp(): number {
-    const requested = WARP_LEVELS[this.warpIndex];
+    const requested = Math.min(WARP_LEVELS[this.warpIndex], this.hook?.warpCap() ?? Infinity);
     return this.player().throttle > 0 ? Math.min(requested, MAX_WARP_UNDER_THRUST) : requested;
   }
 
@@ -82,28 +95,33 @@ export class FlightSession {
   }
 
   setThrottle(t: number): void {
+    this.onManualInput?.();
     this.game.set_throttle(this.playerId, Math.max(0, Math.min(1, t)));
     this.refresh();
   }
 
   setAttitude(mode: Attitude): boolean {
+    this.onManualInput?.();
     const ok = this.game.set_attitude(this.playerId, mode);
     this.refresh();
     return ok;
   }
 
   setRotate(input: number): void {
+    this.onManualInput?.();
     this.game.set_rotate(this.playerId, input);
     this.refresh();
   }
 
   setTarget(id: number | null): void {
+    this.onManualInput?.();
     this.game.set_target(this.playerId, id ?? -1);
     this.refresh();
   }
 
   /** Fires a missile at the current target. Returns false if none was fired. */
   fireMissile(): boolean {
+    this.onManualInput?.();
     const ok = this.game.launch_missile(this.playerId) >= 0;
     this.pendingEvents.push(...decodeEvents(this.game.take_events()));
     this.refresh();
@@ -112,6 +130,7 @@ export class FlightSession {
 
   /** Leaves a dormant mine on the current orbit. Returns false if none was dropped. */
   dropMine(): boolean {
+    this.onManualInput?.();
     const ok = this.game.drop_mine(this.playerId) >= 0;
     this.pendingEvents.push(...decodeEvents(this.game.take_events()));
     this.refresh();
@@ -137,11 +156,15 @@ export class FlightSession {
     if (this.paused) return 0;
     this.acc += Math.min(realDt, 0.25) * this.effectiveWarp();
     const steps = Math.floor(this.acc / SIM_DT);
-    if (steps > 0) {
-      this.acc -= steps * SIM_DT;
-      this.game.step(steps, SIM_DT);
+    this.acc -= steps * SIM_DT;
+    let left = steps;
+    while (left > 0) {
+      const chunk = this.hook ? Math.max(1, Math.min(left, this.hook.maxSteps())) : left;
+      this.game.step(chunk, SIM_DT);
+      left -= chunk;
       this.pendingEvents.push(...decodeEvents(this.game.take_events()));
       this.refresh();
+      this.hook?.afterSteps();
     }
     return steps;
   }

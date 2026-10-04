@@ -331,7 +331,7 @@ describe('commander layer', () => {
     let clock = 0;
     w.pilot.subscribe((ev) => {
       const cue = pilotCue(ev, w.pilot.speechVars());
-      clock += 10; // each line gets the voice to itself
+      clock += 30; // each line gets the voice to itself
       if (cue) advisor.announce(cue, playerSnapshot(w.session, []), clock);
     });
     const intent = INTENTS.find((i) => i.id === 'set-altitude')!;

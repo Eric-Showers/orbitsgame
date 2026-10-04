@@ -228,7 +228,11 @@ export class Rendezvous implements Maneuver {
     // Matched speed: check how close we got.
     const range = len(sub(this.target(ctx)!.pos, ctx.self.pos));
     const rc = ctx.cfg.rendezvous;
-    if (Math.abs(range - this.standoff) > rc.rangeTolerance && this.far(ctx) && this.attempts < rc.maxAttempts) {
+    if (
+      Math.abs(range - this.standoff) > rc.rangeTolerance &&
+      this.far(ctx) &&
+      this.attempts < rc.maxAttempts
+    ) {
       const why = this.enterPhasingOrMatch(ctx);
       return why ? failed(why) : next('Adjusting phase');
     }

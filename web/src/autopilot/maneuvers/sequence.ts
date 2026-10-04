@@ -39,7 +39,13 @@ export class Sequence implements Maneuver {
       this.index++;
       if (this.index >= n) return { ...st, progress: 1 };
       this.enter(ctx);
-      return { state: 'running', phase: 'next', progress: this.index / n, note: 'Next burn', coast: 0 };
+      return {
+        state: 'running',
+        phase: 'next',
+        progress: this.index / n,
+        note: 'Next burn',
+        coast: 0,
+      };
     }
     return { ...st, progress: (this.index + st.progress) / n };
   }

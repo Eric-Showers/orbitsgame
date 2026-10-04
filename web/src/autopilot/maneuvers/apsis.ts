@@ -60,7 +60,11 @@ export class ApsisBurn extends BurnManeuver {
     }
     if (latch) this.otherRadius = other;
     const vReq = apsisSpeed(ctx.mu, r, other);
-    return { time, mode: vReq > v ? Attitude.Prograde : Attitude.Retrograde, dv: Math.abs(vReq - v) };
+    return {
+      time,
+      mode: vReq > v ? Attitude.Prograde : Attitude.Retrograde,
+      dv: Math.abs(vReq - v),
+    };
   }
 
   protected remaining(ctx: Ctx): number {
@@ -94,7 +98,13 @@ class CircularizeBurn extends ApsisBurn {
   plan(ctx: Ctx): Plan {
     this.bind(ctx);
     if (ctx.orbit && ctx.orbit.eccentricity < ctx.cfg.safety.circularEcc / 4) {
-      return { feasible: true, nodes: [], dv: 0, eta: 0, vars: { ...costVars({ dv: 0, eta: 0 }), note: 'already circular' } };
+      return {
+        feasible: true,
+        nodes: [],
+        dv: 0,
+        eta: 0,
+        vars: { ...costVars({ dv: 0, eta: 0 }), note: 'already circular' },
+      };
     }
     return super.plan(ctx);
   }
@@ -146,9 +156,17 @@ export function changeAltitude(targetAlt: number): Maneuver {
     if (blocked) return infeasible(blocked);
     const r = R(ctx);
     const vars = { alt: fmtDistance(targetAlt) };
-    if (g.skip) return { feasible: true, nodes: [], dv: 0, eta: 0, vars: { ...costVars({ dv: 0, eta: 0 }), ...vars } };
+    if (g.skip)
+      return {
+        feasible: true,
+        nodes: [],
+        dv: 0,
+        eta: 0,
+        vars: { ...costVars({ dv: 0, eta: 0 }), ...vars },
+      };
     const o = ctx.orbit!;
-    const t1 = g.first.where === 'now' ? ctx.time : ctx.time + timeToApsis(o, g.first.where as Apsis);
+    const t1 =
+      g.first.where === 'now' ? ctx.time : ctx.time + timeToApsis(o, g.first.where as Apsis);
     const a = o.semiMajorAxis;
     const vHere = Math.sqrt(ctx.mu * (2 / g.first.rBurn - 1 / a));
     const vTransfer1 = apsisSpeed(ctx.mu, g.first.rBurn, r);
@@ -186,7 +204,9 @@ export function changeAltitude(targetAlt: number): Maneuver {
         // After burn 1 the orbit's far side is at R; circularize there.
         const o = ctx.orbit;
         const at: Apsis =
-          o && Math.abs(o.apoapsis - R(ctx)) < Math.abs(o.periapsis - R(ctx)) ? 'apoapsis' : 'periapsis';
+          o && Math.abs(o.apoapsis - R(ctx)) < Math.abs(o.periapsis - R(ctx))
+            ? 'apoapsis'
+            : 'periapsis';
         return new ApsisBurn('altitude.2', 'Circularize', at, 'circular');
       },
     ],

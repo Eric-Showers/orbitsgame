@@ -28,7 +28,11 @@ export const wrapTau = (a: number): number => ((a % TAU) + TAU) % TAU;
 export const angleOf = (p: Vec3): number => Math.atan2(p.y, p.x);
 
 const stumpffC = (z: number): number =>
-  z > 1e-8 ? (1 - Math.cos(Math.sqrt(z))) / z : z < -1e-8 ? (Math.cosh(Math.sqrt(-z)) - 1) / -z : 0.5;
+  z > 1e-8
+    ? (1 - Math.cos(Math.sqrt(z))) / z
+    : z < -1e-8
+      ? (Math.cosh(Math.sqrt(-z)) - 1) / -z
+      : 0.5;
 const stumpffS = (z: number): number => {
   if (z > 1e-8) {
     const s = Math.sqrt(z);
@@ -42,12 +46,7 @@ const stumpffS = (z: number): number => {
 };
 
 /** Coasts a state `dt` seconds (either direction) along its Kepler orbit. */
-export function propagate(
-  mu: number,
-  pos: Vec3,
-  vel: Vec3,
-  dt: number,
-): { pos: Vec3; vel: Vec3 } {
+export function propagate(mu: number, pos: Vec3, vel: Vec3, dt: number): { pos: Vec3; vel: Vec3 } {
   if (dt === 0) return { pos, vel };
   const r0 = Math.hypot(pos.x, pos.y, pos.z);
   const v0 = Math.hypot(vel.x, vel.y, vel.z);
@@ -62,8 +61,7 @@ export function propagate(
     const S = stumpffS(z);
     const F =
       ((r0 * vr0) / sm) * chi * chi * C + (1 - alpha * r0) * chi ** 3 * S + r0 * chi - sm * dt;
-    const dF =
-      ((r0 * vr0) / sm) * chi * (1 - z * S) + (1 - alpha * r0) * chi * chi * C + r0;
+    const dF = ((r0 * vr0) / sm) * chi * (1 - z * S) + (1 - alpha * r0) * chi * chi * C + r0;
     const step = F / dF;
     chi -= step;
     if (Math.abs(step) < 1e-9 * Math.max(1, Math.abs(chi))) break;
@@ -84,7 +82,8 @@ export function propagate(
 export function timeToTrueAnomaly(o: OrbitView, target: number): number {
   const e = o.eccentricity;
   const mean = (nu: number): number => {
-    const E = 2 * Math.atan2(Math.sqrt(1 - e) * Math.sin(nu / 2), Math.sqrt(1 + e) * Math.cos(nu / 2));
+    const E =
+      2 * Math.atan2(Math.sqrt(1 - e) * Math.sin(nu / 2), Math.sqrt(1 + e) * Math.cos(nu / 2));
     return E - e * Math.sin(E);
   };
   const dM = wrapTau(mean(target) - mean(o.trueAnomaly));
@@ -106,8 +105,7 @@ export function apsisSpeed(mu: number, r: number, other: number): number {
 export const periodOf = (mu: number, a: number): number => TAU * Math.sqrt((a * a * a) / mu);
 
 /** Semi-major axis of the orbit with period `t`. */
-export const semiMajorFor = (mu: number, t: number): number =>
-  Math.cbrt((mu * (t / TAU) ** 2));
+export const semiMajorFor = (mu: number, t: number): number => Math.cbrt(mu * (t / TAU) ** 2);
 
 /** Smallest separation of two coasting bodies over `horizon` seconds, sampled every `step`. */
 export function closestApproach(

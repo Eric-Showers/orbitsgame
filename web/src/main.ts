@@ -1,5 +1,7 @@
 import init, { Game } from './wasm-pkg/orbit_wasm.js';
 import { VesselAdvisor } from './advisor/advisor';
+import { Pilot } from './autopilot/pilot';
+import { pilotCue } from './autopilot/speech';
 import { AdvisoryChannel } from './advisor/channel';
 import { playerSnapshot } from './advisor/snapshot';
 import { LOCK_PROGRESSION, loadMissions } from './missions/load';
@@ -12,6 +14,7 @@ import { bindKeyboard, type ClientControl } from './ui/controls';
 import { CommsLog } from './ui/comms';
 import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
+import { PilotPanel } from './ui/pilot';
 
 async function main(): Promise<void> {
   await init();
@@ -30,10 +33,25 @@ async function main(): Promise<void> {
   const comms = new CommsLog(document.body, voice);
   const clock = (): number => performance.now() / 1000;
 
+  // Ship AI hands: flies confirmed maneuvers and speaks through the same advisor.
+  let unlistenPilot = (): void => {};
+  const attachPilot = (): Pilot => {
+    const p = new Pilot(session);
+    unlistenPilot = p.subscribe((ev) => {
+      const cue = pilotCue(ev, p.speechVars());
+      if (cue) advisor.announce(cue, playerSnapshot(session, []), clock());
+    });
+    return p;
+  };
+  let pilot = attachPilot();
+
   /** Every new flight (mission, retry or free flight) starts with a quiet advisor. */
   const switchTo = (next: FlightSession): void => {
+    unlistenPilot();
+    pilot.dispose();
     session.game.free();
     session = next;
+    pilot = attachPilot();
     advisor.reset();
     comms.clear();
   };
@@ -63,6 +81,11 @@ async function main(): Promise<void> {
   });
   bindKeyboard(() => session, client);
   const consoleEl = document.querySelector<HTMLElement>('.console');
+  const pilotPanel = new PilotPanel(
+    consoleEl ?? document.body,
+    () => pilot,
+    () => session,
+  );
   screens.showBoard();
 
   let last = performance.now();
@@ -89,6 +112,7 @@ async function main(): Promise<void> {
     view.setBottomInset(consoleEl?.offsetHeight ?? 0);
     view.render(session);
     panel.update();
+    pilotPanel.update();
     hud.update(run);
     requestAnimationFrame(frame);
   };

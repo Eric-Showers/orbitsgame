@@ -14,11 +14,27 @@
     "maxQueue": 6
   },
   "priorities": {
-    "critical": { "rank": 0, "ttl": 10, "interrupt": true },
-    "warning": { "rank": 1, "ttl": 8 },
-    "ack": { "rank": 2, "ttl": 4 },
-    "advise": { "rank": 3, "ttl": 6 },
-    "status": { "rank": 4, "ttl": 6 }
+    "critical": {
+      "rank": 0,
+      "ttl": 10,
+      "interrupt": true
+    },
+    "warning": {
+      "rank": 1,
+      "ttl": 8
+    },
+    "ack": {
+      "rank": 2,
+      "ttl": 4
+    },
+    "advise": {
+      "rank": 3,
+      "ttl": 6
+    },
+    "status": {
+      "rank": 4,
+      "ttl": 6
+    }
   },
   "thresholds": {
     "fuelLowFraction": 0.25,
@@ -146,18 +162,42 @@
       "cooldown": 5,
       "text": ["Launch detected. {range} out."]
     },
-    "ack.prograde": { "priority": "ack", "text": ["Prograde.", "Aligning prograde."] },
-    "ack.retrograde": { "priority": "ack", "text": ["Retrograde.", "Coming about, retrograde."] },
-    "ack.radial-out": { "priority": "ack", "text": ["Radial out."] },
-    "ack.radial-in": { "priority": "ack", "text": ["Radial in."] },
-    "ack.target": { "priority": "ack", "text": ["Nose on target."] },
-    "ack.anti-target": { "priority": "ack", "text": ["Anti-target."] },
-    "ack.target-prograde": { "priority": "ack", "text": ["Target prograde."] },
+    "ack.prograde": {
+      "priority": "ack",
+      "text": ["Prograde.", "Aligning prograde."]
+    },
+    "ack.retrograde": {
+      "priority": "ack",
+      "text": ["Retrograde.", "Coming about, retrograde."]
+    },
+    "ack.radial-out": {
+      "priority": "ack",
+      "text": ["Radial out."]
+    },
+    "ack.radial-in": {
+      "priority": "ack",
+      "text": ["Radial in."]
+    },
+    "ack.target": {
+      "priority": "ack",
+      "text": ["Nose on target."]
+    },
+    "ack.anti-target": {
+      "priority": "ack",
+      "text": ["Anti-target."]
+    },
+    "ack.target-prograde": {
+      "priority": "ack",
+      "text": ["Target prograde."]
+    },
     "ack.target-retrograde": {
       "priority": "ack",
       "text": ["Target retrograde. Ready to match velocity."]
     },
-    "ack.hold": { "priority": "ack", "text": ["Holding attitude."] },
+    "ack.hold": {
+      "priority": "ack",
+      "text": ["Holding attitude."]
+    },
     "ack.attitude.fail": {
       "priority": "ack",
       "text": ["Unable. That mode needs a target.", "Negative. No target for that mode."]
@@ -166,13 +206,22 @@
       "priority": "ack",
       "text": ["Unable. Plane changes are locked out."]
     },
-    "ack.throttle-full": { "priority": "ack", "text": ["Main engine, full.", "Full burn."] },
-    "ack.throttle-cut": { "priority": "ack", "text": ["Engine cut.", "Main engine off."] },
+    "ack.throttle-full": {
+      "priority": "ack",
+      "text": ["Main engine, full.", "Full burn."]
+    },
+    "ack.throttle-cut": {
+      "priority": "ack",
+      "text": ["Engine cut.", "Main engine off."]
+    },
     "ack.target-next": {
       "priority": "ack",
       "text": ["Tracking {target}, {range}.", "{target} designated. {range}."]
     },
-    "ack.target-clear": { "priority": "ack", "text": ["Track released."] },
+    "ack.target-clear": {
+      "priority": "ack",
+      "text": ["Track released."]
+    },
     "ack.fire-missile": {
       "priority": "ack",
       "text": ["Missile away.", "Bird away. Guidance nominal."]
@@ -181,12 +230,151 @@
       "priority": "ack",
       "text": ["No target designated. Holding fire."]
     },
-    "ack.fire-missile.fail": { "priority": "ack", "text": ["Launch inhibited. Magazine is dry."] },
+    "ack.fire-missile.fail": {
+      "priority": "ack",
+      "text": ["Launch inhibited. Magazine is dry."]
+    },
     "ack.drop-mine": {
       "priority": "ack",
       "text": ["Mine released. It will sleep until something hostile passes."]
     },
-    "ack.drop-mine.fail": { "priority": "ack", "text": ["Mine rack is empty, Commander."] },
-    "ack.restart": { "priority": "ack", "text": ["Systems reset. {callsign} standing by."] }
+    "ack.drop-mine.fail": {
+      "priority": "ack",
+      "text": ["Mine rack is empty, Commander."]
+    },
+    "ack.restart": {
+      "priority": "ack",
+      "text": ["Systems reset. {callsign} standing by."]
+    },
+    "ap.propose": {
+      "priority": "ack",
+      "text": ["{label}. {dv} of delta-v, about {eta}. Confirm to execute, or cancel."]
+    },
+    "ap.propose.circularize": {
+      "priority": "ack",
+      "text": [
+        "I will round off our orbit at the safest high point. {dv} of delta-v, about {eta}. Confirm?"
+      ]
+    },
+    "ap.propose.altitude": {
+      "priority": "ack",
+      "text": [
+        "Two burns to a {alt} circular orbit: one to start the climb or drop, one to settle. {dv} in all, about {eta}. Confirm?"
+      ]
+    },
+    "ap.propose.rendezvous": {
+      "priority": "ack",
+      "text": [
+        "Target is {range} away. I will line up altitudes, adjust our orbital timing, and arrive {standoff} off its side. {dv} of delta-v, about {eta}. Confirm?"
+      ]
+    },
+    "ap.propose.intercept": {
+      "priority": "ack",
+      "text": [
+        "Closing to firing range, about {standoff} behind the target at matched speed. {dv} of delta-v, about {eta}. Confirm?"
+      ]
+    },
+    "ap.propose.match-velocity": {
+      "priority": "ack",
+      "text": [
+        "I will burn against our relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"
+      ]
+    },
+    "ap.propose.station-keep": {
+      "priority": "ack",
+      "text": [
+        "I will hold station beside the target and cancel any drift, closing in if it strays past {hold}. Confirm?"
+      ]
+    },
+    "ap.propose.evade": {
+      "priority": "ack",
+      "text": ["{count} inbound. I will burn across their line of sight. Confirm, Commander."]
+    },
+    "ap.propose.launch-missile": {
+      "priority": "ack",
+      "text": [
+        "Target {range} out, closing at {relv}. Firing solution is good, flight time about {eta}. Confirm to fire?"
+      ]
+    },
+    "ap.propose.drop-mine": {
+      "priority": "ack",
+      "text": ["A hostile will cross this orbit, {range} at its closest. Confirm to lay the mine?"]
+    },
+    "ap.refused": {
+      "priority": "warning",
+      "text": ["I can't do that. {reason}"]
+    },
+    "ap.cancelled": {
+      "priority": "ack",
+      "text": ["Standing by."]
+    },
+    "ap.start": {
+      "priority": "ack",
+      "text": ["Executing. {label}."]
+    },
+    "ap.phase.coast": {
+      "priority": "ack",
+      "text": ["Coasting to the burn point."]
+    },
+    "ap.phase.burn": {
+      "priority": "ack",
+      "text": ["Ignition."]
+    },
+    "ap.done": {
+      "priority": "ack",
+      "text": ["{label} complete."]
+    },
+    "ap.done.circularize": {
+      "priority": "ack",
+      "text": ["Orbit is round, {pe} by {ap}."]
+    },
+    "ap.done.altitude": {
+      "priority": "ack",
+      "text": ["On station. Orbit is {pe} by {ap}."]
+    },
+    "ap.done.rendezvous": {
+      "priority": "ack",
+      "text": ["Rendezvous complete. {range} off the target, speeds matched."]
+    },
+    "ap.done.intercept": {
+      "priority": "ack",
+      "text": ["In position, {range} off the target. Firing solution is yours."]
+    },
+    "ap.done.match-velocity": {
+      "priority": "ack",
+      "text": ["Velocities matched."]
+    },
+    "ap.done.launch-missile": {
+      "priority": "ack",
+      "text": ["Missile away."]
+    },
+    "ap.done.drop-mine": {
+      "priority": "ack",
+      "text": ["Mine laid."]
+    },
+    "ap.done.evade": {
+      "priority": "ack",
+      "text": ["Clear. Recommend recircularizing when convenient."]
+    },
+    "ap.failed": {
+      "priority": "warning",
+      "text": ["{label} failed. {reason}"]
+    },
+    "ap.aborted.commander": {
+      "priority": "ack",
+      "text": ["Aborted. Engine cut."]
+    },
+    "ap.aborted.override": {
+      "priority": "ack",
+      "text": ["You have the helm, Commander. Standing down."]
+    },
+    "ap.assist.on": {
+      "priority": "ack",
+      "text": ["Assist online. Tell me where to go."]
+    },
+    "ap.assist.off": {
+      "priority": "ack",
+      "text": ["Assist off. Manual control only."]
+    }
   }
 }

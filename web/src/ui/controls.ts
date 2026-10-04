@@ -321,6 +321,7 @@ function dispatch(
 /** Wires keyboard events to actions. Returns a function that removes the listeners. */
 export function bindKeyboard(session: () => FlightSession, client: ClientControl): () => void {
   const down = (ev: KeyboardEvent): void => {
+    if (ev.target instanceof HTMLInputElement) return; // typing in a field
     const action = actionForKey(ev.code);
     if (!action) return;
     ev.preventDefault();
@@ -328,6 +329,7 @@ export function bindKeyboard(session: () => FlightSession, client: ClientControl
     applyAction(session(), client, action, true);
   };
   const up = (ev: KeyboardEvent): void => {
+    if (ev.target instanceof HTMLInputElement) return;
     const action = actionForKey(ev.code);
     if (action?.hold) applyAction(session(), client, action, false);
   };

@@ -1,0 +1,104 @@
+/* ARGUS pilot module in the flight console. Uses the console tokens from panel.css. */
+
+.module.pilot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 260px;
+  max-width: 340px;
+}
+
+.pilot-toggle {
+  width: 100%;
+}
+
+.pilot-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pilot-body.off .pilot-row,
+.pilot-body.off .pilot-card {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.pilot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.pilot-intent {
+  flex: 1 1 auto;
+  padding: 4px 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.pilot-alt {
+  width: 58px;
+  padding: 2px 4px;
+  font: 12px var(--font-ui);
+  color: var(--c-text);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--c-edge);
+}
+
+.pilot-card {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--c-glow);
+  background: rgba(63, 210, 255, 0.07);
+}
+
+.pilot-card.shown {
+  display: flex;
+}
+
+.pilot-title {
+  font: 600 10px/1 var(--font-title);
+  letter-spacing: 0.14em;
+  color: var(--c-glow);
+}
+
+.pilot-facts {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--c-text);
+}
+
+.pilot-track {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--c-edge);
+}
+
+.pilot-fill {
+  height: 100%;
+  width: 0;
+  background: var(--c-glow);
+  transition: width 0.2s linear;
+}
+
+.pilot-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pilot-actions .ctl {
+  flex: 1;
+}
+
+.pilot-go {
+  border-color: var(--c-green);
+  color: var(--c-green);
+}
+
+.pilot-stop {
+  border-color: var(--c-red);
+  color: var(--c-red);
+}

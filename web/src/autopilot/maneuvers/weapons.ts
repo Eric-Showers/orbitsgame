@@ -20,7 +20,8 @@ export function missileCheck(ctx: Ctx, targetId: number): InterceptCheck {
   const t = ctx.entity(targetId);
   const w = ctx.cfg.weapons;
   const base = { range: 0, relSpeed: 0, closing: 0, need: 0 };
-  if (!t?.alive || t.kind !== EntityKind.Ship) return { ...base, ok: false, reason: 'No live target.' };
+  if (!t?.alive || t.kind !== EntityKind.Ship)
+    return { ...base, ok: false, reason: 'No live target.' };
   if (t.team === me.team) return { ...base, ok: false, reason: 'That is a friendly.' };
   const rel = sub(t.pos, me.pos);
   const relV = sub(t.vel, me.vel);
@@ -30,10 +31,18 @@ export function missileCheck(ctx: Ctx, targetId: number): InterceptCheck {
   const need = (ctx.missile.closingSpeed + relSpeed) * w.missileDvMargin;
   const out = { range, relSpeed, closing, need };
   if (range > w.missileRange) {
-    return { ...out, ok: false, reason: `Target is ${fmtDistance(range)} out. Missiles are cleared inside ${fmtDistance(w.missileRange)}.` };
+    return {
+      ...out,
+      ok: false,
+      reason: `Target is ${fmtDistance(range)} out. Missiles are cleared inside ${fmtDistance(w.missileRange)}.`,
+    };
   }
   if (need > ctx.missile.deltaV) {
-    return { ...out, ok: false, reason: `Relative speed ${fmtSpeed(relSpeed)} is too high for the missile's fuel. Match velocity first.` };
+    return {
+      ...out,
+      ok: false,
+      reason: `Relative speed ${fmtSpeed(relSpeed)} is too high for the missile's fuel. Match velocity first.`,
+    };
   }
   if (range / ctx.missile.closingSpeed > ctx.missile.lifetime) {
     return { ...out, ok: false, reason: 'The missile would expire before it arrived.' };
@@ -59,7 +68,11 @@ export class LaunchMissile implements Maneuver {
       nodes: [],
       dv: 0,
       eta,
-      vars: { range: fmtDistance(c.range), relv: fmtSpeed(c.relSpeed), eta: `${Math.round(eta)} s` },
+      vars: {
+        range: fmtDistance(c.range),
+        relv: fmtSpeed(c.relSpeed),
+        eta: `${Math.round(eta)} s`,
+      },
     };
   }
 
@@ -76,7 +89,12 @@ export class LaunchMissile implements Maneuver {
 }
 
 /** Mines wake for hostiles passing close to where they are laid. Looks ahead for one. */
-export function mineCheck(ctx: Ctx): { ok: boolean; reason: string; who?: number; distance: number } {
+export function mineCheck(ctx: Ctx): {
+  ok: boolean;
+  reason: string;
+  who?: number;
+  distance: number;
+} {
   const me = ctx.self;
   const w = ctx.cfg.weapons;
   const reach = ctx.mine.triggerRange * w.mineRangeFraction;

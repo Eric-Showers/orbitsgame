@@ -9,14 +9,7 @@ import {
   type Plan,
   type Status,
 } from '../types';
-import {
-  burnSeconds,
-  cannotFly,
-  costVars,
-  desiredHeading,
-  headingError,
-  usableDv,
-} from './common';
+import { burnSeconds, cannotFly, costVars, desiredHeading, headingError, usableDv } from './common';
 
 /** Where, when and in which direction a burn happens, decided at plan/start time. */
 export interface BurnSolution {

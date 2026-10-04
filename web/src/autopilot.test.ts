@@ -1,5 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { VesselAdvisor } from './advisor/advisor';
+import { AdvisoryChannel, type AdvisoryEvent } from './advisor/channel';
+import { playerSnapshot } from './advisor/snapshot';
+import { VOICE } from './advisor/config';
+import { INTENTS, buildIntent } from './autopilot/intents';
+import { pilotCue } from './autopilot/speech';
 import { Pilot, type PilotEvent } from './autopilot/pilot';
 import type { Maneuver } from './autopilot/types';
 import { circularize, changeAltitude } from './autopilot/maneuvers/apsis';
@@ -99,11 +105,13 @@ describe('change altitude', () => {
 });
 
 describe('match velocity and rendezvous', () => {
-  const beaconAhead = (meters: number, altitude = 80_000) => (g: Game, id: number) => {
-    const r = g.planet_radius() + 80_000;
-    const b = g.spawn_ship(BEACON, 2, altitude, altitude, 0, meters / r);
-    g.set_target(id, b);
-  };
+  const beaconAhead =
+    (meters: number, altitude = 80_000) =>
+    (g: Game, id: number) => {
+      const r = g.planet_radius() + 80_000;
+      const b = g.spawn_ship(BEACON, 2, altitude, altitude, 0, meters / r);
+      g.set_target(id, b);
+    };
 
   it('kills relative velocity to a drone on another orbit', () => {
     const w = world(80_000, 80_000, 0, (g, id) => {
@@ -167,11 +175,13 @@ describe('orient', () => {
 });
 
 describe('weapons scripts', () => {
-  const hostile = (ahead: number, lo = 80_000, hi = 80_000) => (g: Game, id: number) => {
-    const r = g.planet_radius() + 80_000;
-    const d = g.spawn_ship(DRONE, 1, lo, hi, 0, ahead / r);
-    g.set_target(id, d);
-  };
+  const hostile =
+    (ahead: number, lo = 80_000, hi = 80_000) =>
+    (g: Game, id: number) => {
+      const r = g.planet_radius() + 80_000;
+      const d = g.spawn_ship(DRONE, 1, lo, hi, 0, ahead / r);
+      g.set_target(id, d);
+    };
 
   it('fires a missile only when the intercept check passes', () => {
     const near = world(80_000, 80_000, 0, hostile(15_000));
@@ -231,7 +241,12 @@ describe('evade', () => {
     const dodge = world(80_000, 80_000, 0, shootAtUs);
     fly(dodge, new Evade(), 120);
     const hp = dodge.session.player().hp;
-    log('evade', { hitIdle, hp, alive: dodge.session.player().alive, idleHp: idle.session.player().hp });
+    log('evade', {
+      hitIdle,
+      hp,
+      alive: dodge.session.player().alive,
+      idleHp: idle.session.player().hp,
+    });
     expect(hitIdle).toBe(true);
     expect(dodge.session.player().alive && hp).toBe(100);
   });
@@ -285,5 +300,59 @@ describe('pilot control', () => {
     }
     expect(maxWarp).toBeGreaterThan(10);
     expect(w.session.warpIndex).toBe(0);
+  });
+});
+
+describe('commander layer', () => {
+  it('has a proposal and a completion line for every intent', () => {
+    const w = world(80_000, 80_000);
+    for (const intent of INTENTS) {
+      const m = buildIntent(intent, { target: 99, altitudeKm: 120 });
+      expect(typeof m).not.toBe('string');
+      if (typeof m === 'string') continue;
+      expect(VOICE.lines[`ap.propose.${m.kind}`] ?? VOICE.lines['ap.propose']).toBeDefined();
+      expect(VOICE.lines[`ap.done.${m.kind}`] ?? VOICE.lines['ap.done']).toBeDefined();
+    }
+    void w;
+  });
+
+  it('asks for a target instead of building a target intent without one', () => {
+    for (const intent of INTENTS.filter((i) => i.needs === 'target')) {
+      expect(typeof buildIntent(intent, { target: null, altitudeKm: 120 })).toBe('string');
+    }
+  });
+
+  it('ARGUS explains, confirms and reports a Hohmann in full sentences with no blanks', () => {
+    const w = world(80_000, 80_000);
+    const channel = new AdvisoryChannel();
+    const spoken: AdvisoryEvent[] = [];
+    channel.subscribe((e) => spoken.push(e));
+    const advisor = new VesselAdvisor(channel);
+    let clock = 0;
+    w.pilot.subscribe((ev) => {
+      const cue = pilotCue(ev, w.pilot.speechVars());
+      clock += 10; // each line gets the voice to itself
+      if (cue) advisor.announce(cue, playerSnapshot(w.session, []), clock);
+    });
+    const intent = INTENTS.find((i) => i.id === 'set-altitude')!;
+    const m = buildIntent(intent, { target: null, altitudeKm: 140 }) as Maneuver;
+    expect(fly(w, m).ok).toBe(true);
+    const ids = spoken.map((e) => e.id);
+    log(spoken.map((e) => e.text));
+    expect(ids).toContain('ap.propose.altitude');
+    expect(ids).toContain('ap.start');
+    expect(ids).toContain('ap.done.altitude');
+    for (const e of spoken) expect(e.text).not.toMatch(/[{}]/);
+    expect(spoken.find((e) => e.id === 'ap.propose.altitude')!.text).toMatch(/140\.0 km/);
+  });
+
+  it('refuses out loud when assist is off', () => {
+    const w = world(80_000, 80_000);
+    w.pilot.setAssist(false);
+    const refused: PilotEvent[] = [];
+    w.pilot.subscribe((e) => refused.push(e));
+    w.pilot.propose(circularize());
+    expect(refused.some((e) => e.kind === 'refused')).toBe(true);
+    w.pilot.setAssist(true);
   });
 });

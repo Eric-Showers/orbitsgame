@@ -42,4 +42,3 @@ export class MatchVelocity extends BurnManeuver {
     return relSpeed(ctx, this.targetId) ?? 0;
   }
 }
-

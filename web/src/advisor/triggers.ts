@@ -42,6 +42,8 @@ export interface Condition {
 /** A one-shot line: something just happened. */
 export interface Cue {
   id: string;
+  /** Line to use when `id` has none in the voice file. */
+  fallback?: string;
   vars?: Record<string, string>;
 }
 

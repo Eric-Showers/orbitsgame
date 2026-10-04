@@ -42,7 +42,8 @@ export class StationKeep implements Maneuver {
     const cfg = ctx.cfg.stationKeep;
     if (this.fix) {
       const st = this.fix.execute(ctx);
-      if (st.state === 'running') return { ...st, progress: 0, note: `${this.fixLabel}: ${st.note}` };
+      if (st.state === 'running')
+        return { ...st, progress: 0, note: `${this.fixLabel}: ${st.note}` };
       this.fix = null;
       if (st.state === 'failed') return failed(st.reason ?? 'Station-keeping failed.');
     }

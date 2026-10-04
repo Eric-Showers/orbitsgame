@@ -1,5 +1,5 @@
 import { Attitude, len, sub, type EntityView, type Vec3 } from '../../sim/bridge';
-import { fmtDistance, fmtDuration, fmtSpeed } from '../../ui/format';
+import { fmtDistance, fmtDuration, fmtSpan, fmtSpeed } from '../../ui/format';
 import { angleBetween, scale, unit } from '../orbitmath';
 import type { Ctx, Plan } from '../types';
 
@@ -67,7 +67,7 @@ export function cannotFly(ctx: Ctx): string | null {
 }
 
 export function costVars(plan: Pick<Plan, 'dv' | 'eta'>): Record<string, string> {
-  return { dv: fmtSpeed(plan.dv), eta: fmtDuration(plan.eta) };
+  return { dv: fmtSpeed(plan.dv), eta: fmtSpan(plan.eta) };
 }
 
 export { fmtDistance, fmtDuration, fmtSpeed };

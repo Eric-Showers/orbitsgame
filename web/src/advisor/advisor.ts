@@ -120,6 +120,13 @@ export class VesselAdvisor {
     this.flush(now);
   }
 
+  /** Speaks a line on the commander-assist channel (the pilot's proposals and progress). */
+  announce(cue: Cue, snap: VesselSnapshot, now: number): void {
+    if (!snap.self.alive) return;
+    this.say(cue, snap, now);
+    this.flush(now);
+  }
+
   /** Releases queued speech when the voice is free. Call every frame. */
   flush(now: number): void {
     for (let ev = this.queue.next(now); ev; ev = this.queue.next(now)) this.channel.publish(ev);
@@ -134,7 +141,9 @@ export class VesselAdvisor {
     this.say(cue, snap, now);
   }
 
-  private say(cue: Cue, snap: VesselSnapshot, now: number): void {
+  private say(requested: Cue, snap: VesselSnapshot, now: number): void {
+    let cue = requested;
+    if (!this.cfg.lines[cue.id] && cue.fallback) cue = { ...cue, id: cue.fallback };
     const spec = this.cfg.lines[cue.id];
     if (!spec || spec.text.length === 0) return;
     const turn = this.rotation.get(cue.id) ?? 0;

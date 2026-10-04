@@ -3,11 +3,20 @@ import { EntityKind, len, sub } from '../sim/bridge';
 import { MAX_WARP_UNDER_THRUST, SIM_DT, type FlightSession, type StepHook } from '../sim/session';
 import { fmtDistance, fmtDuration } from '../ui/format';
 import { PILOT_CONFIG, type PilotConfig } from './config';
-import { infeasible, type ClassStats, type Ctx, type Helm, type Maneuver, type MunitionStats, type Plan, type Status } from './types';
+import {
+  infeasible,
+  type ClassStats,
+  type Ctx,
+  type Helm,
+  type Maneuver,
+  type MunitionStats,
+  type Plan,
+  type Status,
+} from './types';
 
 export type PilotEvent =
   | { kind: 'proposed'; maneuver: Maneuver; plan: Plan }
-  | { kind: 'refused'; maneuver: Maneuver; reason: string }
+  | { kind: 'refused'; label: string; reason: string }
   | { kind: 'cancelled'; maneuver: Maneuver }
   | { kind: 'started'; maneuver: Maneuver }
   | { kind: 'phase'; maneuver: Maneuver; phase: string }
@@ -104,12 +113,17 @@ export class Pilot implements StepHook {
     const plan = this.assist ? maneuver.plan(this.ctx()) : infeasible('AI assist is switched off.');
     this.proposal = null;
     if (!plan.feasible) {
-      this.emit({ kind: 'refused', maneuver, reason: plan.reason ?? 'That is not possible right now.' });
+      this.refuse(maneuver.label, plan.reason ?? 'That is not possible right now.');
       return plan;
     }
     this.proposal = { maneuver, plan };
     this.emit({ kind: 'proposed', maneuver, plan });
     return plan;
+  }
+
+  /** Tells the commander ARGUS cannot do something (also used before a plan exists). */
+  refuse(label: string, reason: string): void {
+    this.emit({ kind: 'refused', label, reason });
   }
 
   cancel(): void {
@@ -206,7 +220,8 @@ export class Pilot implements StepHook {
   }
 
   private finish(): void {
-    if (this.autoWarp && !this.warpManual && this.warpSet >= 0) this.session.setWarp(this.warpBefore);
+    if (this.autoWarp && !this.warpManual && this.warpSet >= 0)
+      this.session.setWarp(this.warpBefore);
     this.active = null;
     this.status = null;
   }
@@ -286,7 +301,16 @@ export class Pilot implements StepHook {
 }
 
 function munition(kind: number): MunitionStats {
-  const [, deltaV = 0, accel = 0, closingSpeed = 0, blastRadius = 0, , armTime = 0, triggerRange = 0, lifetime = 0] =
-    Game.munition_stats(kind);
+  const [
+    ,
+    deltaV = 0,
+    accel = 0,
+    closingSpeed = 0,
+    blastRadius = 0,
+    ,
+    armTime = 0,
+    triggerRange = 0,
+    lifetime = 0,
+  ] = Game.munition_stats(kind);
   return { deltaV, accel, closingSpeed, blastRadius, armTime, triggerRange, lifetime };
 }

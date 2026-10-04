@@ -58,13 +58,6 @@
   "autoWarp": {
     "enabled": true,
     "minRealSeconds": 1.5,
-    "levels": [
-      1,
-      2,
-      4,
-      10,
-      50,
-      100
-    ]
+    "levels": [1, 2, 4, 10, 50, 100]
   }
 }

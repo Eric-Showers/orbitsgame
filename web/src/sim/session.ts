@@ -43,7 +43,7 @@ export class FlightSession {
   throttleRamp = 0;
   /** Rides along with sim steps; set by the autopilot. */
   hook: StepHook | null = null;
-  /** Called when the commander gives a flight order by hand (not via the helm). */
+  /** Called when the commander steers by hand: throttle, attitude, rotation or target (not via the helm). */
   onManualInput: (() => void) | null = null;
   private acc = 0;
   private entities: EntityView[] = [];
@@ -121,7 +121,6 @@ export class FlightSession {
 
   /** Fires a missile at the current target. Returns false if none was fired. */
   fireMissile(): boolean {
-    this.onManualInput?.();
     const ok = this.game.launch_missile(this.playerId) >= 0;
     this.pendingEvents.push(...decodeEvents(this.game.take_events()));
     this.refresh();
@@ -130,7 +129,6 @@ export class FlightSession {
 
   /** Leaves a dormant mine on the current orbit. Returns false if none was dropped. */
   dropMine(): boolean {
-    this.onManualInput?.();
     const ok = this.game.drop_mine(this.playerId) >= 0;
     this.pendingEvents.push(...decodeEvents(this.game.take_events()));
     this.refresh();

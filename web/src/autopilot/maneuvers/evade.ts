@@ -39,7 +39,11 @@ export class Evade implements Maneuver {
       nodes: [],
       dv,
       eta: ctx.cfg.evade.burnSeconds,
-      vars: { count: String(n), dv: dv.toFixed(0) + ' m/s', range: fmtDistance(ctx.cfg.evade.warnRange) },
+      vars: {
+        count: String(n),
+        dv: dv.toFixed(0) + ' m/s',
+        range: fmtDistance(ctx.cfg.evade.warnRange),
+      },
     };
   }
 

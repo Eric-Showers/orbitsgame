@@ -35,7 +35,11 @@ export class Orient implements Maneuver {
 
   plan(ctx: Ctx): Plan {
     if (!ctx.self.alive) return infeasible('The ship is lost.');
-    if (this.mode >= Attitude.Target && this.mode <= Attitude.TargetRetrograde && !ctx.entity(ctx.self.target)) {
+    if (
+      this.mode >= Attitude.Target &&
+      this.mode <= Attitude.TargetRetrograde &&
+      !ctx.entity(ctx.self.target)
+    ) {
       return infeasible('Select a target first.');
     }
     const slew = ctx.classStats(ctx.self.shipClass).slewRate;

@@ -1,0 +1,15 @@
+{
+  "sun": {
+    "angleDeg": 25,
+    "rateDegPerHour": 0,
+    "edgeMarginPx": 44
+  },
+  "moon": {
+    "orbitRadius": 2400000,
+    "radius": 120000,
+    "phaseDeg": 160,
+    "minPx": 9,
+    "ringOpacity": 0.25
+  },
+  "night": { "opacity": 0.55, "shadowOpacity": 0.4 }
+}

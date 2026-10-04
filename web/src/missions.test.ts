@@ -54,8 +54,8 @@ function shoot(run: MissionRun, tag: string): void {
 }
 
 describe('mission data', () => {
-  it('ships a valid ladder of six missions', () => {
-    expect(MISSIONS.length).toBe(6);
+  it('ships a valid ladder of twelve missions', () => {
+    expect(MISSIONS.length).toBe(12);
     expect(validateMissions({ version: 1, missions: MISSIONS })).toEqual([]);
   });
 
@@ -78,6 +78,13 @@ describe('mission data', () => {
     expect(locked.unlocked(MISSIONS, 1)).toBe(false);
     locked.record(MISSIONS[0].id, 1);
     expect(locked.unlocked(MISSIONS, 1)).toBe(true);
+  });
+
+  it('gives every mission a concept and ARGUS coaching to teach it', () => {
+    for (const m of MISSIONS) {
+      expect(m.lesson?.points.length, m.id).toBeGreaterThan(0);
+      expect(m.coach?.length, m.id).toBeGreaterThan(0);
+    }
   });
 
   it('applies the player loadout from data', () => {

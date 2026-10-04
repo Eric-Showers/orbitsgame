@@ -45,6 +45,8 @@ export interface Cue {
   /** Line to use when `id` has none in the voice file. */
   fallback?: string;
   vars?: Record<string, string>;
+  /** Literal text to speak instead of a voice-file line (mission coaching). */
+  text?: string;
 }
 
 export function isHostile(self: EntityView, other: EntityView, t: Thresholds): boolean {

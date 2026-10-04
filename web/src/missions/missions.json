@@ -12,8 +12,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 80000 },
-        "loadout": { "missiles": 0, "mines": 0, "fuel": 1 }
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 0,
+          "mines": 0,
+          "fuel": 1
+        }
       },
       "ships": [],
       "objectives": [
@@ -26,7 +32,33 @@
           "hold": 10
         }
       ],
-      "score": { "parTime": 1300, "fuelReserve": 0.9 }
+      "score": {
+        "parTime": 1300,
+        "fuelReserve": 0.9
+      },
+      "lesson": {
+        "concept": "A burn changes the OPPOSITE side of your orbit",
+        "points": [
+          "There is no brake pedal in orbit. Speeding up at one point raises the point on the far side of the planet; slowing down lowers it.",
+          "That is why raising a circular orbit takes two burns half an orbit apart: the first sets the new high point, the second lifts the low point to match.",
+          "Burn along PROGRADE (your direction of travel) to go higher, RETROGRADE to go lower."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Lesson one, Commander. A burn changes the opposite side of the orbit. Burn prograde to raise the far side, then again at the top to round it off. You can also ask me to circularize."
+        },
+        {
+          "when": {
+            "objective": "circularize",
+            "status": "done"
+          },
+          "text": "Orbit set. Remember it: every burn echoes half an orbit away."
+        }
+      ]
     },
     {
       "id": "beacon-rendezvous",
@@ -38,8 +70,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 80000 },
-        "loadout": { "missiles": 0, "mines": 0, "fuel": 1 }
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 0,
+          "mines": 0,
+          "fuel": 1
+        }
       },
       "ships": [
         {
@@ -47,7 +85,10 @@
           "name": "Nav Beacon",
           "class": "beacon",
           "team": "neutral",
-          "orbit": { "pe": 80000, "lead": 25000 }
+          "orbit": {
+            "pe": 80000,
+            "lead": 25000
+          }
         }
       ],
       "objectives": [
@@ -61,8 +102,128 @@
           "hold": 10
         }
       ],
-      "fail": { "timeLimit": 5400 },
-      "score": { "parTime": 2400, "fuelReserve": 0.85 }
+      "fail": {
+        "timeLimit": 5400
+      },
+      "score": {
+        "parTime": 2400,
+        "fuelReserve": 0.85
+      },
+      "lesson": {
+        "concept": "Lower is faster: chasing means dropping down",
+        "points": [
+          "Orbital speed falls as you climb. A lower orbit is shorter and quicker, so you drift ahead of anything higher and fall behind in a higher orbit.",
+          "To catch a target ahead of you, drop slightly lower, let the gap close, then climb back and match speed. Pushing straight at it only makes you higher and slower.",
+          "Relative speed is what matters. Match it before you arrive, or you will fly straight past."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "The beacon is ahead in our own orbit. Do not accelerate toward it. Drop lower and I will catch up. The RENDEZVOUS order in the pilot panel will fly this for you."
+        },
+        {
+          "when": {
+            "atTime": 900
+          },
+          "text": "Still closing? Watch the range readout. When it falls under a few kilometres, start matching speed with target retrograde."
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "title": "Round Trip",
+      "summary": "Two beacons, one ahead and one behind. Catch both.",
+      "briefing": [
+        "Two navigation beacons share your orbit: one 25 km ahead, one 30 km behind. Rendezvous with the leading beacon first, then the trailing one.",
+        "You have already learned to catch what is ahead by dropping lower. Catching what is behind is the mirror image: climb higher, slow down, and let the beacon come to you. The skill is knowing which way to push, and when to stop."
+      ],
+      "lesson": {
+        "concept": "Phasing: pick your orbit to set the gap",
+        "points": [
+          "The gap to another craft in the same orbit changes only because you are in a different one. Higher means longer and slower; lower means shorter and faster.",
+          "To go forward, descend. To go back, climb. Then return to the matching orbit when the gap is right.",
+          "Two beacons teach both directions. Use the pilot RENDEZVOUS order if a plan is troubling you."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Two beacons. Ahead first, so drop lower. When we have docked, we will have to climb to let the second one catch us."
+        },
+        {
+          "when": {
+            "objective": "front",
+            "status": "done"
+          },
+          "text": "First beacon matched. The second is behind us. We want a slower orbit now: burn retrograde to drop, then prograde to rise when it is close."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 0,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "lead",
+          "name": "Lead Beacon",
+          "class": "beacon",
+          "team": "neutral",
+          "orbit": {
+            "pe": 80000,
+            "lead": 25000
+          }
+        },
+        {
+          "tag": "tail",
+          "name": "Tail Beacon",
+          "class": "beacon",
+          "team": "neutral",
+          "orbit": {
+            "pe": 80000,
+            "lead": -30000
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "front",
+          "type": "rendezvous",
+          "label": "Match the lead beacon: within 300 m, under 2 m/s",
+          "target": "lead",
+          "range": 300,
+          "maxRelSpeed": 2,
+          "hold": 8
+        },
+        {
+          "id": "back",
+          "type": "rendezvous",
+          "label": "Then match the tail beacon",
+          "target": "tail",
+          "range": 300,
+          "maxRelSpeed": 2,
+          "hold": 8,
+          "after": "front"
+        }
+      ],
+      "fail": {
+        "timeLimit": 9000
+      },
+      "score": {
+        "parTime": 5000,
+        "fuelReserve": 0.7
+      }
     },
     {
       "id": "live-fire",
@@ -74,8 +235,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 80000 },
-        "loadout": { "missiles": 3, "mines": 0, "fuel": 1 }
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 3,
+          "mines": 0,
+          "fuel": 1
+        }
       },
       "ships": [
         {
@@ -83,15 +250,23 @@
           "name": "Drone A",
           "class": "drone",
           "team": "enemy",
-          "orbit": { "pe": 80000, "lead": 15000 }
+          "orbit": {
+            "pe": 80000,
+            "lead": 15000
+          }
         },
         {
           "tag": "drone2",
           "name": "Drone B",
           "class": "drone",
           "team": "enemy",
-          "orbit": { "pe": 76000, "lead": -25000 },
-          "spawn": { "afterObjective": "first" }
+          "orbit": {
+            "pe": 76000,
+            "lead": -25000
+          },
+          "spawn": {
+            "afterObjective": "first"
+          }
         }
       ],
       "objectives": [
@@ -111,8 +286,184 @@
           "after": "first"
         }
       ],
-      "fail": { "timeLimit": 1800 },
-      "score": { "parTime": 400, "fuelReserve": 0.95 }
+      "fail": {
+        "timeLimit": 1800
+      },
+      "score": {
+        "parTime": 400,
+        "fuelReserve": 0.95
+      },
+      "lesson": {
+        "concept": "Missiles are spacecraft, with fuel of their own",
+        "points": [
+          "A missile does not fly a straight line. It carries a fixed delta-v and spends it cancelling the sideways speed between it and the target, so a fast crossing shot costs far more than a slow one.",
+          "Shots from the same orbit are cheap because you and the target move together. Slow, matched shots are the efficient ones.",
+          "Lock a target with T and fire with F. The target and range show on your display."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Weapons hot. Select the drone with T, then fire with F. It sits in our own orbit, so the missile will spend very little fuel closing."
+        }
+      ]
+    },
+    {
+      "id": "crossing-traffic",
+      "title": "Crossing Traffic",
+      "summary": "Two drones on elliptical orbits will cross yours. Be ready.",
+      "briefing": [
+        "Two unarmed drones are on elliptical orbits that cross your lane. They do not drift into range; they sweep through it, then swing away. Each pass lasts only minutes.",
+        "Use time warp to wait, but keep the range readout in view. When a drone closes inside about 30 km, select it with T and fire. You have one missile per drone."
+      ],
+      "lesson": {
+        "concept": "Timing: wait for the geometry",
+        "points": [
+          "Two orbits that intersect put both craft at the crossing point only at certain moments. Miss that moment and the next one is a full orbit away.",
+          "Closing speed at a crossing can be high, and a missile spends delta-v cancelling it. Ready early and fire at the nearest approach.",
+          "Warp to save time, but drop out before they are inside 100 km."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Drones are crossing our lane on ellipses. There is nothing to chase. We wait at the crossing point. I will warn you as they come into range."
+        },
+        {
+          "when": {
+            "atTime": 2100
+          },
+          "text": "The first crossing is close. Target the nearest drone and fire as soon as the range allows."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 2,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "cross1",
+          "name": "Drone Crossing A",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "ap": 160000,
+            "argPeDeg": 180,
+            "phaseDeg": 40
+          }
+        },
+        {
+          "tag": "cross2",
+          "name": "Drone Crossing B",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "ap": 120000,
+            "argPeDeg": 180,
+            "phaseDeg": 20
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "a",
+          "type": "destroy",
+          "label": "Destroy Drone Crossing A",
+          "targets": ["cross1"],
+          "by": "missile"
+        },
+        {
+          "id": "b",
+          "type": "destroy",
+          "label": "Destroy Drone Crossing B",
+          "targets": ["cross2"],
+          "by": "missile"
+        }
+      ],
+      "fail": {
+        "timeLimit": 4200
+      },
+      "score": {
+        "parTime": 2700,
+        "fuelReserve": 0.98
+      }
+    },
+    {
+      "id": "long-reach",
+      "title": "Long Reach",
+      "summary": "The target is farther than a missile can fly. Close first.",
+      "briefing": [
+        "A target drone sits 130 km ahead in your orbit. A missile fired from here will run out of fuel before it arrives, and you only carry two.",
+        "Close the distance first, then shoot. Dropping into a lower orbit shortens the gap; the pilot's INTERCEPT order will do it for you and stop at missile range."
+      ],
+      "lesson": {
+        "concept": "Weapon geometry: every shot has a reach",
+        "points": [
+          "A missile is a small spaceship with a fixed delta-v. Its reach is a budget, not a speed. On a shared orbit that budget covers roughly 85 km.",
+          "Out of range, the missile coasts on and misses. The fix is to get closer, not to fire sooner.",
+          "Check the range readout, not the target marker."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "That target is farther than we can shoot. Ask me to INTERCEPT, or drop lower yourself. Close to under 70 kilometres before you fire."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 2,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "far",
+          "name": "Far Drone",
+          "class": "drone",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 130000
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy the drone with a missile",
+          "targets": ["far"],
+          "by": "missile"
+        }
+      ],
+      "fail": {
+        "timeLimit": 5400
+      },
+      "score": {
+        "parTime": 2200,
+        "fuelReserve": 0.6
+      }
     },
     {
       "id": "mine-corridor",
@@ -124,8 +475,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 80000 },
-        "loadout": { "missiles": 0, "mines": 3, "fuel": 1 }
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 0,
+          "mines": 3,
+          "fuel": 1
+        }
       },
       "ships": [
         {
@@ -133,16 +490,26 @@
           "name": "Convoy Lead",
           "class": "drone",
           "team": "enemy",
-          "orbit": { "pe": 86500, "lead": -15000 },
-          "spawn": { "afterObjective": "lay" }
+          "orbit": {
+            "pe": 86500,
+            "lead": -15000
+          },
+          "spawn": {
+            "afterObjective": "lay"
+          }
         },
         {
           "tag": "convoy2",
           "name": "Convoy Tail",
           "class": "drone",
           "team": "enemy",
-          "orbit": { "pe": 86500, "lead": -16500 },
-          "spawn": { "afterObjective": "lay" }
+          "orbit": {
+            "pe": 86500,
+            "lead": -16500
+          },
+          "spawn": {
+            "afterObjective": "lay"
+          }
         }
       ],
       "objectives": [
@@ -162,8 +529,30 @@
           "after": "lay"
         }
       ],
-      "fail": { "timeLimit": 6000 },
-      "score": { "parTime": 3000, "fuelReserve": 0.9 }
+      "fail": {
+        "timeLimit": 6000
+      },
+      "score": {
+        "parTime": 3000,
+        "fuelReserve": 0.9
+      },
+      "lesson": {
+        "concept": "Mines are patient: orbit paths do the aiming",
+        "points": [
+          "A mine drifts on its own orbit. If its orbit crosses a lane, anything passing by within 5 km wakes it.",
+          "A mine is only useful in the lane if its whole orbit stays in the lane. Circularize before you drop.",
+          "A lower, faster orbit overtakes everything above it. The convoy will catch your field from behind."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "objective": "lay",
+            "status": "done"
+          },
+          "text": "Field laid. Now we wait. Use time warp, but keep clear of your own mines."
+        }
+      ]
     },
     {
       "id": "minelayer",
@@ -175,8 +564,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 76000 },
-        "loadout": { "missiles": 4, "mines": 0, "fuel": 1 }
+        "orbit": {
+          "pe": 76000
+        },
+        "loadout": {
+          "missiles": 4,
+          "mines": 0,
+          "fuel": 1
+        }
       },
       "ships": [
         {
@@ -184,10 +579,20 @@
           "name": "Minelayer",
           "class": "minelayer",
           "team": "enemy",
-          "orbit": { "pe": 80000, "lead": 40000 },
+          "orbit": {
+            "pe": 80000,
+            "lead": 40000
+          },
           "ai": {
-            "miner": { "range": 20000, "cooldown": 20 },
-            "evade": { "warnRange": 6000, "burnSeconds": 15, "throttle": 1 }
+            "miner": {
+              "range": 20000,
+              "cooldown": 20
+            },
+            "evade": {
+              "warnRange": 6000,
+              "burnSeconds": 15,
+              "throttle": 1
+            }
           }
         }
       ],
@@ -199,8 +604,102 @@
           "targets": ["layer"]
         }
       ],
-      "fail": { "timeLimit": 3000 },
-      "score": { "parTime": 900, "fuelReserve": 0.9 }
+      "fail": {
+        "timeLimit": 3000
+      },
+      "score": {
+        "parTime": 900,
+        "fuelReserve": 0.9
+      },
+      "lesson": {
+        "concept": "Your lower orbit is also a weapon: relative motion sets the clock",
+        "points": [
+          "You are 4 km lower, so you move faster and pass beneath the minelayer. How fast you close decides how long your window is.",
+          "Hits take time to arrive. A missile that is already flying keeps working while you manoeuvre.",
+          "Targets dodge once a missile is close. Fire a second missile while the first is still in the air to make them choose."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "The minelayer is ahead and above. We close on it slowly from below. Shoot early, while it still has to dodge, and keep missiles in the air."
+        }
+      ]
+    },
+    {
+      "id": "under-fire",
+      "title": "Under Fire",
+      "summary": "A gunboat shoots at you from far away. Stay alive.",
+      "briefing": [
+        "A gunboat 60 km ahead will fire missiles at you from beyond your own reach. You carry none. Survive for six minutes after it opens fire.",
+        "A missile is only a threat while its fuel lasts. Each course correction spends delta-v. Burn sideways early and often, then leave your path alone so it must spend more to catch you. Waiting until the last few seconds is how pilots die."
+      ],
+      "lesson": {
+        "concept": "Evasion: make them spend their fuel",
+        "points": [
+          "A missile steers by burning. If you keep changing your path, it keeps burning, and its fuel runs out.",
+          "Burn across the line the missile is flying along (radial in or out), not toward or away from it.",
+          "The pilot's EVADE order does this automatically. Manual input cancels it."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "We are being shot at from long range. When a missile is in the air, burn radially. Early dodges cost them more than late ones. I can run EVADE if you like."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 0,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "gun",
+          "name": "Hostile Gunboat",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 60000
+          },
+          "loadout": {
+            "missiles": 4
+          },
+          "ai": {
+            "gunner": {
+              "range": 80000,
+              "cooldown": 70,
+              "firstShotDelay": 5
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "live",
+          "type": "survive",
+          "label": "Survive 6 minutes",
+          "seconds": 360
+        }
+      ],
+      "fail": {
+        "timeLimit": 900
+      },
+      "score": {
+        "parTime": 365,
+        "fuelReserve": 0.6
+      }
     },
     {
       "id": "gunboat-duel",
@@ -212,8 +711,14 @@
       ],
       "player": {
         "class": "corvette",
-        "orbit": { "pe": 77000 },
-        "loadout": { "missiles": 5, "mines": 2, "fuel": 1 }
+        "orbit": {
+          "pe": 77000
+        },
+        "loadout": {
+          "missiles": 5,
+          "mines": 2,
+          "fuel": 1
+        }
       },
       "ships": [
         {
@@ -221,11 +726,24 @@
           "name": "Gunboat Alpha",
           "class": "gunboat",
           "team": "enemy",
-          "orbit": { "pe": 80000, "lead": 35000 },
-          "loadout": { "missiles": 2 },
+          "orbit": {
+            "pe": 80000,
+            "lead": 35000
+          },
+          "loadout": {
+            "missiles": 2
+          },
           "ai": {
-            "gunner": { "range": 14000, "cooldown": 45, "firstShotDelay": 20 },
-            "evade": { "warnRange": 5000, "burnSeconds": 12, "throttle": 1 }
+            "gunner": {
+              "range": 14000,
+              "cooldown": 45,
+              "firstShotDelay": 20
+            },
+            "evade": {
+              "warnRange": 5000,
+              "burnSeconds": 12,
+              "throttle": 1
+            }
           }
         },
         {
@@ -233,12 +751,27 @@
           "name": "Gunboat Bravo",
           "class": "gunboat",
           "team": "enemy",
-          "orbit": { "pe": 82000, "lead": 30000 },
-          "loadout": { "missiles": 2 },
-          "spawn": { "afterObjective": "alpha" },
+          "orbit": {
+            "pe": 82000,
+            "lead": 30000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "spawn": {
+            "afterObjective": "alpha"
+          },
           "ai": {
-            "gunner": { "range": 16000, "cooldown": 40, "firstShotDelay": 10 },
-            "evade": { "warnRange": 6000, "burnSeconds": 12, "throttle": 1 }
+            "gunner": {
+              "range": 16000,
+              "cooldown": 40,
+              "firstShotDelay": 10
+            },
+            "evade": {
+              "warnRange": 6000,
+              "burnSeconds": 12,
+              "throttle": 1
+            }
           }
         }
       ],
@@ -257,8 +790,258 @@
           "after": "alpha"
         }
       ],
-      "fail": { "timeLimit": 3600 },
-      "score": { "parTime": 900, "fuelReserve": 0.8 }
+      "fail": {
+        "timeLimit": 3600
+      },
+      "score": {
+        "parTime": 900,
+        "fuelReserve": 0.8
+      },
+      "lesson": {
+        "concept": "Range wins duels: out-reach the enemy",
+        "points": [
+          "The gunboat can only lock on within 14 km. Your missiles reach much farther.",
+          "A target dodges by burning sideways. A single missile gives it plenty of time; two missiles in flight overwhelm it.",
+          "If you cannot win the range fight, break contact and burn away. Distance is safety."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "The gunboat's lock range is 14 kilometres. Stay outside it and use ours. If you must close, close from below, where you are faster."
+        }
+      ]
+    },
+    {
+      "id": "convoy-escort",
+      "title": "Convoy Escort",
+      "summary": "A raider is hunting the freighter, not you. Stop it.",
+      "briefing": [
+        "A freighter shares your orbit, 4 km ahead. A raider is coming up from below and behind, and its missiles are aimed at the freighter. You are not its target, but you are the only escort.",
+        "The raider closes from a lower, faster orbit. It will pass beneath you before it reaches the freighter, which is your window. Missiles take time to arrive and it dodges, so fire early and fire twice."
+      ],
+      "lesson": {
+        "concept": "Multi-craft combat: protect a ship, not yourself",
+        "points": [
+          "The enemy flies toward its target, not toward you. That predictable path is yours to intercept.",
+          "Fire from the side where your orbit gives the longest window. A shot taken early arrives before the raider is near the freighter.",
+          "Losing the freighter loses the mission, whatever your own health."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "The raider is coming up from behind and below. It wants the freighter. Target it as soon as it enters missile range and keep missiles in the air."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 4,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "freighter",
+          "name": "Freighter",
+          "class": "drone",
+          "team": "neutral",
+          "orbit": {
+            "pe": 80000,
+            "lead": 4000
+          }
+        },
+        {
+          "tag": "raider",
+          "name": "Raider",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 72000,
+            "lead": -45000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "prey": "freighter",
+            "gunner": {
+              "range": 14000,
+              "cooldown": 30,
+              "firstShotDelay": 0
+            },
+            "evade": {
+              "warnRange": 5000,
+              "burnSeconds": 12,
+              "throttle": 1
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy the raider",
+          "targets": ["raider"]
+        }
+      ],
+      "fail": {
+        "timeLimit": 3600,
+        "protect": ["freighter"]
+      },
+      "score": {
+        "parTime": 1500,
+        "fuelReserve": 0.85
+      }
+    },
+    {
+      "id": "task-force",
+      "title": "Task Force",
+      "summary": "A wingman, a minelayer and a gunboat. Focus fire.",
+      "briefing": [
+        "You lead a two-ship flight. Your wingman, a gunboat, is 6 km ahead and will engage whatever the enemy sends at it. The enemy has a gunboat 40 km behind you and a minelayer 40 km ahead.",
+        "You cannot fight everything at once. Split the enemy: kill the gunboat first, because it can kill you, while the minelayer only seeds the lane. Then turn on the minelayer. Do not fly into its field."
+      ],
+      "lesson": {
+        "concept": "Engagements: sequence the fight",
+        "points": [
+          "Count threats, then kill the one that can hurt you first. Anything that can only drop mines can wait.",
+          "A wingman is a force multiplier: it draws fire and adds missiles. Keep it alive.",
+          "Two missiles from two ships arrive together and a target can only dodge one."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Two threats. The gunboat behind us can kill us; the minelayer only seeds. Deal with the gunboat first."
+        },
+        {
+          "when": {
+            "objective": "gun",
+            "status": "done"
+          },
+          "text": "Gunboat down. Minelayer is next. Stay out of its mine field and let the wingman help."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 6,
+          "mines": 0,
+          "fuel": 1
+        }
+      },
+      "ships": [
+        {
+          "tag": "wing",
+          "name": "Wingman",
+          "class": "gunboat",
+          "team": "player",
+          "orbit": {
+            "pe": 80000,
+            "lead": 6000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "prey": "hunter",
+            "gunner": {
+              "range": 22000,
+              "cooldown": 40,
+              "firstShotDelay": 10
+            },
+            "evade": {
+              "warnRange": 5000,
+              "burnSeconds": 12,
+              "throttle": 1
+            }
+          }
+        },
+        {
+          "tag": "hunter",
+          "name": "Enemy Gunboat",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 76000,
+            "lead": -40000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "gunner": {
+              "range": 14000,
+              "cooldown": 45,
+              "firstShotDelay": 20
+            },
+            "evade": {
+              "warnRange": 5000,
+              "burnSeconds": 12,
+              "throttle": 1
+            }
+          }
+        },
+        {
+          "tag": "layer",
+          "name": "Enemy Minelayer",
+          "class": "minelayer",
+          "team": "enemy",
+          "orbit": {
+            "pe": 82000,
+            "lead": 40000
+          },
+          "ai": {
+            "miner": {
+              "range": 20000,
+              "cooldown": 25
+            },
+            "evade": {
+              "warnRange": 6000,
+              "burnSeconds": 15,
+              "throttle": 1
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "gun",
+          "type": "destroy",
+          "label": "Destroy the enemy gunboat",
+          "targets": ["hunter"]
+        },
+        {
+          "id": "lay",
+          "type": "destroy",
+          "label": "Destroy the enemy minelayer",
+          "targets": ["layer"]
+        }
+      ],
+      "fail": {
+        "timeLimit": 4800,
+        "protect": ["wing"]
+      },
+      "score": {
+        "parTime": 260,
+        "fuelReserve": 0.8
+      }
     }
   ]
 }

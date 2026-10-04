@@ -82,6 +82,15 @@ export class MissionScreens {
     const card = this.card(`MISSION ${String(index + 1).padStart(2, '0')} · ${m.title}`);
     for (const p of m.briefing) card.appendChild(text('p', 'mission-brief', p));
 
+    if (m.lesson) {
+      const box = el('div', 'mission-lesson');
+      box.appendChild(text('h3', 'mission-sub', `CONCEPT · ${m.lesson.concept}`));
+      const pts = el('ul', 'mission-points');
+      for (const p of m.lesson.points) pts.appendChild(text('li', '', p));
+      box.appendChild(pts);
+      card.appendChild(box);
+    }
+
     card.appendChild(text('h3', 'mission-sub', 'OBJECTIVES'));
     const obj = el('ul', 'mission-objs');
     for (const o of m.objectives) obj.appendChild(text('li', '', o.label));

@@ -14,6 +14,10 @@ export class HostileAi {
   private evading = false;
   private evadeOut = true;
 
+  get prey(): string | undefined {
+    return this.def.prey;
+  }
+
   constructor(
     readonly id: number,
     private def: AiDef,

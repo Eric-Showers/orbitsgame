@@ -102,7 +102,10 @@ async function main(): Promise<void> {
         events = session.takeEvents();
       }
       view.showEvents(events);
-      advisor.observe(playerSnapshot(session, events), now / 1000);
+      const snap = playerSnapshot(session, events);
+      advisor.observe(snap, now / 1000);
+      for (const text of run?.takeCoach() ?? [])
+        advisor.announce({ id: 'coach', text }, snap, now / 1000);
     }
     if (run && run.outcome !== 'running' && !debriefed) {
       debriefed = true;

@@ -451,7 +451,10 @@ mod tests {
         assert_eq!((s.missiles, s.mines), (1, 0));
         assert_eq!(s.fuel, s.ship_class().fuel_mass * 0.5);
         w.set_loadout(id, 0, 0, 3.0);
-        assert_eq!(w.get(id).unwrap().fuel, w.get(id).unwrap().ship_class().fuel_mass);
+        assert_eq!(
+            w.get(id).unwrap().fuel,
+            w.get(id).unwrap().ship_class().fuel_mass
+        );
     }
 
     #[test]

@@ -20,8 +20,14 @@ export class SpeechQueue {
   private order = 0;
   private busyUntil = -Infinity;
   private speakingRank = Infinity;
+  private wpm: number | undefined;
 
   constructor(private cfg: VoiceConfig) {}
+
+  /** Overrides the configured reading pace (a voice persona speaks faster or slower). */
+  setWordsPerMinute(wpm: number | undefined): void {
+    this.wpm = wpm;
+  }
 
   get size(): number {
     return this.items.length;
@@ -53,14 +59,18 @@ export class SpeechQueue {
       head.line.rank < this.speakingRank;
     if (busy && !interrupt) return null;
     this.items.shift();
-    const duration = speechSeconds(head.line.text, this.cfg);
+    const duration = speechSeconds(head.line.text, this.cfg, this.wpm);
     this.busyUntil = now + duration + this.cfg.speech.gapSeconds;
     this.speakingRank = head.line.rank;
     return { ...head.line, timestamp: now, duration, interrupt };
   }
 }
 
-export function speechSeconds(text: string, cfg: VoiceConfig): number {
+export function speechSeconds(
+  text: string,
+  cfg: VoiceConfig,
+  wpm = cfg.speech.wordsPerMinute,
+): number {
   const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.max(cfg.speech.minSeconds, (words * 60) / cfg.speech.wordsPerMinute);
+  return Math.max(cfg.speech.minSeconds, (words * 60) / wpm);
 }

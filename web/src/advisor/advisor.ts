@@ -2,6 +2,7 @@ import { len, SHIP_CLASS_NAMES, sub } from '../sim/bridge';
 import { fmtDistance } from '../ui/format';
 import type { AdvisoryChannel } from './channel';
 import { fillTemplate, VOICE, type VoiceConfig } from './config';
+import { DEFAULT_PERSONA, type Persona } from './personas';
 import { SpeechQueue } from './queue';
 import {
   entityName,
@@ -37,6 +38,7 @@ export class VesselAdvisor {
   private burnSeconds = 0;
   private hullMax = 0;
   private greeted = false;
+  private persona: Persona = DEFAULT_PERSONA;
 
   constructor(
     private channel: AdvisoryChannel,
@@ -53,6 +55,12 @@ export class VesselAdvisor {
     this.burnSeconds = 0;
     this.hullMax = 0;
     this.greeted = false;
+  }
+
+  /** Switches the wording and reading pace to a voice persona. Lines already queued keep their text. */
+  setPersona(persona: Persona): void {
+    this.persona = persona;
+    this.queue.setWordsPerMinute(persona.speech.wordsPerMinute);
   }
 
   /** Feeds one snapshot; `now` is real time in seconds. Speaks if the voice is free. */
@@ -146,10 +154,11 @@ export class VesselAdvisor {
     if (!this.cfg.lines[cue.id] && cue.fallback) cue = { ...cue, id: cue.fallback };
     const spec = this.cfg.lines[cue.id];
     if (!spec || spec.text.length === 0) return;
+    const variants = this.persona.lines[cue.id] ?? spec.text;
     const turn = this.rotation.get(cue.id) ?? 0;
     this.rotation.set(cue.id, turn + 1);
     const speaker = this.callsign(snap.self.shipClass);
-    const text = fillTemplate(spec.text[turn % spec.text.length], {
+    const text = fillTemplate(variants[turn % variants.length], {
       callsign: speaker,
       ...cue.vars,
     });

@@ -3,6 +3,7 @@ import { VesselAdvisor } from './advisor/advisor';
 import { Pilot } from './autopilot/pilot';
 import { pilotCue } from './autopilot/speech';
 import { AdvisoryChannel } from './advisor/channel';
+import { findPersona } from './advisor/personas';
 import { playerSnapshot } from './advisor/snapshot';
 import { LOCK_PROGRESSION, loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
@@ -12,6 +13,8 @@ import { ZoneLayer } from './render/zones';
 import { FlightSession } from './sim/session';
 import { bindKeyboard, type ClientControl } from './ui/controls';
 import { CommsLog } from './ui/comms';
+import { TtsPlayer } from './ui/tts';
+import { VoiceBar } from './ui/voicebar';
 import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
 import { PilotPanel } from './ui/pilot';
@@ -31,6 +34,13 @@ async function main(): Promise<void> {
   const voice = new AdvisoryChannel();
   const advisor = new VesselAdvisor(voice);
   const comms = new CommsLog(document.body, voice);
+  const tts = new TtsPlayer(voice);
+  advisor.setPersona(tts.persona);
+  new VoiceBar(comms.box, tts, (id) => {
+    const persona = findPersona(id);
+    tts.setPersona(persona);
+    advisor.setPersona(persona);
+  });
   const clock = (): number => performance.now() / 1000;
 
   // Ship AI hands: flies confirmed maneuvers and speaks through the same advisor.

@@ -6,11 +6,12 @@ const MAX_LINES = 6;
 
 /** Text log of the vessel AI's speech: the first listener on the advisory channel. */
 export class CommsLog {
+  readonly box: HTMLElement;
   private list: HTMLElement;
   private title: HTMLElement;
 
   constructor(root: HTMLElement, channel: AdvisoryChannel) {
-    const box = document.createElement('section');
+    const box = (this.box = document.createElement('section'));
     box.className = 'comms';
     this.title = document.createElement('h2');
     this.title.className = 'comms-title';

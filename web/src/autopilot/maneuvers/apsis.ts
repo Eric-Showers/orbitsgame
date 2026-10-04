@@ -37,8 +37,9 @@ export class ApsisBurn extends BurnManeuver {
     label: string,
     protected where: Where,
     private other: Other,
+    idleReason?: string,
   ) {
-    super(kind, label);
+    super(kind, label, idleReason);
   }
 
   protected solve(ctx: Ctx, latch: boolean): BurnSolution | string {
@@ -83,7 +84,7 @@ export function circularize(at: 'auto' | Apsis = 'auto'): Maneuver {
 
 class CircularizeBurn extends ApsisBurn {
   constructor(private at: 'auto' | Apsis) {
-    super('circularize', 'Circularize', 'apoapsis', 'circular');
+    super('circularize', 'Circularize', 'apoapsis', 'circular', 'Our orbit is already round.');
   }
 
   private pick(ctx: Ctx): Apsis {
@@ -97,15 +98,6 @@ class CircularizeBurn extends ApsisBurn {
 
   plan(ctx: Ctx): Plan {
     this.bind(ctx);
-    if (ctx.orbit && ctx.orbit.eccentricity < ctx.cfg.safety.circularEcc / 4) {
-      return {
-        feasible: true,
-        nodes: [],
-        dv: 0,
-        eta: 0,
-        vars: { ...costVars({ dv: 0, eta: 0 }), note: 'already circular' },
-      };
-    }
     return super.plan(ctx);
   }
 
@@ -156,14 +148,7 @@ export function changeAltitude(targetAlt: number): Maneuver {
     if (blocked) return infeasible(blocked);
     const r = R(ctx);
     const vars = { alt: fmtDistance(targetAlt) };
-    if (g.skip)
-      return {
-        feasible: true,
-        nodes: [],
-        dv: 0,
-        eta: 0,
-        vars: { ...costVars({ dv: 0, eta: 0 }), ...vars },
-      };
+    if (g.skip) return infeasible('We are already at that altitude.');
     const o = ctx.orbit!;
     const t1 =
       g.first.where === 'now' ? ctx.time : ctx.time + timeToApsis(o, g.first.where as Apsis);

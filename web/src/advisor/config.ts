@@ -1,7 +1,7 @@
 import voiceData from './voice.json';
 
 /** Speech priority classes, most urgent first. Ranks and TTLs live in `voice.json`. */
-export type Priority = 'critical' | 'warning' | 'ack' | 'advise' | 'status';
+export type Priority = 'critical' | 'warning' | 'order' | 'ack' | 'advise' | 'status';
 
 export interface PrioritySpec {
   /** Lower speaks first. */

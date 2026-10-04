@@ -82,7 +82,7 @@ async function main(): Promise<void> {
   bindKeyboard(() => session, client);
   const consoleEl = document.querySelector<HTMLElement>('.console');
   const pilotPanel = new PilotPanel(
-    consoleEl ?? document.body,
+    document.body,
     () => pilot,
     () => session,
   );
@@ -109,7 +109,9 @@ async function main(): Promise<void> {
       progress.record(run.def.id, run.stars());
       screens.showResult(run, runIndex);
     }
-    view.setBottomInset(consoleEl?.offsetHeight ?? 0);
+    const consoleHeight = consoleEl?.offsetHeight ?? 0;
+    document.documentElement.style.setProperty('--console-h', `${consoleHeight}px`);
+    view.setBottomInset(consoleHeight);
     view.render(session);
     panel.update();
     pilotPanel.update();

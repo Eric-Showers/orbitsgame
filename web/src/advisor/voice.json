@@ -34,6 +34,11 @@
     "status": {
       "rank": 4,
       "ttl": 6
+    },
+    "order": {
+      "rank": 1,
+      "ttl": 20,
+      "interrupt": true
     }
   },
   "thresholds": {
@@ -305,55 +310,55 @@
       "text": ["I can't do that. {reason}"]
     },
     "ap.cancelled": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Standing by."]
     },
     "ap.start": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Executing. {label}."]
     },
     "ap.phase.coast": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Coasting to the burn point."]
     },
     "ap.phase.burn": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Ignition."]
     },
     "ap.done": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["{label} complete."]
     },
     "ap.done.circularize": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Orbit is round, {pe} by {ap}."]
     },
     "ap.done.altitude": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["On station. Orbit is {pe} by {ap}."]
     },
     "ap.done.rendezvous": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Rendezvous complete. {range} off the target, speeds matched."]
     },
     "ap.done.intercept": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["In position, {range} off the target. Firing solution is yours."]
     },
     "ap.done.match-velocity": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Velocities matched."]
     },
     "ap.done.launch-missile": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Missile away."]
     },
     "ap.done.drop-mine": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Mine laid."]
     },
     "ap.done.evade": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Clear. Recommend recircularizing when convenient."]
     },
     "ap.failed": {
@@ -361,19 +366,19 @@
       "text": ["{label} failed. {reason}"]
     },
     "ap.aborted.commander": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Aborted. Engine cut."]
     },
     "ap.aborted.override": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["You have the helm, Commander. Standing down."]
     },
     "ap.assist.on": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Assist online. Tell me where to go."]
     },
     "ap.assist.off": {
-      "priority": "ack",
+      "priority": "order",
       "text": ["Assist off. Manual control only."]
     }
   }

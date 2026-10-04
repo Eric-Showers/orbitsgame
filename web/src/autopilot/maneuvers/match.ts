@@ -11,7 +11,7 @@ export function relSpeed(ctx: Ctx, id: number): number | null {
 /** Burns against the relative velocity until the target and we drift together. */
 export class MatchVelocity extends BurnManeuver {
   constructor(private targetId: number) {
-    super('match-velocity', 'Match velocity');
+    super('match-velocity', 'Match velocity', 'We are already drifting together.');
   }
 
   /** Gravity pulls bodies on different orbits apart, so far from the target only a floor is reachable. */

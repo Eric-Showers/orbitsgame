@@ -36,6 +36,8 @@ export abstract class BurnManeuver implements Maneuver {
   constructor(
     readonly kind: string,
     readonly label: string,
+    /** What ARGUS says when the burn would be zero. */
+    private idleReason = 'There is nothing to burn: we are already there.',
   ) {}
 
   /** Pure: the burn this maneuver would fly now, or a reason it cannot. */
@@ -55,9 +57,7 @@ export abstract class BurnManeuver implements Maneuver {
   plan(ctx: Ctx): Plan {
     const sol = this.solve(ctx, false);
     if (typeof sol === 'string') return infeasible(sol);
-    if (sol.dv < ctx.cfg.burn.minDvToBurn) {
-      return { feasible: true, nodes: [], dv: 0, eta: 0, vars: costVars({ dv: 0, eta: 0 }) };
-    }
+    if (sol.dv < ctx.cfg.burn.minDvToBurn) return infeasible(this.idleReason);
     const blocked = cannotFly(ctx);
     if (blocked) return infeasible(blocked);
     if (sol.dv > usableDv(ctx)) return infeasible('Not enough fuel for that burn.');

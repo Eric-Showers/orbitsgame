@@ -29,10 +29,12 @@
     "rangeTolerance": 600,
     "maxRevolutions": 8,
     "maxAttempts": 3,
-    "finalRelSpeed": 0.3
+    "matchAllowance": 10,
+    "phasingDvBudget": 40
   },
   "matchVelocity": {
-    "tolerance": 0.25
+    "tolerance": 0.25,
+    "tidalSeconds": 2
   },
   "stationKeep": {
     "deadband": 0.6,
@@ -49,8 +51,8 @@
   "weapons": {
     "missileRange": 25000,
     "missileDvMargin": 1.25,
-    "mineHorizon": 300,
-    "mineSampleSeconds": 5,
+    "mineHorizon": 1800,
+    "mineSampleSeconds": 10,
     "mineRangeFraction": 0.8
   },
   "autoWarp": {

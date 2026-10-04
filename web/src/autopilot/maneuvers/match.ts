@@ -14,8 +14,14 @@ export class MatchVelocity extends BurnManeuver {
     super('match-velocity', 'Match velocity');
   }
 
+  /** Gravity pulls bodies on different orbits apart, so far from the target only a floor is reachable. */
   protected tolerance(ctx: Ctx): number {
-    return ctx.cfg.matchVelocity.tolerance;
+    const t = ctx.entity(this.targetId);
+    const mv = ctx.cfg.matchVelocity;
+    if (!t) return mv.tolerance;
+    const r = len(ctx.self.pos);
+    const tidal = ((ctx.mu / (r * r)) * len(sub(t.pos, ctx.self.pos))) / r;
+    return Math.max(mv.tolerance, tidal * mv.tidalSeconds);
   }
 
   protected solve(ctx: Ctx, latch: boolean): BurnSolution | string {

@@ -40,11 +40,18 @@ export interface PilotConfig {
     closeRange: number;
     /** Allowed miss (m) around the standoff before another phasing pass. */
     rangeTolerance: number;
+    /** Phasing burns up to this size (m/s) are fine; more laps are used to stay under it. */
+    phasingDvBudget: number;
     maxRevolutions: number;
     maxAttempts: number;
-    finalRelSpeed: number;
+    /** Delta-v (m/s) set aside for the closing speed match when estimating cost. */
+    matchAllowance: number;
   };
-  matchVelocity: { tolerance: number };
+  matchVelocity: {
+    tolerance: number;
+    /** Far from the target, gravity gradient alone adds this many seconds of drift; ignore that much. */
+    tidalSeconds: number;
+  };
   stationKeep: { deadband: number; holdRange: number; recaptureStandoff: number };
   evade: {
     warnRange: number;
@@ -59,7 +66,7 @@ export interface PilotConfig {
     missileRange: number;
     /** Missile delta-v must beat the estimated need by this factor. */
     missileDvMargin: number;
-    /** Seconds ahead a mine drop looks for a hostile crossing its orbit. */
+    /** Seconds ahead a mine drop looks for a hostile crossing its orbit (dormant mines wait). */
     mineHorizon: number;
     mineSampleSeconds: number;
     /** A hostile must pass within this fraction of the mine's trigger range. */

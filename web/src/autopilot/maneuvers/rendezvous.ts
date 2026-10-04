@@ -15,8 +15,8 @@ const WEIGHT: Record<Stage, [number, number]> = {
 
 interface Phasing {
   k: number;
-  /** Radius of the phasing orbit's low point. */
-  rLow: number;
+  /** Radius of the phasing orbit's far apsis. */
+  other: number;
   period: number;
   dv: number;
 }
@@ -35,6 +35,7 @@ export class Rendezvous implements Maneuver {
   private stage: Stage = 'altitude';
   private child: Maneuver | null = null;
   private attempts = 0;
+  private startFailure: string | null = null;
 
   constructor(
     private targetId: number,
@@ -77,20 +78,33 @@ export class Rendezvous implements Maneuver {
     return wrapTau(angleOf(t.pos) - angleOf(ctx.self.pos));
   }
 
-  /** Phasing orbit that turns a lead of `phi` (after the standoff) into zero. */
+  /**
+   * Phasing orbit that turns a lead of `phi` (after the standoff) into zero.
+   * Orbits k laps long, either lower and faster (the target is far ahead) or
+   * higher and slower (it is just behind). Of those whose burn fits the dv
+   * budget, the quickest; if none fit, the cheapest.
+   */
   private phasing(ctx: Ctx, R: number, phi: number): Phasing | null {
     const to = ctx.orbitOf(this.targetId)!;
+    const rc = ctx.cfg.rendezvous;
     const minR = ctx.planetRadius + ctx.cfg.safety.minAltitude;
-    for (let k = 1; k <= ctx.cfg.rendezvous.maxRevolutions; k++) {
-      const period = to.period * (1 - phi / (TAU * k));
-      const a = semiMajorFor(ctx.mu, period);
-      const rLow = 2 * a - R;
-      if (rLow >= minR) {
-        const dv = Math.sqrt(ctx.mu / R) - Math.sqrt(ctx.mu * (2 / R - 1 / a));
-        return { k, rLow, period, dv };
+    const maxR = ctx.planetRadius + ctx.cfg.safety.maxAltitude;
+    const vc = Math.sqrt(ctx.mu / R);
+    let fast: Phasing | null = null;
+    let cheap: Phasing | null = null;
+    for (let k = 1; k <= rc.maxRevolutions; k++) {
+      for (const m of [k, k + 1]) {
+        const period = (to.period * (m - phi / TAU)) / k;
+        const a = semiMajorFor(ctx.mu, period);
+        const other = 2 * a - R;
+        if (other < minR || other > maxR) continue;
+        const dv = Math.abs(vc - Math.sqrt(ctx.mu * (2 / R - 1 / a)));
+        const cand = { k, other, period, dv };
+        if (!cheap || dv < cheap.dv) cheap = cand;
+        if (dv <= rc.phasingDvBudget && (!fast || k * period < fast.k * fast.period)) fast = cand;
       }
     }
-    return null;
+    return fast ?? cheap;
   }
 
   private effectiveLead(ctx: Ctx, R: number): number {
@@ -124,7 +138,7 @@ export class Rendezvous implements Maneuver {
       dv += 2 * ph.dv;
       eta += ph.k * ph.period;
     }
-    dv += len(sub(t.vel, ctx.self.vel));
+    dv += rc.matchAllowance;
     if (dv > usableDv(ctx)) return infeasible('Not enough fuel to reach that target.');
     eta += 30;
     return {
@@ -143,6 +157,7 @@ export class Rendezvous implements Maneuver {
 
   start(ctx: Ctx): void {
     this.attempts = 0;
+    this.startFailure = null;
     ctx.helm.setTarget(this.targetId);
     const R = this.targetRadius(ctx);
     const o = ctx.orbit!;
@@ -151,7 +166,7 @@ export class Rendezvous implements Maneuver {
       Math.abs(o.apoapsis - R) > rc.altitudeTolerance ||
       Math.abs(o.periapsis - R) > rc.altitudeTolerance;
     if (off && this.far(ctx)) this.enter(ctx, 'altitude');
-    else this.enterPhasingOrMatch(ctx);
+    else this.startFailure = this.enterPhasingOrMatch(ctx);
   }
 
   private far(ctx: Ctx): boolean {
@@ -159,19 +174,20 @@ export class Rendezvous implements Maneuver {
     return len(sub(t.pos, ctx.self.pos)) > ctx.cfg.rendezvous.closeRange + this.standoff;
   }
 
-  private enterPhasingOrMatch(ctx: Ctx): void {
+  /** Starts a phasing lap if we are still far, else the final speed match. Returns a failure reason. */
+  private enterPhasingOrMatch(ctx: Ctx): string | null {
     if (this.far(ctx) && this.attempts < ctx.cfg.rendezvous.maxAttempts) {
       const R = this.targetRadius(ctx);
       const ph = this.phasing(ctx, R, this.effectiveLead(ctx, R));
-      if (ph) {
-        this.attempts++;
-        this.stage = 'phasing';
-        this.child = new PhasingOrbit(ph.rLow, ph.k, ph.period);
-        this.child.start(ctx);
-        return;
-      }
+      if (!ph) return 'There is no safe phasing orbit for that target right now.';
+      this.attempts++;
+      this.stage = 'phasing';
+      this.child = new PhasingOrbit(ph.other, ph.k, ph.period);
+      this.child.start(ctx);
+      return null;
     }
     this.enter(ctx, 'match');
+    return null;
   }
 
   private enter(ctx: Ctx, stage: Stage): void {
@@ -185,6 +201,7 @@ export class Rendezvous implements Maneuver {
   }
 
   execute(ctx: Ctx): Status {
+    if (this.startFailure) return failed(this.startFailure);
     if (!this.child) return failed('Nothing to fly.');
     if (!this.target(ctx)) return failed('Lost the target.');
     const st = this.child.execute(ctx);
@@ -201,8 +218,8 @@ export class Rendezvous implements Maneuver {
       coast: 0,
     });
     if (this.stage === 'altitude') {
-      this.enterPhasingOrMatch(ctx);
-      return next('Altitude matched');
+      const why = this.enterPhasingOrMatch(ctx);
+      return why ? failed(why) : next('Altitude matched');
     }
     if (this.stage === 'phasing') {
       this.enter(ctx, 'match');
@@ -212,8 +229,8 @@ export class Rendezvous implements Maneuver {
     const range = len(sub(this.target(ctx)!.pos, ctx.self.pos));
     const rc = ctx.cfg.rendezvous;
     if (Math.abs(range - this.standoff) > rc.rangeTolerance && this.far(ctx) && this.attempts < rc.maxAttempts) {
-      this.enterPhasingOrMatch(ctx);
-      return next('Adjusting phase');
+      const why = this.enterPhasingOrMatch(ctx);
+      return why ? failed(why) : next('Adjusting phase');
     }
     return {
       state: 'done',
@@ -230,7 +247,7 @@ export class Rendezvous implements Maneuver {
   }
 }
 
-/** Drop to a lower orbit here, coast `k` laps, recircularize at the same point. */
+/** Burn onto a faster or slower orbit here, coast `k` laps, recircularize at the same point. */
 class PhasingOrbit implements Maneuver {
   readonly kind = 'phasing';
   readonly label = 'Phasing orbit';
@@ -239,11 +256,11 @@ class PhasingOrbit implements Maneuver {
   private onUp = false;
 
   constructor(
-    rLow: number,
+    other: number,
     private k: number,
     private period: number,
   ) {
-    this.down = new ApsisBurn('phasing.down', 'Phasing burn', 'now', rLow);
+    this.down = new ApsisBurn('phasing.down', 'Phasing burn', 'now', other);
     this.up = new ApsisBurn(
       'phasing.up',
       'Recircularize',

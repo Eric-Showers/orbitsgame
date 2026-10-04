@@ -88,7 +88,7 @@ export function mineCheck(ctx: Ctx): { ok: boolean; reason: string; who?: number
       { pos: me.pos, vel: me.vel },
       { pos: e.pos, vel: e.vel },
       ctx.mine.armTime,
-      Math.min(w.mineHorizon, ctx.mine.lifetime),
+      w.mineHorizon,
       w.mineSampleSeconds,
     );
     if (!best || c.distance < best.distance) best = { id: e.id, distance: c.distance };

@@ -15,6 +15,7 @@ import {
   type VesselDrawState,
 } from '../sprites';
 import { CameraRig } from './camera';
+import { CelestialLayer } from './celestialLayer';
 import { MunitionLayer } from './munitions';
 
 const MIN_VIEW = 300; // m across the screen height
@@ -98,6 +99,15 @@ export class FlightView {
     );
     this.planet.add(disc, edge);
     this.scene.add(this.planet);
+
+    this.layers.push(
+      new CelestialLayer(
+        this.scene,
+        this.camera,
+        () => this.sprites.style,
+        (key, x, y, text) => this.placeBodyLabel(key, x, y, text),
+      ),
+    );
 
     this.orbitLine = orbitLine(COLORS.orbit, 0.9);
     this.targetOrbitLine = orbitLine(COLORS.targetOrbit, 0.5);
@@ -410,6 +420,17 @@ export class FlightView {
       );
       this.placeLabel(tgt, target.pos, `◇ TGT ${fmtDistance(range)}`);
     }
+  }
+
+  /** Positions a text label at local world coordinates (x, y). */
+  private placeBodyLabel(key: string, x: number, y: number, text: string | null): void {
+    const l = this.label(key);
+    l.hidden = text === null;
+    if (text === null) return;
+    const mpp = this.metersPerPixel;
+    l.style.left = `${window.innerWidth / 2 + x / mpp}px`;
+    l.style.top = `${(this.topExtent - y) / mpp}px`;
+    if (l.textContent !== text) l.textContent = text;
   }
 
   private label(key: string): HTMLElement {

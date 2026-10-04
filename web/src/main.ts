@@ -1,4 +1,7 @@
 import init, { Game } from './wasm-pkg/orbit_wasm.js';
+import { VesselAdvisor } from './advisor/advisor';
+import { AdvisoryChannel } from './advisor/channel';
+import { playerSnapshot } from './advisor/snapshot';
 import { loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
 import { MissionRun } from './missions/run';
@@ -6,6 +9,7 @@ import { FlightView } from './render/view';
 import { ZoneLayer } from './render/zones';
 import { FlightSession } from './sim/session';
 import { bindKeyboard, type ClientControl } from './ui/controls';
+import { CommsLog } from './ui/comms';
 import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
 
@@ -20,10 +24,18 @@ async function main(): Promise<void> {
   let debriefed = false;
   const view = new FlightView(document.body, session.planetRadius);
   view.addLayer((scene) => new ZoneLayer(scene, () => run));
+  // Vessel AI: speaks on one channel; the comms log (and later TTS) listens.
+  const voice = new AdvisoryChannel();
+  const advisor = new VesselAdvisor(voice);
+  const comms = new CommsLog(document.body, voice);
+  const clock = (): number => performance.now() / 1000;
 
+  /** Every new flight (mission, retry or free flight) starts with a quiet advisor. */
   const switchTo = (next: FlightSession): void => {
     session.game.free();
     session = next;
+    advisor.reset();
+    comms.clear();
   };
   const startMission = (index: number): void => {
     run = new MissionRun(new Game(), missions[index]);
@@ -40,6 +52,8 @@ async function main(): Promise<void> {
     zoomBy: (f) => view.zoomBy(f),
     toggleFocus: () => view.toggleFocus(),
     restart: () => (run ? startMission(runIndex) : freeFlight()),
+    onAction: (action, ok) =>
+      advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock()),
   };
   const panel = new ControlPanel(document.body, () => session, client);
   const hud = new MissionHud(document.body);
@@ -55,14 +69,17 @@ async function main(): Promise<void> {
   const frame = (now: number): void => {
     const dt = (now - last) / 1000;
     last = now;
-    // The flight holds still while a mission screen is up.
+    // The flight (and the advisor watching it) holds still while a mission screen is up.
     if (!screens.open) {
+      let events;
       if (run) {
-        view.showEvents(run.update(dt));
+        events = run.update(dt);
       } else {
         session.update(dt);
-        view.showEvents(session.takeEvents());
+        events = session.takeEvents();
       }
+      view.showEvents(events);
+      advisor.observe(playerSnapshot(session, events), now / 1000);
     }
     if (run && run.outcome !== 'running' && !debriefed) {
       debriefed = true;

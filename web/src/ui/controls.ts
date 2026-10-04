@@ -249,6 +249,8 @@ export interface ClientControl {
   zoomBy(factor: number): void;
   toggleFocus(): void;
   restart(): void;
+  /** Told about every pressed action after it is applied; `ok` is false if the ship refused it. */
+  onAction?(action: ControlAction, ok: boolean): void;
 }
 
 /** Applies a control action. `pressed` is false only for the release of a hold action. */
@@ -258,8 +260,18 @@ export function applyAction(
   action: ControlAction,
   pressed: boolean,
 ): void {
+  const ok = dispatch(session, client, action, pressed);
+  if (pressed) client.onAction?.(action, ok !== false);
+}
+
+function dispatch(
+  session: FlightSession,
+  client: ClientControl,
+  action: ControlAction,
+  pressed: boolean,
+): boolean | void {
   if (action.attitude !== undefined) {
-    if (pressed) session.setAttitude(action.attitude);
+    if (pressed) return session.setAttitude(action.attitude);
     return;
   }
   switch (action.id) {
@@ -285,11 +297,9 @@ export function applyAction(
     case 'target-clear':
       return session.setTarget(null);
     case 'fire-missile':
-      session.fireMissile();
-      return;
+      return session.fireMissile();
     case 'drop-mine':
-      session.dropMine();
-      return;
+      return session.dropMine();
     case 'pause':
       session.paused = !session.paused;
       return;

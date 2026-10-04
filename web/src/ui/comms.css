@@ -1,0 +1,83 @@
+.comms {
+  /* Top-right: the mission HUD owns the top-left corner. */
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: min(380px, calc(100vw - 24px));
+  padding: 16px 10px 6px;
+  font-family: var(--font-ui);
+  color: var(--c-text);
+  background: var(--c-bg);
+  border: 1px solid var(--c-edge);
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  pointer-events: none;
+  user-select: none;
+}
+
+.comms:not(:has(li)) {
+  display: none;
+}
+
+.comms-title {
+  position: absolute;
+  top: 3px;
+  left: 14px;
+  margin: 0;
+  font: 600 9px/1 var(--font-title);
+  letter-spacing: 0.18em;
+  color: var(--c-dim);
+}
+
+.comms-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comms-line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.55;
+}
+
+.comms-line:last-child {
+  opacity: 1;
+  animation: comms-in 0.25s steps(4, end);
+}
+
+.comms-time {
+  flex: 0 0 auto;
+  color: var(--c-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.p-critical .comms-text {
+  color: var(--c-red);
+}
+
+.p-warning .comms-text {
+  color: var(--c-amber);
+}
+
+.p-advise .comms-text {
+  color: var(--c-green);
+}
+
+@keyframes comms-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}

@@ -1,0 +1,265 @@
+/* Flight HUD: fixed-position overlay (docs/hud-design.md). Uses the console tokens from panel.css. */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-ui);
+  color: var(--c-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud[data-mode='off'] {
+  display: none;
+}
+
+/* Mission objectives own the top-left, comms the top-right: the strips stack between them. */
+.hud-stack {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(340px, calc(100vw - 740px), 600px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-strip {
+  box-sizing: border-box;
+  padding: 5px 10px;
+  background: rgba(6, 14, 22, 0.62);
+  border: 1px solid var(--c-edge);
+  border-radius: 2px;
+  text-align: center;
+}
+
+.hud-own {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 22px;
+}
+
+.hud-target {
+  border-color: #7a3f6f;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-target[data-team='hostile'] {
+  border-color: #8a2f3a;
+}
+
+.hud-target[hidden],
+.hud-munitions[hidden],
+.hud-warning[hidden] {
+  display: none;
+}
+
+.hud-field {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.hud-value {
+  font: 600 18px/1 var(--font-title);
+  color: var(--c-glow);
+}
+
+.hud-eta {
+  color: var(--c-dim);
+}
+
+.hud-field.crit .hud-value {
+  color: var(--c-red);
+}
+
+.hud-label {
+  font: 600 9px/1 var(--font-title);
+  letter-spacing: 0.18em;
+  color: var(--c-dim);
+}
+
+.hud-minor {
+  flex: 1 0 100%;
+  color: var(--c-text);
+  opacity: 0.85;
+  font-size: 11px;
+}
+
+.hud-head-row {
+  color: #ff9ae9;
+  font-size: 13px;
+}
+
+.hud-target[data-team='hostile'] .hud-head-row {
+  color: var(--c-red);
+}
+
+.hud-side {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  padding: 6px 8px;
+  background: rgba(6, 14, 22, 0.62);
+  border: 1px solid var(--c-edge);
+  border-radius: 2px;
+}
+
+.hud-resources {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.hud-resources .hud-heat {
+  flex: 1 1 auto;
+}
+
+.hud-munitions {
+  right: 8px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.hud-mun.own {
+  color: var(--c-glow);
+}
+
+.hud-mun.hostile {
+  color: var(--c-red);
+}
+
+.hud-mun.neutral,
+.hud-more {
+  color: var(--c-dim);
+}
+
+.hud-heat {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2px 8px;
+  align-items: center;
+}
+
+.hud-bar {
+  height: 8px;
+  background: rgba(63, 210, 255, 0.1);
+  border: 1px solid var(--c-edge);
+}
+
+.hud-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--c-glow);
+}
+
+.hud-bar-fill.warn {
+  background: var(--c-amber);
+}
+
+.hud-bar-fill.crit {
+  background: var(--c-red);
+}
+
+.hud-note {
+  grid-column: 2 / -1;
+  font-size: 9px;
+  color: var(--c-dim);
+  letter-spacing: 0.1em;
+}
+
+.hud-note:empty {
+  display: none;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+
+.pip {
+  width: 8px;
+  height: 12px;
+  border: 1px solid var(--c-edge);
+}
+
+.pip.on {
+  background: var(--c-glow);
+}
+
+.hud-count {
+  margin-left: 4px;
+}
+
+.hud-warning {
+  text-align: center;
+  padding: 3px 12px;
+  border: 1px solid var(--c-amber);
+  background: rgba(40, 24, 0, 0.7);
+  color: var(--c-amber);
+  font: 600 12px/1.2 var(--font-title);
+  letter-spacing: 0.14em;
+}
+
+.hud-warning.crit {
+  border-color: var(--c-red);
+  color: var(--c-red);
+  background: rgba(40, 0, 6, 0.75);
+}
+
+.hud-toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--console-h, 240px) + 12px);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 11px;
+  color: var(--c-glow);
+}
+
+.hud-toast.show {
+  opacity: 1;
+}
+
+/* Declutter: COMBAT drops own-orbit detail and the target's orbit line; MIN keeps only L1 essentials. */
+.hud[data-mode='combat'] .hud-own .hud-minor,
+.hud[data-mode='combat'] .l3,
+.hud[data-mode='min'] .l2,
+.hud[data-mode='min'] .l3,
+.hud[data-mode='min'] .hud-own .hud-minor,
+.hud[data-mode='min'] .hud-eta,
+.hud[data-mode='min'] .hud-row {
+  display: none;
+}
+
+/* Narrow windows: drop below the mission panel instead of overlapping it. */
+@media (max-width: 1100px) {
+  .hud-stack {
+    left: 8px;
+    transform: none;
+    width: min(420px, calc(100vw - 16px));
+    top: 190px;
+  }
+}

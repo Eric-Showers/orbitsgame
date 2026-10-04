@@ -11,6 +11,7 @@ import { LOCK_PROGRESSION, loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
 import { MissionRun } from './missions/run';
 import { FlightView } from './render/view';
+import { InterceptLayer } from './render/intercepts';
 import { ZoneLayer } from './render/zones';
 import { FlightSession } from './sim/session';
 import { bindKeyboard, type ClientControl } from './ui/controls';
@@ -22,6 +23,7 @@ import { MissionHud, MissionScreens } from './ui/missions';
 import { ControlPanel } from './ui/panel';
 import { AudioPanel } from './ui/audio';
 import { PilotPanel } from './ui/pilot';
+import { FlightHud } from './ui/hud';
 
 async function main(): Promise<void> {
   await init();
@@ -34,6 +36,7 @@ async function main(): Promise<void> {
   let debriefed = false;
   const view = new FlightView(document.body, session.planetRadius);
   view.addLayer((scene) => new ZoneLayer(scene, () => run));
+  view.addLayer((scene) => new InterceptLayer(scene));
   // Vessel AI: speaks on one channel; the comms log (and later TTS) listens.
   const voice = new AdvisoryChannel();
   const advisor = new VesselAdvisor(voice);
@@ -109,6 +112,7 @@ async function main(): Promise<void> {
       advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock()),
   };
   const panel = new ControlPanel(document.body, () => session, client);
+  const flightHud = new FlightHud(document.body, () => session);
   const hud = new MissionHud(document.body);
   const screens = new MissionScreens(document.body, missions, progress, {
     launch: startMission,
@@ -166,6 +170,7 @@ async function main(): Promise<void> {
     view.render(session);
     panel.update();
     pilotPanel.update();
+    flightHud.update();
     hud.update(run);
     requestAnimationFrame(frame);
   };

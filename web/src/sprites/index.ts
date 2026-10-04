@@ -38,8 +38,8 @@ export interface VesselDrawState {
 
 export interface VesselSpriteOptions {
   style?: SpriteStyle;
-  /** Team drawn as friendly; tactical symbols use diamonds for everyone else. */
-  friendlyTeam?: number;
+  /** Tactical symbols draw hostile teams as diamonds. Default: every team but 0. */
+  isHostile?: (team: number) => boolean;
 }
 
 export interface VesselSprites {
@@ -57,7 +57,8 @@ export interface VesselSprites {
 }
 
 /** Accent colour per team; the SVGs use TEAM_TOKEN as the placeholder. */
-export const TEAM_COLORS = ['#4da6ff', '#ff5a4d', '#ffd24d', '#5ee07a'];
+// Matches the flight view palette: player, enemy, neutral, spare.
+export const TEAM_COLORS = ['#3fd2ff', '#ff4d5e', '#5dffa8', '#ffd24d'];
 const TEAM_TOKEN = /#4da6ff/gi;
 
 /** Rasterized texture edge in pixels (sprites draw at most ~48 px on screen). */
@@ -153,7 +154,7 @@ export function createVesselSprites(
   scene: THREE.Scene,
   options: VesselSpriteOptions = {},
 ): VesselSprites {
-  const friendlyTeam = options.friendlyTeam ?? 0;
+  const isHostile = options.isHostile ?? ((team: number) => team !== 0);
   const loaded = new Map<SpriteStyle, Promise<Map<string, THREE.Texture>>>();
   let style: SpriteStyle = options.style ?? 'neon';
   /** Style currently drawn, with its textures; null until the first load. */
@@ -201,7 +202,7 @@ export function createVesselSprites(
         seen.add(v.id);
         const look = lookFor(v);
         const team = v.team % TEAM_COLORS.length;
-        const hostile = tactical && v.team !== friendlyTeam ? '-hostile' : '';
+        const hostile = tactical && isHostile(v.team) ? '-hostile' : '';
         const key = `${look.file}${hostile}:${team}`;
         let e = entries.get(v.id);
         if (!e) {

@@ -24,7 +24,6 @@ async function main(): Promise<void> {
   const switchTo = (next: FlightSession): void => {
     session.game.free();
     session = next;
-    view.reset();
   };
   const startMission = (index: number): void => {
     run = new MissionRun(new Game(), missions[index]);

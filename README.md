@@ -87,3 +87,18 @@ Every console button has a keyboard key (shown in its corner).
 Attitude modes turn the ship at its slew rate; the engine pushes along the
 ship's heading, so point first, then burn. Fuel use follows the rocket
 equation, and the console shows remaining delta-v.
+
+## Missions
+
+The game opens on the mission board (`Esc` reopens it in flight). Missions
+unlock in order and remember their best 1-3 star rating in the browser: one
+star for winning, one for beating the par time, one for finishing with the par
+fuel reserve.
+
+Every mission is data in `web/src/missions/missions.json` (types and field
+docs in `web/src/missions/types.ts`): ships and their orbits (placed relative
+to the player), loadouts, hostile AI (`gunner`, `miner`, `evade`), objectives
+(`orbit`, `rendezvous`, `destroy`, `mineZone`, `survive`, chained with
+`after`), late spawns, failure rules and par scores. The loader validates tags
+and references on start, and `npm test` flies each shipped mission's intended
+solution, so a balance change that makes a mission unwinnable fails a test.

@@ -8,6 +8,12 @@ import {
 } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 import { fmtDistance } from '../ui/format';
+import {
+  SPRITE_STYLES,
+  createVesselSprites,
+  type SpriteStyle,
+  type VesselDrawState,
+} from '../sprites';
 import { MunitionLayer } from './munitions';
 
 const MIN_VIEW = 300; // m across the screen height
@@ -20,7 +26,6 @@ const COLORS = {
   player: 0x3fd2ff,
   enemy: 0xff4d5e,
   neutral: 0x5dffa8,
-  flame: 0xffb547,
   prograde: 0x5dffa8,
   target: 0xff7ce5,
   orbit: 0x3fd2ff,
@@ -34,11 +39,13 @@ export interface ViewLayer {
   update(session: FlightSession, local: (p: Vec3) => [number, number], mpp: number): void;
 }
 
-interface Marker {
-  group: THREE.Group;
-  hull: THREE.Mesh;
-  flame: THREE.Mesh;
-}
+/** Cycles the vessel art: neon (default), realistic, tactical. */
+const STYLE_KEY = 'KeyV';
+const STYLE_NAMES: Record<SpriteStyle, string> = {
+  neon: 'NEON',
+  realistic: 'REALISTIC',
+  tactical: 'TACTICAL',
+};
 
 /**
  * Top-down orthographic view of the orbital plane. Uses a floating origin:
@@ -53,7 +60,10 @@ export class FlightView {
   private focus: Focus = 'ship';
   private origin: Vec3 = { x: 0, y: 0, z: 0 };
   private planet: THREE.Group;
-  private markers = new Map<number, Marker>();
+  // Team 1 is the enemy; team 2 (drones, beacons) is neutral, not hostile.
+  private sprites = createVesselSprites(this.scene, { isHostile: (team) => team === 1 });
+  private drawStates: VesselDrawState[] = [];
+  private styleToast = 0;
   private orbitLine: THREE.Line;
   private targetOrbitLine: THREE.Line;
   private apsides: THREE.Points;
@@ -109,6 +119,10 @@ export class FlightView {
     this.scene.add(this.vectors);
 
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('keydown', (ev) => {
+      if (ev.code !== STYLE_KEY || ev.repeat || ev.target instanceof HTMLInputElement) return;
+      this.cycleSpriteStyle();
+    });
     container.addEventListener(
       'wheel',
       (ev) => {
@@ -136,10 +150,16 @@ export class FlightView {
     this.layers.push(make(this.scene));
   }
 
-  /** Drops per-entity ship markers; call when switching to a different world. */
-  reset(): void {
-    for (const m of this.markers.values()) this.scene.remove(m.group);
-    this.markers.clear();
+  cycleSpriteStyle(): void {
+    const next =
+      SPRITE_STYLES[(SPRITE_STYLES.indexOf(this.sprites.style) + 1) % SPRITE_STYLES.length];
+    void this.sprites.setStyle(next);
+    const toast = this.label('sprite-style');
+    Object.assign(toast.style, { left: '50%', top: '16px', transform: 'translateX(-50%)' });
+    toast.textContent = `ART ${STYLE_NAMES[next]} · V`;
+    toast.hidden = false;
+    window.clearTimeout(this.styleToast);
+    this.styleToast = window.setTimeout(() => (toast.hidden = true), 1500);
   }
 
   /** Feeds sim events (detonations, kills) to the effects layer. */
@@ -192,61 +212,32 @@ export class FlightView {
     this.drawOrbit(this.targetOrbitLine, target?.alive ? session.orbit(target.id) : null);
     this.drawApsides(me.alive ? session.orbit(me.id) : null, session.planetRadius);
 
-    const seen = new Set<number>();
+    // Ships and munitions share the sprite layer, in floating-origin coordinates.
+    const states = this.drawStates;
+    let n = 0;
     for (const e of session.all()) {
-      if (e.kind !== EntityKind.Ship) continue;
-      seen.add(e.id);
-      const m = this.marker(e);
-      m.group.visible = e.alive;
       if (!e.alive) continue;
       const [x, y] = this.local(e.pos);
-      m.group.position.set(x, y, 1);
-      m.group.rotation.z = Math.atan2(e.heading.y, e.heading.x);
-      m.group.scale.setScalar(mpp);
-      m.flame.visible = e.throttle > 0 && e.fuel > 0;
-      m.flame.scale.set(0.4 + e.throttle * (0.8 + 0.3 * Math.random()), 1, 1);
+      const st = (states[n++] ??= {} as VesselDrawState);
+      st.id = e.id;
+      st.kind = e.kind;
+      st.shipClass = e.shipClass;
+      st.team = e.team;
+      st.x = x;
+      st.y = y;
+      st.z = e.kind === EntityKind.Ship ? 1 : 1.5;
+      st.headingX = e.heading.x;
+      st.headingY = e.heading.y;
+      st.throttle = e.kind === EntityKind.Ship && e.fuel <= 0 ? 0 : e.throttle;
     }
-    for (const [id, m] of this.markers) {
-      if (!seen.has(id)) {
-        this.scene.remove(m.group);
-        this.markers.delete(id);
-      }
-    }
+    states.length = n;
+    this.sprites.update(states, mpp);
 
     this.munitions.update(session.all(), (p) => this.local(p), mpp);
     for (const layer of this.layers) layer.update(session, (p) => this.local(p), mpp);
     this.drawVectors(me, target, mpp);
     this.updateLabels(me, target);
     this.renderer.render(this.scene, this.camera);
-  }
-
-  private marker(e: EntityView): Marker {
-    let m = this.markers.get(e.id);
-    if (m) return m;
-    // Placeholder hull shapes (in pixels; scaled by metres-per-pixel each frame).
-    const color = e.team === 0 ? COLORS.player : e.team === 1 ? COLORS.enemy : COLORS.neutral;
-    const hullShape = new THREE.Shape();
-    if (e.team === 2) {
-      hullShape.moveTo(6, 0).lineTo(0, 6).lineTo(-6, 0).lineTo(0, -6).closePath();
-    } else {
-      hullShape.moveTo(11, 0).lineTo(-7, 7).lineTo(-4, 0).lineTo(-7, -7).closePath();
-    }
-    const hull = new THREE.Mesh(
-      new THREE.ShapeGeometry(hullShape),
-      new THREE.MeshBasicMaterial({ color }),
-    );
-    const flameShape = new THREE.Shape().moveTo(0, 3.5).lineTo(-14, 0).lineTo(0, -3.5).closePath();
-    const flame = new THREE.Mesh(
-      new THREE.ShapeGeometry(flameShape),
-      new THREE.MeshBasicMaterial({ color: COLORS.flame, transparent: true, opacity: 0.85 }),
-    );
-    flame.position.x = -4;
-    const group = new THREE.Group();
-    group.add(flame, hull);
-    this.scene.add(group);
-    m = { group, hull, flame };
-    this.markers.set(e.id, m);
-    return m;
   }
 
   private drawOrbit(line: THREE.Line, orbit: OrbitView | null): void {

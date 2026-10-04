@@ -63,21 +63,21 @@ export function evaluateConditions(snap: VesselSnapshot, t: Thresholds): Conditi
   if (!self.alive) return [];
   const out: Condition[] = [];
 
-  // Fuel: low, then bingo. Bingo supersedes low.
-  const frac = self.fuelMax > 0 ? self.fuel / self.fuelMax : 0;
-  const fuelVars = { pct: fmtPercent(frac), dv: fmtSpeed(self.deltaV) };
-  const bingo = self.fuel > 0 && frac <= t.fuelBingoFraction;
+  // Drive heat: rising, then near the limit. The limit supersedes the early warning.
+  const load = self.heatCapacity > 0 ? self.heat / self.heatCapacity : 0;
+  const heatVars = { pct: fmtPercent(load), cap: fmtPercent(self.outputCap) };
+  const limit = load >= t.heatLimitFraction;
   out.push({
-    id: 'fuel.bingo',
-    on: bingo,
-    hold: self.fuel > 0 && frac <= t.fuelBingoFraction + t.fuelHysteresis,
-    vars: fuelVars,
+    id: 'heat.limit',
+    on: limit,
+    hold: load >= t.heatLimitFraction - t.heatHysteresis,
+    vars: heatVars,
   });
   out.push({
-    id: 'fuel.low',
-    on: !bingo && self.fuel > 0 && frac <= t.fuelLowFraction,
-    hold: self.fuel > 0 && frac <= t.fuelLowFraction + t.fuelHysteresis,
-    vars: fuelVars,
+    id: 'heat.high',
+    on: !limit && load >= t.heatHighFraction,
+    hold: load >= t.heatHighFraction - t.heatHysteresis,
+    vars: heatVars,
   });
 
   // Trajectory: impact, imminent impact, or merely a low periapsis.
@@ -175,8 +175,8 @@ export function evaluateCues(
   for (const ev of snap.events) {
     const e = byId.get(ev.id);
     switch (ev.kind) {
-      case SimEventKind.FuelOut:
-        if (ev.id === self.id) out.push({ id: 'fuel.out' });
+      case SimEventKind.Overheat:
+        if (ev.id === self.id) out.push({ id: 'heat.derate' });
         break;
       case SimEventKind.ShipDestroyed:
         if (ev.id === self.id) out.push({ id: 'status.lost' });

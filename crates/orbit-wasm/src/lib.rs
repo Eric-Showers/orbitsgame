@@ -1,13 +1,13 @@
 //! Thin wasm-bindgen facade over `orbit_sim::World`. JS sends commands and
 //! reads flat `Float64Array` snapshots; it never mutates sim state directly.
 
-use orbit_sim::vessel::{MINE, MISSILE, SHIP_CLASSES};
+use orbit_sim::vessel::{Kind, MINE, MISSILE, SHIP_CLASSES};
 use orbit_sim::{elements, AttitudeMode, OrbitSpec, Planet, World};
 use wasm_bindgen::prelude::*;
 
 /// Number of f64 values per entity in `Game::entities()`. Field order is
 /// mirrored by `web/src/sim/bridge.ts`.
-pub const ENTITY_STRIDE: usize = 23;
+pub const ENTITY_STRIDE: usize = 24;
 
 #[wasm_bindgen]
 pub struct Game {
@@ -65,24 +65,30 @@ impl Game {
         self.world.spawn_ship_in_orbit(class, team, spec)
     }
 
-    /// Sets a ship's missiles, mines and fuel (fraction of a full tank).
-    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32, fuel_fraction: f64) {
-        self.world.set_loadout(id, missiles, mines, fuel_fraction);
+    /// Sets a ship's missiles and mines.
+    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32) {
+        self.world.set_loadout(id, missiles, mines);
     }
 
-    /// Static stats of ship class `class`: dry mass, fuel mass, isp, thrust,
-    /// slew rate, hp, missiles, mines. Empty if the class is unknown.
+    /// Static stats of ship class `class`: dry mass, thrust, slew rate, hp,
+    /// missiles, mines, heat capacity (MJ), heat gain at full output (MW),
+    /// radiator base and slope (MW), derate start (load fraction), minimum
+    /// output at the limit. Empty if the class is unknown.
     pub fn class_stats(class: u8) -> Vec<f64> {
         SHIP_CLASSES.get(class as usize).map_or_else(Vec::new, |c| {
             vec![
                 c.dry_mass,
-                c.fuel_mass,
-                c.isp,
                 c.thrust,
                 c.slew_rate,
                 c.hp,
                 c.missiles as f64,
                 c.mines as f64,
+                c.heat_capacity,
+                c.heat_gain,
+                c.radiate_base,
+                c.radiate_slope,
+                c.derate_start,
+                c.min_output,
             ]
         })
     }
@@ -155,7 +161,8 @@ impl Game {
 
     /// Flat snapshot, `ENTITY_STRIDE` values per entity:
     /// id, kind, team, class, alive, pos xyz, vel xyz, heading xyz, throttle,
-    /// fuel, fuel_max, delta_v, mode, target (-1 = none), hp, mass, max_accel.
+    /// heat (MJ), heat_capacity (MJ), output_cap (0..1 of full thrust), mode,
+    /// target (-1 = none), hp, mass, max_accel, delta_v (munitions only).
     pub fn entities(&self) -> Vec<f64> {
         let mut out = Vec::with_capacity(self.world.entities.len() * ENTITY_STRIDE);
         for e in &self.world.entities {
@@ -175,14 +182,19 @@ impl Game {
                 e.heading.y,
                 e.heading.z,
                 e.throttle,
-                e.fuel,
-                e.ship_class().fuel_mass,
-                e.delta_v(),
+                e.heat,
+                if e.kind == Kind::Ship {
+                    e.ship_class().heat_capacity
+                } else {
+                    0.0
+                },
+                e.output_cap(),
                 e.mode as u8 as f64,
                 e.target.map_or(-1.0, |t| t as f64),
                 e.hp,
                 e.mass(),
                 e.max_accel(),
+                e.delta_v(),
             ]);
         }
         out

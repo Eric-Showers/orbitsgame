@@ -104,8 +104,10 @@ export class MissionScreens {
     };
     fact('MISSILES', l.missiles === undefined ? 'standard' : String(l.missiles));
     fact('MINES', l.mines === undefined ? 'standard' : String(l.mines));
-    fact('FUEL', fmtPercent(l.fuel ?? 1));
-    fact('PAR', `${fmtDuration(m.score.parTime)} · ${fmtPercent(m.score.fuelReserve)} fuel left`);
+    fact(
+      'PAR',
+      `${fmtDuration(m.score.parTime)} · drive under ${fmtPercent(m.score.heatCeiling)} heat`,
+    );
     card.appendChild(facts);
 
     const row = el('div', 'mission-buttons');
@@ -124,7 +126,6 @@ export class MissionScreens {
     card.classList.add(won ? 'won' : 'lost');
     card.appendChild(text('p', 'mission-reason', run.reason));
     if (won) card.appendChild(text('div', 'mission-big-stars', starString(run.stars())));
-    const me = run.session.player();
     const facts = el('div', 'mission-facts');
     const fact = (k: string, v: string): void => {
       facts.append(text('span', 'readout-label', k), text('span', 'readout-value', v));
@@ -135,8 +136,8 @@ export class MissionScreens {
     );
     fact('WALL CLOCK', fmtDuration(run.wallSeconds));
     fact(
-      'FUEL LEFT',
-      `${fmtPercent(me.fuelMax > 0 ? me.fuel / me.fuelMax : 0)} (par ${fmtPercent(run.def.score.fuelReserve)})`,
+      'PEAK DRIVE HEAT',
+      `${fmtPercent(run.peakHeat)} (par ${fmtPercent(run.def.score.heatCeiling)})`,
     );
     card.appendChild(facts);
     const row = el('div', 'mission-buttons');

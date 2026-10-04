@@ -1,5 +1,15 @@
 import { closestApproach, timeToApsis } from '../autopilot/orbitmath';
-import { dot, EntityKind, len, sub, type EntityView, type OrbitView } from '../sim/bridge';
+import {
+  decodeClassStats,
+  dot,
+  EntityKind,
+  len,
+  sub,
+  type ClassStats,
+  type EntityView,
+  type OrbitView,
+} from '../sim/bridge';
+import { Game } from '../wasm-pkg/orbit_wasm.js';
 import type { FlightSession } from '../sim/session';
 
 /**
@@ -7,10 +17,6 @@ import type { FlightSession } from '../sim/session';
  * shows today's closest stand-in until the sim exposes the real number (see docs/hud-design.md).
  */
 export interface FutureStats {
-  /** Thermal load as a fraction of the limit, 0..1. */
-  heat?: number;
-  /** Heat change in fractions of the limit per second (positive = warming). */
-  heatRate?: number;
   /** Remaining RCS delta-v of a missile (m/s). */
   rcsDeltaV?: number;
   /** Mine battery charge, 0..1. */
@@ -20,6 +26,21 @@ export interface FutureStats {
 }
 
 const future = (e: EntityView): FutureStats => e as EntityView & FutureStats;
+
+const classCache = new Map<number, ClassStats>();
+
+/** Net heat flow in fractions of the limit per second, from the class thermal tuning. */
+export function heatRateOf(e: EntityView): number | null {
+  if (e.heatCapacity <= 0) return null;
+  let c = classCache.get(e.shipClass);
+  if (!c) {
+    c = decodeClassStats(Game.class_stats(e.shipClass));
+    classCache.set(e.shipClass, c);
+  }
+  const output = Math.min(e.throttle, e.outputCap);
+  const load = e.heat / e.heatCapacity;
+  return (c.heatGain * output - (c.radiateBase + c.radiateSlope * load)) / e.heatCapacity;
+}
 
 export interface OrbitStats {
   /** Apsis altitudes above the surface (m); apoapsis is null on open orbits. */
@@ -132,21 +153,21 @@ export class TcaCache {
 }
 
 export interface ResourceStats {
-  /** 0..1; `estimated` is true while the sim publishes no heat and throttle stands in. */
+  /** Thermal load as a fraction of the limit, 0..1. */
   heat: number;
   heatRate: number | null;
-  estimated: boolean;
+  /** Fraction of full thrust the drive can deliver at this heat, 0..1. */
+  outputCap: number;
   missiles: number;
   mines: number;
 }
 
 export function resourceStats(s: FlightSession, me: EntityView): ResourceStats {
-  const f = future(me);
   const { missiles, mines } = s.munitionsLeft(me.id);
   return {
-    heat: f.heat ?? me.throttle,
-    heatRate: f.heatRate ?? null,
-    estimated: f.heat === undefined,
+    heat: me.heatCapacity > 0 ? me.heat / me.heatCapacity : 0,
+    heatRate: heatRateOf(me),
+    outputCap: me.outputCap,
     missiles,
     mines,
   };
@@ -185,7 +206,7 @@ export function munitionStats(s: FlightSession): MunitionStats[] {
       tti = closing > 0.1 ? range / closing : null;
     }
     const f = future(e);
-    const base = e.fuelMax > 0 ? e.fuel / e.fuelMax : 0;
+    const base = 0;
     out.push({
       id: e.id,
       kind: e.kind,

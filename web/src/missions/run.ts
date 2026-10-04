@@ -38,6 +38,8 @@ export class MissionRun {
   reason = '';
   /** Ship id for each tag, once spawned. */
   readonly ids = new Map<string, number>();
+  /** Highest drive heat the player has reached, as a fraction of the thermal limit. */
+  peakHeat = 0;
   /** Real seconds spent flying (not paused, not after the end). */
   wallSeconds = 0;
   private names = new Map<number, string>();
@@ -101,6 +103,8 @@ export class MissionRun {
     const t0 = s.time;
     if (!s.paused) this.wallSeconds += realDt;
     s.update(realDt);
+    const me = s.player();
+    if (me.heatCapacity > 0) this.peakHeat = Math.max(this.peakHeat, me.heat / me.heatCapacity);
     const events = s.takeEvents();
     this.observe(events);
     this.activate();
@@ -115,12 +119,10 @@ export class MissionRun {
   /** 0 while running or lost; 1-3 once won. */
   stars(): number {
     if (this.outcome !== 'won') return 0;
-    const me = this.session.player();
-    const fuel = me.fuelMax > 0 ? me.fuel / me.fuelMax : 1;
     return (
       1 +
       (this.session.time <= this.def.score.parTime ? 1 : 0) +
-      (fuel >= this.def.score.fuelReserve ? 1 : 0)
+      (this.peakHeat <= this.def.score.heatCeiling ? 1 : 0)
     );
   }
 
@@ -331,8 +333,6 @@ export class MissionRun {
           : 'Your vessel was destroyed';
     } else if (failed) {
       why = failed.detail;
-    } else if (fail?.fuelOut && me.fuel <= 0) {
-      why = 'Fuel exhausted';
     } else {
       for (const tag of fail?.protect ?? []) {
         const id = this.ids.get(tag);
@@ -370,5 +370,5 @@ export function spawnShip(game: Game, cls: number, team: number, o: OrbitDef, re
 function applyLoadout(game: Game, id: number, l: LoadoutDef | undefined): void {
   if (!l) return;
   const [missiles, mines] = game.munitions_left(id);
-  game.set_loadout(id, l.missiles ?? missiles, l.mines ?? mines, l.fuel ?? 1);
+  game.set_loadout(id, l.missiles ?? missiles, l.mines ?? mines);
 }

@@ -1,11 +1,10 @@
 import { Game } from '../wasm-pkg/orbit_wasm.js';
-import { EntityKind, len, sub } from '../sim/bridge';
+import { decodeClassStats, EntityKind, len, sub, type ClassStats } from '../sim/bridge';
 import { MAX_WARP_UNDER_THRUST, SIM_DT, type FlightSession, type StepHook } from '../sim/session';
 import { fmtDistance, fmtDuration } from '../ui/format';
 import { PILOT_CONFIG, type PilotConfig } from './config';
 import {
   infeasible,
-  type ClassStats,
   type Ctx,
   type Helm,
   type Maneuver,
@@ -281,9 +280,7 @@ export class Pilot implements StepHook {
   private stats(shipClass: number): ClassStats {
     let c = this.classCache.get(shipClass);
     if (!c) {
-      const [dryMass = 0, fuelMass = 0, isp = 0, thrust = 0, slewRate = 0, hp = 0] =
-        Game.class_stats(shipClass);
-      c = { dryMass, fuelMass, isp, thrust, slewRate, hp };
+      c = decodeClassStats(Game.class_stats(shipClass));
       this.classCache.set(shipClass, c);
     }
     return c;

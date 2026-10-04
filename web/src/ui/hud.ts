@@ -129,7 +129,7 @@ export class FlightHud {
       this.heatText,
       `${fmtPercent(heat)}${res.heatRate !== null ? ` ${res.heatRate >= 0 ? '▲' : '▼'}` : ''}`,
     );
-    this.text(this.heatNote, res.estimated ? 'EST · THROTTLE' : '');
+    this.text(this.heatNote, res.outputCap < 1 ? `CAP ${fmtPercent(res.outputCap)}` : '');
     this.setPips(this.pips.missiles, res.missiles, this.peak.missiles);
     this.setPips(this.pips.mines, res.mines, this.peak.mines);
 

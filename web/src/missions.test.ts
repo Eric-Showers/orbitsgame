@@ -103,6 +103,15 @@ describe('missions are winnable as designed', () => {
     expect(run.stars()).toBe(3);
   });
 
+  it('first burn: the heat star is lost by cooking the drive', () => {
+    const run = start(mission('first-burn'));
+    run.peakHeat = 0.99;
+    hohmannUp(run, 120_000);
+    fly(run, 60);
+    expect(run.outcome).toBe('won');
+    expect(run.stars()).toBe(2);
+  });
+
   it('live fire: both drones fall to missiles, the second spawning after the first', () => {
     const run = start(mission('live-fire'));
     expect(run.ids.has('drone2')).toBe(false);
@@ -153,7 +162,7 @@ function custom(patch: Partial<MissionDef>): MissionDef {
     player: { class: 'corvette', orbit: { pe: 80_000 } },
     ships: [],
     objectives: [],
-    score: { parTime: 100, fuelReserve: 0.5 },
+    score: { parTime: 100, heatCeiling: 0.5 },
     ...patch,
   };
 }
@@ -200,14 +209,14 @@ describe('mission rules', () => {
     const run = start(
       custom({
         objectives: [{ id: 's', type: 'survive', label: '', seconds: 100 }],
-        score: { parTime: 10, fuelReserve: 0 },
+        score: { parTime: 10, heatCeiling: 1 },
       }),
     );
     fly(run, 50);
     expect(run.outcome).toBe('running');
     fly(run, 100);
     expect(run.outcome).toBe('won');
-    expect(run.stars()).toBe(2); // completion + fuel; par time missed
+    expect(run.stars()).toBe(2); // completion + cool drive; par time missed
     expect(run.wallSeconds).toBeGreaterThan(0);
   });
 

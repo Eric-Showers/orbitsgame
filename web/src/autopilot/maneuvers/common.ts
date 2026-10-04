@@ -1,4 +1,4 @@
-import { Attitude, len, sub, type EntityView, type Vec3 } from '../../sim/bridge';
+import { Attitude, len, outputCapAt, sub, type EntityView, type Vec3 } from '../../sim/bridge';
 import { fmtDistance, fmtDuration, fmtSpan, fmtSpeed } from '../../ui/format';
 import { angleBetween, scale, unit } from '../orbitmath';
 import type { Ctx, Plan } from '../types';
@@ -50,11 +50,38 @@ export function headingError(ctx: Ctx, mode: Attitude): number {
   return want ? angleBetween(ctx.self.heading, want) : Infinity;
 }
 
-export const burnSeconds = (ctx: Ctx, dv: number): number =>
-  ctx.self.maxAccel > 0 ? dv / ctx.self.maxAccel : Infinity;
+const THERMAL_STEP = 0.5;
 
-export const usableDv = (ctx: Ctx): number =>
-  ctx.self.deltaV * (1 - ctx.cfg.safety.reserveDvFraction);
+/**
+ * Seconds a full-throttle burn of `dv` takes from the ship's present heat,
+ * stepping the same thermal model the sim runs (heat builds, output derates).
+ */
+export function burnSeconds(ctx: Ctx, dv: number): number {
+  const me = ctx.self;
+  if (me.maxAccel <= 0) return Infinity;
+  if (me.heatCapacity <= 0) return dv / me.maxAccel;
+  const c = ctx.classStats(me.shipClass);
+  const limit = ctx.cfg.burn.maxBurnSeconds;
+  let heat = me.heat;
+  let left = dv;
+  let t = 0;
+  while (left > 0 && t < limit * 2) {
+    const load = heat / c.heatCapacity;
+    const out = outputCapAt(c, load);
+    const step = Math.min(THERMAL_STEP, left / (me.maxAccel * out));
+    left -= me.maxAccel * out * step;
+    heat = Math.min(
+      c.heatCapacity,
+      Math.max(0, heat + (c.heatGain * out - (c.radiateBase + c.radiateSlope * load)) * step),
+    );
+    t += step;
+  }
+  return left > 0 ? Infinity : t;
+}
+
+/** True when the drive could not deliver `dv` inside the longest burn the autopilot will fly. */
+export const burnTooLong = (ctx: Ctx, dv: number): boolean =>
+  burnSeconds(ctx, dv) > ctx.cfg.burn.maxBurnSeconds;
 
 export const speedOf = (e: EntityView): number => len(e.vel);
 
@@ -62,7 +89,6 @@ export const speedOf = (e: EntityView): number => len(e.vel);
 export function cannotFly(ctx: Ctx): string | null {
   if (!ctx.self.alive) return 'The ship is lost.';
   if (ctx.self.maxAccel <= 0) return 'This vessel has no main engine.';
-  if (ctx.self.fuel <= 0) return 'The tanks are dry.';
   return null;
 }
 

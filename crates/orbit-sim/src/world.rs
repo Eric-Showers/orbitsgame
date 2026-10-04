@@ -1,7 +1,7 @@
 //! The simulated world: one planet plus every vessel, advanced in fixed steps.
 
 use crate::orbit::{self, OrbitSpec};
-use crate::vessel::{AttitudeMode, Entity, Kind, G0, SHIP_CLASSES};
+use crate::vessel::{AttitudeMode, Entity, Kind, SHIP_CLASSES};
 use crate::{weapons, Planet, Vec3};
 use serde::{Deserialize, Serialize};
 
@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 pub enum EventKind {
     /// A vessel hit the planet surface.
     Crash = 0,
-    /// A ship burned its last fuel.
-    FuelOut = 1,
+    /// A ship's drive heat crossed the point where output starts to derate.
+    Overheat = 1,
     MissileLaunched = 2,
     MineDropped = 3,
     /// A dormant mine detected an enemy and started its attack run.
@@ -69,7 +69,7 @@ impl World {
             vel,
             heading: orbit::prograde(vel),
             throttle: 0.0,
-            fuel: c.fuel_mass,
+            heat: 0.0,
             mode: AttitudeMode::Hold,
             rotate_input: 0.0,
             hp: c.hp,
@@ -91,13 +91,11 @@ impl World {
         self.spawn_ship(class, team, pos, vel)
     }
 
-    /// Overrides a ship's carried munitions and fuel (fraction of its class
-    /// tank, clamped to [0, 1]). Used by missions to set the loadout.
-    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32, fuel_fraction: f64) {
+    /// Overrides a ship's carried munitions. Used by missions to set the loadout.
+    pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32) {
         if let Some(e) = self.get_mut(id).filter(|e| e.kind == Kind::Ship) {
             e.missiles = missiles;
             e.mines = mines;
-            e.fuel = e.ship_class().fuel_mass * fuel_fraction.clamp(0.0, 1.0);
         }
     }
 
@@ -223,26 +221,32 @@ impl World {
         self.entities[i].heading = heading;
     }
 
-    /// Engine acceleration this step; burns the fuel it uses.
+    /// Engine acceleration this step. Output is held to the thermal cap; the
+    /// drive's waste heat accumulates and the radiators bleed it off.
     fn burn(&mut self, i: usize, dt: f64) -> Vec3 {
         let e = &mut self.entities[i];
         let c = e.ship_class();
-        if e.throttle <= 0.0 || e.fuel <= 0.0 || c.thrust <= 0.0 {
+        if c.thrust <= 0.0 {
             return Vec3::ZERO;
         }
-        let mass = e.mass();
-        let want_fuel = e.throttle * c.thrust / (c.isp * G0) * dt;
-        let frac = (e.fuel / want_fuel).min(1.0);
-        e.fuel -= want_fuel * frac;
-        if e.fuel <= 0.0 {
-            e.fuel = 0.0;
-            self.events.push(Event {
-                kind: EventKind::FuelOut,
-                id: e.id,
-                pos: e.pos,
-            });
+        let output = e.throttle.min(e.output_cap());
+        if c.heat_capacity > 0.0 {
+            let load = e.heat / c.heat_capacity;
+            let net = c.heat_gain * output - (c.radiate_base + c.radiate_slope * load);
+            let was_limited = load > c.derate_start;
+            e.heat = (e.heat + net * dt).clamp(0.0, c.heat_capacity);
+            if !was_limited && e.heat > c.derate_start * c.heat_capacity {
+                self.events.push(Event {
+                    kind: EventKind::Overheat,
+                    id: e.id,
+                    pos: e.pos,
+                });
+            }
         }
-        e.heading * (e.throttle * frac * c.thrust / mass)
+        if output <= 0.0 {
+            return Vec3::ZERO;
+        }
+        e.heading * (output * c.thrust / e.mass())
     }
 
     fn gravity(&self, pos: Vec3) -> Vec3 {
@@ -318,9 +322,9 @@ mod tests {
     }
 
     #[test]
-    fn prograde_burn_raises_apoapsis_and_matches_rocket_equation() {
+    fn prograde_burn_raises_apoapsis_by_thrust_over_mass() {
         let (mut w, id) = world_with_corvette();
-        let dv0 = w.get(id).unwrap().delta_v();
+        let accel = w.get(id).unwrap().max_accel();
         let v0 = w.get(id).unwrap().vel.length();
         w.set_attitude(id, AttitudeMode::Prograde);
         w.set_throttle(id, 1.0);
@@ -328,7 +332,7 @@ mod tests {
             w.step(DT);
         }
         let s = w.get(id).unwrap();
-        let spent = dv0 - s.delta_v();
+        let spent = accel * 10.0;
         let el = crate::elements(w.planet.mu, s.pos, s.vel);
         assert!(el.apoapsis > LEO + 20_000.0, "apoapsis {}", el.apoapsis);
         // Over 10 s gravity barely changes speed in a circular orbit, so speed
@@ -341,20 +345,58 @@ mod tests {
     }
 
     #[test]
-    fn burning_all_fuel_yields_class_delta_v_and_stops() {
+    fn sustained_full_burn_heats_derates_and_settles() {
         let (mut w, id) = world_with_corvette();
-        let dv0 = w.get(id).unwrap().delta_v();
-        assert!((1_400.0..1_600.0).contains(&dv0), "corvette dv {dv0}");
-        w.set_attitude(id, AttitudeMode::Retrograde);
+        w.set_attitude(id, AttitudeMode::Prograde);
         w.set_throttle(id, 1.0);
-        let mut fuel_out = false;
+        let mut derated = false;
+        for _ in 0..(400.0 / DT) as usize {
+            w.step(DT);
+            derated |= w
+                .take_events()
+                .iter()
+                .any(|e| e.kind == EventKind::Overheat);
+        }
+        let e = w.get(id).unwrap();
+        assert!(derated);
+        assert!(e.output_cap() < 1.0 && e.output_cap() >= e.ship_class().min_output);
+        assert!(e.heat < e.ship_class().heat_capacity);
+        assert!(e.alive);
+    }
+
+    #[test]
+    fn heat_dissipates_when_idle() {
+        let (mut w, id) = world_with_corvette();
+        w.set_throttle(id, 1.0);
+        for _ in 0..(120.0 / DT) as usize {
+            w.step(DT);
+        }
+        let hot = w.get(id).unwrap().heat;
+        assert!(hot > 0.0);
+        w.set_throttle(id, 0.0);
         for _ in 0..(300.0 / DT) as usize {
             w.step(DT);
-            fuel_out |= w.take_events().iter().any(|e| e.kind == EventKind::FuelOut);
         }
-        assert!(fuel_out);
-        assert_eq!(w.get(id).unwrap().fuel, 0.0);
-        assert_eq!(w.get(id).unwrap().delta_v(), 0.0);
+        assert!(w.get(id).unwrap().heat < hot * 0.2);
+        assert_eq!(w.get(id).unwrap().output_cap(), 1.0);
+    }
+
+    #[test]
+    fn output_cap_limits_acceleration() {
+        let (mut w, id) = world_with_corvette();
+        let c = *w.get(id).unwrap().ship_class();
+        w.entities.iter_mut().find(|e| e.id == id).unwrap().heat = c.heat_capacity;
+        w.set_attitude(id, AttitudeMode::Prograde);
+        w.set_throttle(id, 1.0);
+        let v0 = w.get(id).unwrap().vel.length();
+        let m = w.get(id).unwrap().mass();
+        w.step(1.0);
+        let gained = w.get(id).unwrap().vel.length() - v0;
+        let expect = c.min_output * c.thrust / m;
+        assert!(
+            (gained - expect).abs() / expect < 0.05,
+            "{gained} vs {expect}"
+        );
     }
 
     #[test]
@@ -444,17 +486,11 @@ mod tests {
     }
 
     #[test]
-    fn loadout_override_sets_munitions_and_clamps_fuel() {
+    fn loadout_override_sets_munitions() {
         let (mut w, id) = world_with_corvette();
-        w.set_loadout(id, 1, 0, 0.5);
+        w.set_loadout(id, 1, 0);
         let s = w.get(id).unwrap();
         assert_eq!((s.missiles, s.mines), (1, 0));
-        assert_eq!(s.fuel, s.ship_class().fuel_mass * 0.5);
-        w.set_loadout(id, 0, 0, 3.0);
-        assert_eq!(
-            w.get(id).unwrap().fuel,
-            w.get(id).unwrap().ship_class().fuel_mass
-        );
     }
 
     #[test]

@@ -318,7 +318,7 @@ export class FlightView {
       st.z = e.kind === EntityKind.Ship ? 1 : 1.5;
       st.headingX = e.heading.x;
       st.headingY = e.heading.y;
-      st.throttle = e.kind === EntityKind.Ship && e.fuel <= 0 ? 0 : e.throttle;
+      st.throttle = e.kind === EntityKind.Ship ? Math.min(e.throttle, e.outputCap) : e.throttle;
     }
     states.length = n;
     this.sprites.update(states, mpp);

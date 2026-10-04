@@ -61,8 +61,8 @@ export class ControlPanel {
     this.addButtons(engineButtons, 'engine', client);
     for (const [k, label] of [
       ['thr', 'THROTTLE'],
-      ['dv', 'ΔV LEFT'],
-      ['fuel', 'FUEL'],
+      ['heat', 'DRIVE HEAT'],
+      ['cap', 'OUTPUT CAP'],
       ['accel', 'MAX ACCEL'],
     ] as const) {
       this.readouts.set(k, readout(engine, label));
@@ -149,8 +149,8 @@ export class ControlPanel {
 
     this.throttleFill.style.height = fmtPercent(me.throttle);
     r.get('thr')?.set(fmtPercent(me.throttle));
-    r.get('dv')?.set(fmtSpeed(me.deltaV));
-    r.get('fuel')?.set(fmtPercent(me.fuelMax > 0 ? me.fuel / me.fuelMax : 0));
+    r.get('heat')?.set(fmtPercent(me.heatCapacity > 0 ? me.heat / me.heatCapacity : 0));
+    r.get('cap')?.set(fmtPercent(me.outputCap));
     r.get('accel')?.set(`${(me.maxAccel / 9.80665).toFixed(2)} g`);
 
     if (target) {
@@ -172,7 +172,7 @@ export class ControlPanel {
 
     let alert = '';
     if (!me.alive) alert = 'VESSEL LOST · PRESS R TO RESET';
-    else if (me.fuel <= 0) alert = 'FUEL DEPLETED';
+    else if (me.outputCap < 1) alert = 'DRIVE DERATED · COAST TO COOL';
     else if (orbit && orbit.periapsis < R) alert = 'IMPACT TRAJECTORY';
     this.alert.textContent = alert;
     this.alert.classList.toggle('show', alert !== '');

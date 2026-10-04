@@ -1,7 +1,7 @@
 // The maneuver-script contract. A maneuver is deterministic: given the same
 // sim state it plans the same burns and issues the same controls.
 
-import type { Attitude, EntityView, OrbitView } from '../sim/bridge';
+import type { Attitude, ClassStats, EntityView, OrbitView } from '../sim/bridge';
 import type { PilotConfig } from './config';
 
 /** The only way a script touches the ship. Mirrors what the commander can do by hand. */
@@ -13,15 +13,7 @@ export interface Helm {
   dropMine(): boolean;
 }
 
-export interface ClassStats {
-  dryMass: number;
-  fuelMass: number;
-  isp: number;
-  thrust: number;
-  /** Attitude slew rate (rad/s). */
-  slewRate: number;
-  hp: number;
-}
+export type { ClassStats };
 
 export interface MunitionStats {
   deltaV: number;

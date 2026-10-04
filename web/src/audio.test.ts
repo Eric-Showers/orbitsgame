@@ -113,7 +113,7 @@ describe('shipboard sounds', () => {
 describe('cockpit sounds', () => {
   it('raises alarms by priority, with per-line overrides', () => {
     const { rec, dir } = setup();
-    dir.onAdvisory(line('fuel.low', 'warning'));
+    dir.onAdvisory(line('heat.high', 'warning'));
     dir.onAdvisory(line('threat.missile', 'critical'));
     dir.onAdvisory(line('advise.target_in_range', 'advise'));
     expect(rec.ids).toEqual(['alarm.warning', 'alarm.missile']);
@@ -139,10 +139,10 @@ describe('cockpit sounds', () => {
     dir.onAdvisory(line('threat.mine_active', 'critical'));
     dir.onAdvisory(line('hazard.impact', 'critical'));
     dir.onFrame(frame({ dt: 0.5 }));
-    dir.onAdvisory(line('fuel.out', 'critical'));
+    dir.onAdvisory(line('heat.derate', 'critical'));
     expect(rec.ids).toEqual(['alarm.critical', 'alarm.impact']);
     dir.onFrame(frame({ dt: 3 }));
-    dir.onAdvisory(line('fuel.out', 'critical'));
+    dir.onAdvisory(line('heat.derate', 'critical'));
     expect(rec.ids).toEqual(['alarm.critical', 'alarm.impact', 'alarm.critical']);
   });
 

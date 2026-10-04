@@ -42,9 +42,9 @@
     }
   },
   "thresholds": {
-    "fuelLowFraction": 0.25,
-    "fuelBingoFraction": 0.1,
-    "fuelHysteresis": 0.03,
+    "heatHighFraction": 0.5,
+    "heatLimitFraction": 0.8,
+    "heatHysteresis": 0.04,
     "lowPeriapsisAlt": 15000,
     "lowPeriapsisClearAlt": 20000,
     "impactImminentSeconds": 60,
@@ -106,19 +106,22 @@
         "Mine on the scope, {range}. Still asleep. Let us keep it that way."
       ]
     },
-    "fuel.low": {
+    "heat.high": {
       "priority": "warning",
       "cooldown": 60,
-      "text": ["Fuel at {pct}. {dv} of delta-v in hand. Spend it carefully."]
+      "text": ["Drive heat at {pct}. Output starts to derate soon. Ease the throttle if you can."]
     },
-    "fuel.bingo": {
+    "heat.limit": {
       "priority": "warning",
       "cooldown": 60,
-      "text": ["Bingo fuel. {dv} remaining. I would keep enough to come home."]
+      "text": ["Drive heat at {pct}. Output is capped at {cap}. Coast and let the radiators work."]
     },
-    "fuel.out": {
-      "priority": "critical",
-      "text": ["Tanks dry. We are ballistic now, Commander.", "Fuel exhausted. We ride this orbit."]
+    "heat.derate": {
+      "priority": "warning",
+      "text": [
+        "The drive is derating, Commander. Thrust is limited until it cools.",
+        "Thermal limit reached. We are on reduced output."
+      ]
     },
     "damage.hull": {
       "priority": "warning",

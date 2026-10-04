@@ -48,14 +48,14 @@
           "There is a sleeping mine {range} off. It is best not to wake it, so let us give it room.",
           "A dormant mine lies {range} away. Nothing to worry about yet, but let us not drift closer."
         ],
-        "fuel.low": [
-          "Our fuel is down to {pct}, which leaves {dv} of delta-v. Nothing alarming, but let us spend it with care."
+        "heat.high": [
+          "The drive is at {pct} of its thermal limit. Nothing alarming yet, but let us give it a rest soon."
         ],
-        "fuel.bingo": [
-          "We are at bingo fuel, Commander, with {dv} left. Please save enough to bring us home safely."
+        "heat.limit": [
+          "The drive is at {pct} and output is held to {cap}. Please coast a while so it can cool, Commander."
         ],
-        "fuel.out": [
-          "The tanks are empty, Commander. We are coasting now, and the orbit will carry us on its own."
+        "heat.derate": [
+          "The drive has begun to derate, Commander. It needs a moment to cool, and the orbit will carry us meanwhile."
         ],
         "damage.hull": [
           "We have been hit, and hull integrity is {hp}. I am here with you. Let us get clear.",
@@ -137,13 +137,9 @@
           "Sleeping mine, {range} off. Do not poke it. Give it a wide berth.",
           "Mine at {range}. It is dormant, so leave it that way."
         ],
-        "fuel.low": [
-          "Fuel is at {pct}, {dv} of delta-v in the tank. Burn like it costs you money."
-        ],
-        "fuel.bingo": [
-          "Bingo fuel, Commander. {dv} left. Save enough to get home, or we sleep in orbit tonight."
-        ],
-        "fuel.out": ["Dry tanks. We are a rock with opinions, Commander. Ballistic from here."],
+        "heat.high": ["Drive heat is {pct}. Burn like the radiators are listening."],
+        "heat.limit": ["Drive at {pct}, output capped at {cap}. Coast, Commander, or we crawl."],
+        "heat.derate": ["Thermal limit. The drive is throttling itself, Commander. Give it time."],
         "damage.hull": [
           "We are hit! Hull at {hp}. It will take more than that to put me down.",
           "Took a round. Hull {hp}. Keep flying, Commander."
@@ -219,13 +215,15 @@
           "A dormant mine sits {range} away. I would not linger, as it is not the sociable type.",
           "Mine at {range}. It is asleep, and I propose we leave it that way."
         ],
-        "fuel.low": [
-          "Fuel stands at {pct}, with {dv} of delta-v. I would call that a gentle hint to stop flying like we own the place."
+        "heat.high": [
+          "The drive stands at {pct} of its limit. I would call that a gentle hint to stop flying like we own the place."
         ],
-        "fuel.bingo": [
-          "Bingo fuel. {dv} left. I recommend keeping enough to get home. Walking is out of the question."
+        "heat.limit": [
+          "Drive at {pct}, output capped at {cap}. I recommend coasting. Patience is also a form of thrust."
         ],
-        "fuel.out": ["The tanks are dry, Commander. We are now a very expensive satellite."],
+        "heat.derate": [
+          "The drive has reached its thermal limit, Commander. We are now a rather slow expensive satellite."
+        ],
         "damage.hull": [
           "We have been hit. Hull integrity is {hp}. This is a minor setback in the sense that we are still here.",
           "That was a hit, Commander. Hull at {hp}. I will file a complaint."

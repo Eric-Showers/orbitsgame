@@ -1,7 +1,7 @@
 // Typed views over the flat arrays the WASM `Game` returns. Field order must
 // match `crates/orbit-wasm/src/lib.rs`.
 
-export const ENTITY_STRIDE = 23;
+export const ENTITY_STRIDE = 24;
 
 export enum Attitude {
   Hold = 0,
@@ -45,14 +45,19 @@ export interface EntityView {
   vel: Vec3;
   heading: Vec3;
   throttle: number;
-  fuel: number;
-  fuelMax: number;
-  deltaV: number;
+  /** Stored drive heat (MJ); 0 for munitions. */
+  heat: number;
+  /** Thermal limit of the drive (MJ); 0 for munitions. */
+  heatCapacity: number;
+  /** Fraction of full thrust the drive can deliver at the current heat, 0..1. */
+  outputCap: number;
   mode: Attitude;
   target: number | null;
   hp: number;
   mass: number;
   maxAccel: number;
+  /** Motor delta-v remaining for munitions (m/s); ships have an unlimited drive and report 0. */
+  deltaV: number;
 }
 
 export function decodeEntities(flat: Float64Array): EntityView[] {
@@ -69,17 +74,61 @@ export function decodeEntities(flat: Float64Array): EntityView[] {
       vel: { x: v(8), y: v(9), z: v(10) },
       heading: { x: v(11), y: v(12), z: v(13) },
       throttle: v(14),
-      fuel: v(15),
-      fuelMax: v(16),
-      deltaV: v(17),
+      heat: v(15),
+      heatCapacity: v(16),
+      outputCap: v(17),
       mode: v(18),
       target: v(19) < 0 ? null : v(19),
       hp: v(20),
       mass: v(21),
       maxAccel: v(22),
+      deltaV: v(23),
     });
   }
   return out;
+}
+
+/** Static ship-class stats as published by `Game.class_stats`. */
+export interface ClassStats {
+  dryMass: number;
+  thrust: number;
+  /** Attitude slew rate (rad/s). */
+  slewRate: number;
+  hp: number;
+  /** Thermal limit of the drive (MJ); 0 means no heat model. */
+  heatCapacity: number;
+  /** Waste heat at full output (MW). */
+  heatGain: number;
+  /** Radiator dissipation when cold (MW). */
+  radiateBase: number;
+  /** Extra dissipation at the thermal limit (MW). */
+  radiateSlope: number;
+  /** Load fraction above which output derates. */
+  derateStart: number;
+  /** Output fraction held at the thermal limit. */
+  minOutput: number;
+}
+
+export function decodeClassStats(f: ArrayLike<number>): ClassStats {
+  const v = (i: number): number => f[i] ?? 0;
+  return {
+    dryMass: v(0),
+    thrust: v(1),
+    slewRate: v(2),
+    hp: v(3),
+    heatCapacity: v(6),
+    heatGain: v(7),
+    radiateBase: v(8),
+    radiateSlope: v(9),
+    derateStart: f[10] ?? 1,
+    minOutput: f[11] ?? 1,
+  };
+}
+
+/** Output fraction the drive can deliver at `load` (heat / capacity). Mirrors the sim. */
+export function outputCapAt(c: ClassStats, load: number): number {
+  if (c.heatCapacity <= 0 || load <= c.derateStart) return 1;
+  return 1 - ((1 - c.minOutput) * (Math.min(load, 1) - c.derateStart)) / (1 - c.derateStart);
 }
 
 export interface OrbitView {
@@ -109,7 +158,7 @@ export function decodeOrbit(flat: Float64Array): OrbitView | null {
 
 export enum SimEventKind {
   Crash = 0,
-  FuelOut = 1,
+  Overheat = 1,
   MissileLaunched = 2,
   MineDropped = 3,
   MineTriggered = 4,

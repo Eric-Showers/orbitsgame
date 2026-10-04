@@ -83,17 +83,27 @@ pub mod ai {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ShipClass {
     pub name: &'static str,
+    /// Hull and drive mass (kg). The fusion drive has no propellant limit.
     pub dry_mass: f64,
-    pub fuel_mass: f64,
-    /// Specific impulse (s).
-    pub isp: f64,
-    /// Main engine thrust (N).
+    /// Main engine thrust at full output (N).
     pub thrust: f64,
     /// Attitude slew rate (rad/s).
     pub slew_rate: f64,
     pub hp: f64,
     pub missiles: u32,
     pub mines: u32,
+    /// Thermal limit of the drive (MJ). Zero means the ship has no drive heat model.
+    pub heat_capacity: f64,
+    /// Waste heat at full output (MW).
+    pub heat_gain: f64,
+    /// Radiator dissipation when cold (MW).
+    pub radiate_base: f64,
+    /// Extra dissipation at the thermal limit (MW); scales with load, hotter radiates faster.
+    pub radiate_slope: f64,
+    /// Load fraction (heat / capacity) above which output starts to derate.
+    pub derate_start: f64,
+    /// Output fraction the drive is held to at the thermal limit.
+    pub min_output: f64,
 }
 
 pub const CORVETTE: u8 = 0;
@@ -104,63 +114,83 @@ pub const BEACON: u8 = 4;
 
 /// First-guess numbers; balance tuning lives here.
 pub const SHIP_CLASSES: [ShipClass; 5] = [
-    // Player corvette: ~1.5 km/s dv, 0.75 g full.
+    // Player corvette: 0.75 g at full output; thermal limit, not fuel, bounds sustained burns.
     ShipClass {
         name: "Corvette",
-        dry_mass: 10_000.0,
-        fuel_mass: 6_000.0,
-        isp: 320.0,
+        dry_mass: 16_000.0,
         thrust: 120_000.0,
         slew_rate: 0.5,
         hp: 100.0,
         missiles: 4,
         mines: 3,
+        heat_capacity: 600.0,
+        heat_gain: 12.0,
+        radiate_base: 1.80,
+        radiate_slope: 6.0,
+        derate_start: 0.6,
+        min_output: 0.3,
     },
     // Unarmed target drone.
     ShipClass {
         name: "Drone",
-        dry_mass: 4_000.0,
-        fuel_mass: 1_000.0,
-        isp: 280.0,
+        dry_mass: 5_000.0,
         thrust: 20_000.0,
         slew_rate: 0.3,
         hp: 50.0,
         missiles: 0,
         mines: 0,
+        heat_capacity: 150.0,
+        heat_gain: 3.0,
+        radiate_base: 0.45,
+        radiate_slope: 1.5,
+        derate_start: 0.6,
+        min_output: 0.3,
     },
     ShipClass {
         name: "Gunboat",
-        dry_mass: 12_000.0,
-        fuel_mass: 5_000.0,
-        isp: 320.0,
+        dry_mass: 17_000.0,
         thrust: 100_000.0,
         slew_rate: 0.4,
         hp: 100.0,
         missiles: 4,
         mines: 0,
+        heat_capacity: 500.0,
+        heat_gain: 10.0,
+        radiate_base: 1.50,
+        radiate_slope: 5.0,
+        derate_start: 0.6,
+        min_output: 0.3,
     },
     ShipClass {
         name: "Minelayer",
-        dry_mass: 14_000.0,
-        fuel_mass: 5_000.0,
-        isp: 320.0,
+        dry_mass: 19_000.0,
         thrust: 90_000.0,
         slew_rate: 0.35,
         hp: 120.0,
         missiles: 0,
         mines: 6,
+        heat_capacity: 700.0,
+        heat_gain: 14.0,
+        radiate_base: 2.10,
+        radiate_slope: 7.0,
+        derate_start: 0.6,
+        min_output: 0.3,
     },
     // Passive navigation beacon (rendezvous target), cannot be damaged in practice.
     ShipClass {
         name: "Beacon",
         dry_mass: 1_000.0,
-        fuel_mass: 0.0,
-        isp: 1.0,
         thrust: 0.0,
         slew_rate: 0.0,
         hp: 1.0e9,
         missiles: 0,
         mines: 0,
+        heat_capacity: 0.0,
+        heat_gain: 0.0,
+        radiate_base: 0.00,
+        radiate_slope: 0.0,
+        derate_start: 1.0,
+        min_output: 1.0,
     },
 ];
 
@@ -236,7 +266,8 @@ pub struct Entity {
     /// Unit vector the main engine points along.
     pub heading: Vec3,
     pub throttle: f64,
-    pub fuel: f64,
+    /// Stored drive heat (MJ), ships only.
+    pub heat: f64,
     pub mode: AttitudeMode,
     /// Manual rotation input in [-1, 1] (counter-clockwise positive).
     pub rotate_input: f64,
@@ -272,22 +303,30 @@ impl Entity {
             Some(m) => m.mass,
             None => {
                 let c = self.ship_class();
-                c.dry_mass
-                    + self.fuel
-                    + self.missiles as f64 * MISSILE.mass
-                    + self.mines as f64 * MINE.mass
+                c.dry_mass + self.missiles as f64 * MISSILE.mass + self.mines as f64 * MINE.mass
             }
         }
     }
 
-    /// Remaining delta-v from the rocket equation (ships) or the motor budget (munitions).
+    /// Remaining motor delta-v for munitions; ships have an unlimited drive and report 0.
     pub fn delta_v(&self) -> f64 {
         match self.kind {
-            Kind::Ship => {
-                let m = self.mass();
-                self.ship_class().isp * G0 * libm::log(m / (m - self.fuel))
-            }
+            Kind::Ship => 0.0,
             _ => self.dv_left,
+        }
+    }
+
+    /// Fraction of full thrust the drive can deliver at its current heat.
+    pub fn output_cap(&self) -> f64 {
+        let c = self.ship_class();
+        if self.kind != Kind::Ship || c.heat_capacity <= 0.0 {
+            return 1.0;
+        }
+        let load = (self.heat / c.heat_capacity).clamp(0.0, 1.0);
+        if load <= c.derate_start {
+            1.0
+        } else {
+            1.0 - (1.0 - c.min_output) * (load - c.derate_start) / (1.0 - c.derate_start)
         }
     }
 

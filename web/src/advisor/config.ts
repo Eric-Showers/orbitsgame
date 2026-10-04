@@ -23,9 +23,9 @@ export interface LineSpec {
 }
 
 export interface Thresholds {
-  fuelLowFraction: number;
-  fuelBingoFraction: number;
-  fuelHysteresis: number;
+  heatHighFraction: number;
+  heatLimitFraction: number;
+  heatHysteresis: number;
   lowPeriapsisAlt: number;
   lowPeriapsisClearAlt: number;
   impactImminentSeconds: number;

@@ -9,7 +9,7 @@ import {
 } from '../orbitmath';
 import { infeasible, resolve, type Ctx, type Lazy, type Maneuver, type Plan } from '../types';
 import { BurnManeuver, type BurnSolution } from './burn';
-import { burnSeconds, cannotFly, costVars, fmtDistance, usableDv } from './common';
+import { burnSeconds, cannotFly, costVars, fmtDistance, burnTooLong } from './common';
 import { Sequence } from './sequence';
 
 export type Where = 'now' | Apsis | { time: Lazy<number> };
@@ -160,7 +160,7 @@ export function changeAltitude(targetAlt: number): Maneuver {
     const dv2 = Math.abs(Math.sqrt(ctx.mu / r) - apsisSpeed(ctx.mu, r, g.first.rBurn));
     const t2 = t1 + periodOf(ctx.mu, aT) / 2;
     const dv = dv1 + dv2;
-    if (dv > usableDv(ctx)) return infeasible('Not enough fuel for that transfer.');
+    if (burnTooLong(ctx, dv)) return infeasible('The drive would overheat flying that transfer.');
     const eta = t2 - ctx.time + burnSeconds(ctx, dv2) / 2;
     const mode1 = vTransfer1 > vHere ? Attitude.Prograde : Attitude.Retrograde;
     const mode2 = r > g.first.rBurn ? Attitude.Prograde : Attitude.Retrograde;

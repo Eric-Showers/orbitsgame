@@ -35,9 +35,10 @@ function ship(over: Partial<EntityView> = {}): EntityView {
     vel: { x: 0, y: 2_100, z: 0 },
     heading: { x: 0, y: 1, z: 0 },
     throttle: 0,
-    fuel: 1000,
-    fuelMax: 1000,
-    deltaV: 2000,
+    heat: 0,
+    heatCapacity: 1000,
+    outputCap: 1,
+    deltaV: 0,
     mode: Attitude.Hold,
     target: null,
     hp: 100,
@@ -103,10 +104,10 @@ describe('vessel AI conditions', () => {
     expect(on(snap())).toEqual([]);
   });
 
-  it('warns of low fuel, then bingo fuel instead', () => {
-    expect(on(snap({ self: ship({ fuel: 200 }) }))).toEqual(['fuel.low']);
-    expect(on(snap({ self: ship({ fuel: 80 }) }))).toEqual(['fuel.bingo']);
-    expect(on(snap({ self: ship({ fuel: 0 }) }))).toEqual([]); // fuel.out is a one-shot cue
+  it('warns of rising drive heat, then the limit instead', () => {
+    expect(on(snap({ self: ship({ heat: 600 }) }))).toEqual(['heat.high']);
+    expect(on(snap({ self: ship({ heat: 900, outputCap: 0.5 }) }))).toEqual(['heat.limit']);
+    expect(on(snap({ self: ship({ heat: 100 }) }))).toEqual([]); // heat.derate is a one-shot cue
   });
 
   it('flags a low periapsis, and an impact trajectory with time to impact', () => {
@@ -169,17 +170,17 @@ describe('vessel AI conditions', () => {
 });
 
 describe('vessel AI cues', () => {
-  it('reports splash, our own loss, fuel-out and hull damage', () => {
+  it('reports splash, our own loss, drive derating and hull damage', () => {
     const me = ship({ hp: 60 });
     const drone = ship({ id: 3, team: 1, shipClass: DRONE, alive: false });
     const ev = (kind: SimEventKind, id: number) => ({ kind, id, pos: me.pos });
     const s = snap({
       self: me,
       entities: [me, drone],
-      events: [ev(SimEventKind.ShipDestroyed, 3), ev(SimEventKind.FuelOut, 0)],
+      events: [ev(SimEventKind.ShipDestroyed, 3), ev(SimEventKind.Overheat, 0)],
     });
     const cues = evaluateCues(s, snap(), T, { burnSeconds: 0, hullMax: 100 });
-    expect(cues.map((c) => c.id)).toEqual(['status.splash', 'fuel.out', 'damage.hull']);
+    expect(cues.map((c) => c.id)).toEqual(['status.splash', 'heat.derate', 'damage.hull']);
     expect(cues[0].vars?.target).toBe('Drone 3');
     expect(cues[2].vars?.hp).toBe('60%');
   });
@@ -265,24 +266,24 @@ describe('vessel advisor', () => {
   it('greets, then warns once per crossing with hysteresis and cooldown', () => {
     const { ai, heard } = rig();
     let t = 0;
-    const feed = (fuel: number): void =>
-      ai.observe(snap({ self: ship({ fuel }), simTime: t }), (t += 5));
-    feed(1000);
-    feed(240);
-    feed(230);
-    feed(260); // inside hysteresis: still latched
-    feed(240);
-    expect(heard.map((e) => e.id)).toEqual(['status.online', 'fuel.low']);
-    feed(400); // clears
-    feed(240); // re-arms, but the cooldown has not run out
-    expect(heard.filter((e) => e.id === 'fuel.low')).toHaveLength(1);
+    const feed = (heat: number): void =>
+      ai.observe(snap({ self: ship({ heat }), simTime: t }), (t += 5));
+    feed(0);
+    feed(560);
+    feed(570);
+    feed(480); // inside hysteresis: still latched
+    feed(560);
+    expect(heard.map((e) => e.id)).toEqual(['status.online', 'heat.high']);
+    feed(300); // clears
+    feed(560); // re-arms, but the cooldown has not run out
+    expect(heard.filter((e) => e.id === 'heat.high')).toHaveLength(1);
     t += 100;
-    feed(400);
-    feed(240);
-    expect(heard.filter((e) => e.id === 'fuel.low')).toHaveLength(2);
+    feed(300);
+    feed(560);
+    expect(heard.filter((e) => e.id === 'heat.high')).toHaveLength(2);
     const ev = heard[1];
     expect(ev).toMatchObject({ priority: 'warning', vessel: 0, speaker: 'ARGUS' });
-    expect(ev.text).toContain('24%');
+    expect(ev.text).toContain('56%');
   });
 
   it('repeats an inbound-missile call while the threat lasts', () => {
@@ -315,7 +316,7 @@ describe('vessel advisor', () => {
       Object.values(o as object).forEach((v) => v && typeof v === 'object' && deep(v));
       return Object.freeze(o);
     };
-    const me = ship({ fuel: 50, target: 3 });
+    const me = ship({ heat: 50, target: 3 });
     const s = deep(snap({ self: me, entities: [me, near(me, 9_000, { id: 3, team: 1 })] }));
     expect(() => ai.observe(s, 0)).not.toThrow();
   });
@@ -337,7 +338,7 @@ describe('voice data', () => {
     ).map((c) => c.id);
     for (const id of [
       ...ids,
-      'fuel.out',
+      'heat.derate',
       'status.lost',
       'status.splash',
       'status.orbit',

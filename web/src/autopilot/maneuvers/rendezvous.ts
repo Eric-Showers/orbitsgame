@@ -2,7 +2,7 @@ import { len, sub } from '../../sim/bridge';
 import { angleOf, semiMajorFor, TAU, wrapTau } from '../orbitmath';
 import { failed, infeasible, type Ctx, type Maneuver, type Plan, type Status } from '../types';
 import { ApsisBurn, changeAltitude } from './apsis';
-import { cannotFly, costVars, fmtDistance, usableDv } from './common';
+import { cannotFly, costVars, fmtDistance, burnTooLong } from './common';
 import { MatchVelocity } from './match';
 
 type Stage = 'altitude' | 'phasing' | 'match';
@@ -139,7 +139,8 @@ export class Rendezvous implements Maneuver {
       eta += ph.k * ph.period;
     }
     dv += rc.matchAllowance;
-    if (dv > usableDv(ctx)) return infeasible('Not enough fuel to reach that target.');
+    if (burnTooLong(ctx, dv))
+      return infeasible('The drive cannot deliver that much thrust before it overheats.');
     eta += 30;
     return {
       feasible: true,

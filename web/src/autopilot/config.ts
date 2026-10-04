@@ -24,8 +24,6 @@ export interface PilotConfig {
     /** Never plan an orbit with a periapsis below this altitude (m). */
     minAltitude: number;
     maxAltitude: number;
-    /** Fraction of the tank held back from any plan. */
-    reserveDvFraction: number;
     /** Below this eccentricity an orbit is "circular": any point is an apsis. */
     circularEcc: number;
   };

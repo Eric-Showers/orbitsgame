@@ -33,7 +33,8 @@ export class Evade implements Maneuver {
     if (blocked) return infeasible(blocked);
     const n = this.threats(ctx);
     if (n === 0) return infeasible('Nothing is locked on us right now.');
-    const dv = ctx.self.maxAccel * ctx.cfg.evade.burnSeconds * ctx.cfg.evade.throttle;
+    const dv =
+      ctx.self.maxAccel * ctx.self.outputCap * ctx.cfg.evade.burnSeconds * ctx.cfg.evade.throttle;
     return {
       feasible: true,
       nodes: [],
@@ -63,7 +64,6 @@ export class Evade implements Maneuver {
     }
     if (threatened) this.clearSince = ctx.time;
     if (threatened && !this.burning) {
-      if (ctx.self.fuel <= 0) return failed('No fuel to dodge with.');
       const o = ctx.orbit;
       const roomBelow = o ? o.periapsis - ctx.planetRadius > cfg.altitudeMargin * 2 : false;
       const mode = this.outward || !roomBelow ? Attitude.RadialOut : Attitude.RadialIn;

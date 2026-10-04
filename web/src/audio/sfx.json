@@ -10,7 +10,7 @@
   },
   "simEvents": {
     "Crash": "crash",
-    "FuelOut": "fuel.out",
+    "Overheat": "heat.derate",
     "MissileLaunched": "missile.launch",
     "MineDropped": "mine.drop",
     "MineTriggered": "mine.trigger",
@@ -152,7 +152,7 @@
         { "wave": "sine", "freq": 45, "freqEnd": 18, "dur": 2.0, "gain": 0.9 }
       ]
     },
-    "fuel.out": {
+    "heat.derate": {
       "bus": "physical",
       "layers": [
         { "wave": "sawtooth", "freq": 140, "freqEnd": 30, "dur": 0.9, "gain": 0.3 },

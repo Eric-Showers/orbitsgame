@@ -9,7 +9,14 @@ import {
   type Plan,
   type Status,
 } from '../types';
-import { burnSeconds, cannotFly, costVars, desiredHeading, headingError, usableDv } from './common';
+import {
+  burnSeconds,
+  burnTooLong,
+  cannotFly,
+  costVars,
+  desiredHeading,
+  headingError,
+} from './common';
 
 /** Where, when and in which direction a burn happens, decided at plan/start time. */
 export interface BurnSolution {
@@ -60,7 +67,7 @@ export abstract class BurnManeuver implements Maneuver {
     if (sol.dv < ctx.cfg.burn.minDvToBurn) return infeasible(this.idleReason);
     const blocked = cannotFly(ctx);
     if (blocked) return infeasible(blocked);
-    if (sol.dv > usableDv(ctx)) return infeasible('Not enough fuel for that burn.');
+    if (burnTooLong(ctx, sol.dv)) return infeasible('The drive would overheat flying that burn.');
     const node: BurnNode = { time: sol.time, mode: sol.mode, dv: sol.dv, label: this.label };
     const eta = sol.time - ctx.time + burnSeconds(ctx, sol.dv) / 2;
     return { feasible: true, nodes: [node], dv: sol.dv, eta, vars: costVars({ dv: sol.dv, eta }) };
@@ -122,10 +129,6 @@ export abstract class BurnManeuver implements Maneuver {
       ctx.helm.setThrottle(0);
       this.phase = 'done';
       return { state: 'done', phase: 'done', progress: 1, note: 'Burn complete', coast: 0 };
-    }
-    if (ctx.self.fuel <= 0) {
-      ctx.helm.setThrottle(0);
-      return failed('Out of fuel mid-burn.');
     }
     if (ctx.time - this.burnStart > cfg.burn.maxBurnSeconds) {
       ctx.helm.setThrottle(0);

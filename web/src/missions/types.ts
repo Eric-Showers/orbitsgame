@@ -25,8 +25,6 @@ export interface OrbitDef {
 export interface LoadoutDef {
   missiles?: number;
   mines?: number;
-  /** Fraction of a full tank, 0..1. Defaults to 1. */
-  fuel?: number;
 }
 
 /** Hostile behaviours, driven client-side against the player. Combine freely. */
@@ -113,14 +111,13 @@ export type ObjectiveDef =
 export interface FailDef {
   /** Tags of ships that must survive. */
   protect?: string[];
-  /** Fail when the player's tank runs dry. */
-  fuelOut?: boolean;
 }
 
-/** Stars: 1 for completing, +1 within `parTime` of mission time, +1 with at least `fuelReserve` of the tank left. Time never ends a mission. */
+/** Stars: 1 for completing, +1 within `parTime` of mission time, +1 if the drive never climbs above `heatCeiling` of its thermal limit. Time never ends a mission. */
 export interface ScoreDef {
   parTime: number;
-  fuelReserve: number;
+  /** Peak drive heat the run may reach, as a fraction of the thermal limit (0..1). */
+  heatCeiling: number;
 }
 
 /** A line ARGUS speaks during a mission, at the moment its trigger fires. */

@@ -62,6 +62,7 @@ fn new_munition(id: u32, kind: Kind, owner: &Entity, vel: Vec3, target: Option<u
         ai_timer: 0.0,
         main_dv_left: spec.delta_v,
         rcs_dv_left: spec.rcs_dv,
+        charge: if spec.battery_j > 0.0 { 1.0 } else { 0.0 },
         age: 0.0,
         active: kind == Kind::Missile,
         owner: Some(owner.id),
@@ -224,6 +225,12 @@ fn update_target(
     }
 }
 
+/// True when the planet hides the sun from `pos` (cylindrical shadow).
+fn in_shadow(pos: Vec3, sun: Vec3, radius: f64) -> bool {
+    let along = pos.dot(sun);
+    along < 0.0 && (pos - sun * along).length() < radius
+}
+
 fn gravity(mu: f64, pos: Vec3) -> Vec3 {
     let r2 = pos.length_squared();
     pos * (-mu / (r2 * r2.sqrt()))
@@ -245,13 +252,23 @@ fn fly(m: &mut Entity, spec: &MunitionSpec, want: Vec3, dt: f64) -> Vec3 {
         m.rcs_dv_left = (m.rcs_dv_left - turn * spec.rcs_turn_cost).max(0.0);
     }
 
+    let battery_dv = if spec.battery_j > 0.0 {
+        m.charge * spec.battery_j / spec.energy_per_dv
+    } else {
+        f64::INFINITY
+    };
     let thrust = m
         .heading
         .dot(want)
         .max(0.0)
         .min(spec.accel)
-        .min(m.main_dv_left / dt);
-    m.main_dv_left = (m.main_dv_left - thrust * dt).max(0.0);
+        .min(m.main_dv_left / dt)
+        .min(battery_dv / dt);
+    let spent = thrust * dt;
+    m.main_dv_left = (m.main_dv_left - spent).max(0.0);
+    if spec.battery_j > 0.0 {
+        m.charge = (m.charge - spent * spec.energy_per_dv / spec.battery_j).max(0.0);
+    }
     m.throttle = thrust / spec.accel;
     let main = m.heading * thrust;
 
@@ -269,7 +286,7 @@ fn fly(m: &mut Entity, spec: &MunitionSpec, want: Vec3, dt: f64) -> Vec3 {
 /// Advances every live munition by `dt`: targeting, guidance burns, motion,
 /// lifetime, then proximity fuses. Call after ships have been moved for the
 /// same tick; fuses treat each ship as moving in a straight line over `dt`.
-pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<Event>) {
+pub fn step(entities: &mut [Entity], planet: &Planet, sun: Vec3, dt: f64, events: &mut Vec<Event>) {
     let mut moved = Vec::new();
     for i in 0..entities.len() {
         let Some(spec) = entities[i].munition().filter(|_| entities[i].alive) else {
@@ -282,6 +299,9 @@ pub fn step(entities: &mut [Entity], planet: &Planet, dt: f64, events: &mut Vec<
             want = guidance_accel(m, spec, &entities[t]);
         }
         let m = &mut entities[i];
+        if spec.solar_w > 0.0 && !in_shadow(m.pos, sun, planet.radius) {
+            m.charge = (m.charge + spec.solar_w * dt / spec.battery_j).min(1.0);
+        }
         let accel = fly(m, spec, want, dt);
         let start = m.pos;
         let v_half = m.vel + (gravity(planet.mu, m.pos) + accel) * (0.5 * dt);
@@ -386,6 +406,7 @@ mod tests {
     const PLANET: Planet = Planet::SCALED;
     const R: f64 = 680_000.0;
     const DT: f64 = 1.0 / 60.0;
+    const SUN: Vec3 = Vec3::new(1.0, 0.0, 0.0);
 
     fn ship(id: u32, class: u8, team: u8, pos: Vec3, vel: Vec3) -> Entity {
         let c = &SHIP_CLASSES[class as usize];
@@ -410,6 +431,7 @@ mod tests {
             ai_timer: 0.0,
             main_dv_left: 0.0,
             rcs_dv_left: 0.0,
+            charge: 0.0,
             age: 0.0,
             active: false,
             owner: None,
@@ -434,7 +456,7 @@ mod tests {
                 s.pos += v_half * DT;
                 s.vel = v_half + gravity(PLANET.mu, s.pos) * (0.5 * DT);
             }
-            step(es, &PLANET, DT, events);
+            step(es, &PLANET, SUN, DT, events);
         }
     }
 
@@ -613,6 +635,42 @@ mod tests {
             )
         };
         assert_eq!(go(), go());
+    }
+
+    #[test]
+    fn mine_charges_in_sun_and_not_in_shadow() {
+        let sunlit = Vec3::new(R + 1_000_000.0, 0.0, 0.0);
+        let mut es = vec![orbiting(1, 3, 1, R + 40_000.0, 0.0)];
+        assert!(drop_mine(&mut es, 1, 10, &mut Vec::new()));
+        es.last_mut().unwrap().charge = 0.5;
+        es.last_mut().unwrap().pos = sunlit.with_z(0.0);
+        let mut ev = Vec::new();
+        step(&mut es, &PLANET, SUN, DT, &mut ev);
+        assert!(get(&es, 10).charge > 0.5);
+
+        let shadowed = Vec3::new(-(R + 1_000_000.0), 0.0, 0.0);
+        let mut es = vec![orbiting(1, 3, 1, R + 40_000.0, 0.0)];
+        assert!(drop_mine(&mut es, 1, 10, &mut Vec::new()));
+        es.last_mut().unwrap().charge = 0.5;
+        es.last_mut().unwrap().pos = shadowed;
+        step(&mut es, &PLANET, SUN, DT, &mut Vec::new());
+        assert_eq!(get(&es, 10).charge, 0.5);
+    }
+
+    #[test]
+    fn low_battery_limits_mine_thrust() {
+        let mut e = ship(10, 3, 2, Vec3::ZERO, Vec3::ZERO);
+        e.kind = Kind::Mine;
+        e.active = true;
+        e.heading = Vec3::new(1.0, 0.0, 0.0);
+        e.main_dv_left = MINE.delta_v;
+        e.rcs_dv_left = 0.0;
+        e.charge = 0.0;
+        let a_empty = fly(&mut e.clone(), &MINE, Vec3::new(1.0, 0.0, 0.0), DT).length();
+        e.charge = 1.0;
+        let a_full = fly(&mut e, &MINE, Vec3::new(1.0, 0.0, 0.0), DT).length();
+        assert_eq!(a_empty, 0.0);
+        assert!(a_full > 0.0 && a_full <= MINE.accel + 1e-9);
     }
 
     #[test]

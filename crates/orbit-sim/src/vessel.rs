@@ -228,6 +228,12 @@ pub struct MunitionSpec {
     pub rcs_turn_rate: f64,
     /// RCS delta-v spent per radian of attitude change (m/s/rad).
     pub rcs_turn_cost: f64,
+    /// Battery capacity (J). Zero means the munition has no battery.
+    pub battery_j: f64,
+    /// Battery energy spent per m/s of main-motor delta-v (J per m/s).
+    pub energy_per_dv: f64,
+    /// Solar charging power in sunlight (W).
+    pub solar_w: f64,
 }
 
 pub const MISSILE: MunitionSpec = MunitionSpec {
@@ -247,6 +253,9 @@ pub const MISSILE: MunitionSpec = MunitionSpec {
     rcs_accel: 1.5,
     rcs_turn_rate: 6.0,
     rcs_turn_cost: 4.0,
+    battery_j: 0.0,
+    energy_per_dv: 0.0,
+    solar_w: 0.0,
 };
 
 pub const MINE: MunitionSpec = MunitionSpec {
@@ -266,6 +275,9 @@ pub const MINE: MunitionSpec = MunitionSpec {
     rcs_accel: 3.0,
     rcs_turn_rate: 3.0,
     rcs_turn_cost: 1.0,
+    battery_j: 1.0e6,
+    energy_per_dv: 4_000.0,
+    solar_w: 1_000.0,
 };
 
 /// One simulated object: a ship, a missile or a mine.
@@ -297,6 +309,8 @@ pub struct Entity {
     /// whether a mine woke up.
     pub main_dv_left: f64,
     pub rcs_dv_left: f64,
+    /// Battery state of charge, 0 to 1 (munitions with a battery only).
+    pub charge: f64,
     pub age: f64,
     pub active: bool,
     pub owner: Option<u32>,

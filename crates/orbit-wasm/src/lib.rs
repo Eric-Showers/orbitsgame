@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 
 /// Number of f64 values per entity in `Game::entities()`. Field order is
 /// mirrored by `web/src/sim/bridge.ts`.
-pub const ENTITY_STRIDE: usize = 24;
+pub const ENTITY_STRIDE: usize = 25;
 
 #[wasm_bindgen]
 pub struct Game {
@@ -96,7 +96,7 @@ impl Game {
     /// Static stats of a munition (1 = missile, 2 = mine): mass, delta-v,
     /// accel, closing speed, blast radius, damage, arm time, trigger range,
     /// lifetime, eject speed, RCS delta-v, RCS accel, RCS turn rate, RCS
-    /// turn cost. Empty for other kinds.
+    /// turn cost, battery capacity (J), energy per m/s (J), solar power (W). Empty for other kinds.
     pub fn munition_stats(kind: u8) -> Vec<f64> {
         let m = match kind {
             1 => &MISSILE,
@@ -118,6 +118,9 @@ impl Game {
             m.rcs_accel,
             m.rcs_turn_rate,
             m.rcs_turn_cost,
+            m.battery_j,
+            m.energy_per_dv,
+            m.solar_w,
         ]
     }
 
@@ -192,7 +195,7 @@ impl Game {
     /// Flat snapshot, `ENTITY_STRIDE` values per entity:
     /// id, kind, team, class, alive, pos xyz, vel xyz, heading xyz, throttle,
     /// heat (MJ), heat_capacity (MJ), output_cap (0..1 of full thrust), mode,
-    /// target (-1 = none), hp, mass, max_accel, delta_v (munitions only).
+    /// target (-1 = none), hp, mass, max_accel, delta_v (munitions only), battery charge (0..1, munitions with a battery).
     pub fn entities(&self) -> Vec<f64> {
         let mut out = Vec::with_capacity(self.world.entities.len() * ENTITY_STRIDE);
         for e in &self.world.entities {
@@ -225,6 +228,7 @@ impl Game {
                 e.mass(),
                 e.max_accel(),
                 e.delta_v(),
+                e.charge,
             ]);
         }
         out

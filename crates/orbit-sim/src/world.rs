@@ -5,6 +5,9 @@ use crate::vessel::{AttitudeMode, Entity, Kind, SHIP_CLASSES};
 use crate::{weapons, Planet, Vec3};
 use serde::{Deserialize, Serialize};
 
+/// Sun direction (deg from +x in the orbital plane), as in web/src/render/celestial.json.
+const SUN_ANGLE_DEG: f64 = 25.0;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum EventKind {
@@ -34,6 +37,8 @@ pub struct Event {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct World {
     pub planet: Planet,
+    /// Unit vector from the planet toward the sun (planar, z = 0).
+    pub sun: Vec3,
     /// Keep gameplay in the z = 0 plane (out-of-plane modes are refused).
     pub planar: bool,
     pub entities: Vec<Entity>,
@@ -46,6 +51,11 @@ impl World {
     pub fn new(planet: Planet) -> Self {
         Self {
             planet,
+            sun: Vec3::new(
+                libm::cos(SUN_ANGLE_DEG.to_radians()),
+                libm::sin(SUN_ANGLE_DEG.to_radians()),
+                0.0,
+            ),
             planar: true,
             entities: Vec::new(),
             time: 0.0,
@@ -80,6 +90,7 @@ impl World {
             ai_timer: 0.0,
             main_dv_left: 0.0,
             rcs_dv_left: 0.0,
+            charge: 0.0,
             age: 0.0,
             active: false,
             owner: None,
@@ -285,7 +296,13 @@ impl World {
                 });
             }
         }
-        weapons::step(&mut self.entities, &self.planet, dt, &mut self.events);
+        weapons::step(
+            &mut self.entities,
+            &self.planet,
+            self.sun,
+            dt,
+            &mut self.events,
+        );
         self.time += dt;
     }
 }

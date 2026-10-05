@@ -19,15 +19,15 @@ The setting is a navy that happens to operate in orbit. Tone is terse and profes
 
 ## Vocabulary
 
-| Plain | Naval |
-| --- | --- |
-| behind | astern |
-| beside | on the beam |
-| engine off | engine secured |
-| full throttle | all ahead full |
-| sandbox | open patrol |
-| autopilot panel | helm |
-| clock | ship time |
+| Plain             | Naval                      |
+| ----------------- | -------------------------- |
+| behind            | astern                     |
+| beside            | on the beam                |
+| engine off        | engine secured             |
+| full throttle     | all ahead full             |
+| sandbox           | open patrol                |
+| autopilot panel   | helm                       |
+| clock             | ship time                  |
 | target (selected) | track / designated contact |
 
 ## Vessel names
@@ -35,3 +35,7 @@ The setting is a navy that happens to operate in orbit. Tone is terse and profes
 - Player hull: Corvette. Enemies and allies: Gunboat, Minelayer, Freighter, Raider, Wingman.
 - Practice targets are **Target Drones**. Nav aids are **beacons**.
 - Callsign strings and `SHIP_CLASS_NAMES` are identifiers used by tests and the HUD. Rename display text only, not those values.
+
+## Adversary pilots
+
+Enemy ships that fly themselves carry a named pilot: Kestrel, Shrike, Hunter, Fang, Talon and Reaper. Each is a callsign, not a rank. Briefings describe them by behaviour (reactive, patient, pursuing) and never by hit points or tier numbers.

@@ -1,3 +1,5 @@
+import type { PilotDef } from '../adversary/pilot';
+
 // Mission data model. Missions live in `missions.json`; everything a designer
 // tunes (orbits, loadouts, ranges, timers, par scores) is a field here, never a
 // constant in the runtime. Distances in metres, times in seconds, speeds in m/s.
@@ -29,6 +31,12 @@ export interface LoadoutDef {
 
 /** Hostile behaviours, driven client-side against the player. Combine freely. */
 export interface AiDef {
+  /**
+   * Scripted pilot that flies the hull itself (tier 0 passive, 1 reacts, 2
+   * anticipates, 3 pursues). Replaces `evade`; combine with `gunner`/`miner`
+   * for the weapons it fires.
+   */
+  pilot?: PilotDef;
   /** Tag of the ship this AI hunts and shoots at; defaults to the player. */
   prey?: string;
   /** Fires missiles at the player when in range. */

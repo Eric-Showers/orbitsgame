@@ -1,3 +1,4 @@
+import { AdversaryPilot } from '../adversary/pilot';
 import { Attitude, EntityKind, len, sub } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 import type { AiDef } from './types';
@@ -13,6 +14,7 @@ export class HostileAi {
   private evadeUntil = -Infinity;
   private evading = false;
   private evadeOut = true;
+  private readonly pilot: AdversaryPilot | null;
 
   get prey(): string | undefined {
     return this.def.prey;
@@ -25,6 +27,12 @@ export class HostileAi {
   ) {
     this.nextShot = spawnTime + (def.gunner?.firstShotDelay ?? 0);
     this.nextDrop = spawnTime + (def.miner?.firstDropDelay ?? 0);
+    this.pilot = def.pilot ? new AdversaryPilot(id, def.pilot, def.gunner?.range ?? 14_000) : null;
+  }
+
+  /** Highest time warp this hull's pilot allows right now. */
+  warpCap(): number {
+    return this.pilot?.warpCap() ?? Infinity;
   }
 
   act(s: FlightSession, quarry: number): void {
@@ -43,7 +51,13 @@ export class HostileAi {
     if (miner && now >= this.nextDrop && range <= miner.range) {
       if (g.drop_mine(this.id) >= 0) this.nextDrop = now + miner.cooldown;
     }
-    if (evade) {
+    if (this.pilot) {
+      this.pilot.act(s, quarry, {
+        setAttitude: (mode) => g.set_attitude(this.id, mode),
+        setThrottle: (t) => g.set_throttle(this.id, t),
+        setTarget: (t) => g.set_target(this.id, t ?? -1),
+      });
+    } else if (evade) {
       const threatened = s
         .all()
         .some(

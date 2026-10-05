@@ -43,6 +43,8 @@ export class FlightSession {
   throttleRamp = 0;
   /** Rides along with sim steps; set by the autopilot. */
   hook: StepHook | null = null;
+  /** Highest warp level other systems allow (e.g. hostile pilots under way); set each frame. */
+  warpCeiling = Infinity;
   /** Called when the commander steers by hand: throttle, attitude, rotation or target (not via the helm). */
   onManualInput: (() => void) | null = null;
   private acc = 0;
@@ -86,7 +88,11 @@ export class FlightSession {
 
   /** Warp actually applied: requested level, capped while thrusting. */
   effectiveWarp(): number {
-    const requested = Math.min(WARP_LEVELS[this.warpIndex], this.hook?.warpCap() ?? Infinity);
+    const requested = Math.min(
+      WARP_LEVELS[this.warpIndex],
+      this.hook?.warpCap() ?? Infinity,
+      this.warpCeiling,
+    );
     return this.player().throttle > 0 ? Math.min(requested, MAX_WARP_UNDER_THRUST) : requested;
   }
 

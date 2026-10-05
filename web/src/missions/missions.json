@@ -1001,6 +1001,394 @@
         "parTime": 260,
         "heatCeiling": 0.6
       }
+    },
+    {
+      "id": "kestrel",
+      "title": "Kestrel",
+      "summary": "A gunboat that finally fights back with its thrusters.",
+      "briefing": [
+        "Intelligence has the gunboat Kestrel 50 km ahead on a matching orbit. She has a pilot now. When a bird closes she lights her engines once and slides sideways.",
+        "One missile will not do it, because she has time to get clear. Put two birds in the air together so that she can only dodge one."
+      ],
+      "lesson": {
+        "concept": "Saturation: more than one threat at once",
+        "points": [
+          "A reactive pilot answers one threat with one burn. A second missile arrives while she is still turning.",
+          "Fire both birds within a few seconds of each other.",
+          "Spares matter: keep a missile in reserve in case the first pair misses."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Kestrel is a reactive pilot. She dodges one bird, not two. Fire both together."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 4,
+          "mines": 0
+        }
+      },
+      "ships": [
+        {
+          "tag": "kestrel",
+          "name": "Kestrel",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 50000
+          },
+          "loadout": {
+            "missiles": 0
+          },
+          "ai": {
+            "pilot": {
+              "tier": 1
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy Kestrel",
+          "targets": ["kestrel"]
+        }
+      ],
+      "score": {
+        "parTime": 600,
+        "heatCeiling": 0.6
+      }
+    },
+    {
+      "id": "shrike",
+      "title": "Shrike",
+      "summary": "Shrike sees a bird coming and starts running early.",
+      "briefing": [
+        "Shrike is a gunboat with a patient pilot. She watches your missiles from the moment they leave the rail, burns early, and keeps burning until the bird has nothing left to chase her with.",
+        "Engines run hot. Watch her heat: a ship that has burned for a long time cannot burn hard. Make her spend it, then finish her."
+      ],
+      "lesson": {
+        "concept": "Attrition: make the dodger spend her heat",
+        "points": [
+          "Dodging costs heat, and heat caps thrust.",
+          "A missile that is dodged is not wasted if it drains the target's cooling margin. Keep birds flying.",
+          "Fire in waves, not all at once, and shoot when she is sluggish."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Shrike dodges early and for long. Spend her heat with a steady stream of birds, then close."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 8,
+          "mines": 0
+        }
+      },
+      "ships": [
+        {
+          "tag": "shrike",
+          "name": "Shrike",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 55000
+          },
+          "loadout": {
+            "missiles": 0
+          },
+          "ai": {
+            "pilot": {
+              "tier": 2
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy Shrike",
+          "targets": ["shrike"]
+        }
+      ],
+      "score": {
+        "parTime": 900,
+        "heatCeiling": 0.6
+      }
+    },
+    {
+      "id": "hunter",
+      "title": "Hunter",
+      "summary": "The adversary comes after you, and her gun has a longer reach than yours.",
+      "briefing": [
+        "Hunter is a gunboat that flies at you. She closes to her standoff range, puts her nose on you and fires two missiles when she is inside her lock range. She also dodges.",
+        "You cannot sit and wait. Fire as she comes in, then keep moving. Her missiles are as lethal as yours."
+      ],
+      "lesson": {
+        "concept": "Pursuit: the enemy closes to engage",
+        "points": [
+          "A pursuer trades her heat for position. When she is hot, she cannot dodge.",
+          "Open fire at long range while she closes; every second she spends burning towards you is a second she is not dodging.",
+          "Burn away if she gets inside her lock range."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Hunter is closing on us and carries two birds. Hit her while she is still hot from the approach."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 8,
+          "mines": 0
+        }
+      },
+      "ships": [
+        {
+          "tag": "hunter",
+          "name": "Hunter",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 60000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "pilot": {
+              "tier": 3
+            },
+            "gunner": {
+              "range": 16000,
+              "cooldown": 40,
+              "firstShotDelay": 20
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy Hunter",
+          "targets": ["hunter"]
+        }
+      ],
+      "score": {
+        "parTime": 1200,
+        "heatCeiling": 0.7
+      }
+    },
+    {
+      "id": "wolf-pack",
+      "title": "Wolf Pack",
+      "summary": "Two adversaries, one flight plan. Do not let them set the range.",
+      "briefing": [
+        "Two gunboats, Fang and Talon, hold your orbit 50 km ahead and 40 km astern. Fang dodges early; Talon pursues.",
+        "Kill Talon first because she will close with you. Then run Fang down."
+      ],
+      "lesson": {
+        "concept": "Divide and destroy",
+        "points": [
+          "Kill the pursuer first. The dodger is no threat to you.",
+          "Two ships can bracket you; do not stay between them.",
+          "Burn away from the second ship while you work the first."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Two adversaries. Talon pursues from astern. Fang dodges ahead. Talon first."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 10,
+          "mines": 0
+        }
+      },
+      "ships": [
+        {
+          "tag": "talon",
+          "name": "Talon",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 78000,
+            "lead": -40000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "pilot": {
+              "tier": 3
+            },
+            "gunner": {
+              "range": 16000,
+              "cooldown": 45,
+              "firstShotDelay": 20
+            }
+          }
+        },
+        {
+          "tag": "fang",
+          "name": "Fang",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 80000,
+            "lead": 50000
+          },
+          "loadout": {
+            "missiles": 0
+          },
+          "ai": {
+            "pilot": {
+              "tier": 2
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "talon",
+          "type": "destroy",
+          "label": "Destroy Talon",
+          "targets": ["talon"]
+        },
+        {
+          "id": "fang",
+          "type": "destroy",
+          "label": "Destroy Fang",
+          "targets": ["fang"]
+        }
+      ],
+      "score": {
+        "parTime": 1800,
+        "heatCeiling": 0.7
+      }
+    },
+    {
+      "id": "last-convoy",
+      "title": "Last Convoy",
+      "summary": "A raider that can think about your freighter and about you. Keep the freighter alive.",
+      "briefing": [
+        "A freighter shares your orbit 4 km ahead. Reaper, an expert raider, is closing from below and astern. She goes for the freighter, dodges your birds well and punishes anything that gets inside her lock.",
+        "You have eight birds and no margin for waste. Fire in waves and keep her spending heat on dodges while the freighter slips away."
+      ],
+      "lesson": {
+        "concept": "Everything together: protect, pursue and out-heat",
+        "points": [
+          "Protect the freighter first, yourself second.",
+          "Every dodge Reaper makes costs her heat; stack threats until she cannot afford another.",
+          "Use your orbit: a lower pass gives you speed and a shorter window."
+        ]
+      },
+      "coach": [
+        {
+          "when": {
+            "start": true
+          },
+          "text": "Reaper is the best pilot we have met. Keep birds in the air and keep the freighter alive."
+        }
+      ],
+      "player": {
+        "class": "corvette",
+        "orbit": {
+          "pe": 80000
+        },
+        "loadout": {
+          "missiles": 8,
+          "mines": 0
+        }
+      },
+      "ships": [
+        {
+          "tag": "freighter",
+          "name": "Freighter",
+          "class": "drone",
+          "team": "neutral",
+          "orbit": {
+            "pe": 80000,
+            "lead": 4000
+          }
+        },
+        {
+          "tag": "reaper",
+          "name": "Reaper",
+          "class": "gunboat",
+          "team": "enemy",
+          "orbit": {
+            "pe": 72000,
+            "lead": -50000
+          },
+          "loadout": {
+            "missiles": 2
+          },
+          "ai": {
+            "prey": "freighter",
+            "pilot": {
+              "tier": 3
+            },
+            "gunner": {
+              "range": 16000,
+              "cooldown": 30,
+              "firstShotDelay": 0
+            }
+          }
+        }
+      ],
+      "objectives": [
+        {
+          "id": "kill",
+          "type": "destroy",
+          "label": "Destroy Reaper",
+          "targets": ["reaper"]
+        }
+      ],
+      "score": {
+        "parTime": 2000,
+        "heatCeiling": 0.7
+      },
+      "fail": {
+        "protect": ["freighter"]
+      }
     }
   ]
 }

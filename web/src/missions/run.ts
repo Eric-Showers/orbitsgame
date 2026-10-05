@@ -99,6 +99,7 @@ export class MissionRun {
       const quarry = ai.prey === undefined ? s.playerId : (this.ids.get(ai.prey) ?? -1);
       ai.act(s, quarry);
     }
+    s.warpCeiling = Math.min(Infinity, ...this.ais.map((ai) => ai.warpCap()));
     s.refresh();
     const t0 = s.time;
     if (!s.paused) this.wallSeconds += realDt;

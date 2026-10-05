@@ -3,11 +3,12 @@ import { fmtDistance, fmtDuration, fmtSpan, fmtSpeed } from '../../ui/format';
 import { angleBetween, scale, unit } from '../orbitmath';
 import type { Ctx, Plan } from '../types';
 
-/** Direction the ship's attitude hold would point in, planar. Mirrors `World::desired_heading`. */
-export function desiredHeading(ctx: Ctx, mode: Attitude): Vec3 | null {
-  const me = ctx.self;
-  const target = ctx.entity(me.target);
-  const tgt = target?.alive ? target : undefined;
+/** Planar direction an attitude hold points `me` along, given its target (if any). Mirrors `World::desired_heading`. */
+export function modeDirection(
+  me: EntityView,
+  tgt: EntityView | undefined,
+  mode: Attitude,
+): Vec3 | null {
   let dir: Vec3 | null;
   switch (mode) {
     case Attitude.Hold:
@@ -42,6 +43,12 @@ export function desiredHeading(ctx: Ctx, mode: Attitude): Vec3 | null {
   if (!dir) return null;
   const flat = unit({ x: dir.x, y: dir.y, z: 0 });
   return flat.x === 0 && flat.y === 0 ? null : flat;
+}
+
+/** Direction the ship's attitude hold would point in, planar. */
+export function desiredHeading(ctx: Ctx, mode: Attitude): Vec3 | null {
+  const target = ctx.entity(ctx.self.target);
+  return modeDirection(ctx.self, target?.alive ? target : undefined, mode);
 }
 
 /** Heading error (rad) from the commanded attitude mode; Infinity if undefined. */

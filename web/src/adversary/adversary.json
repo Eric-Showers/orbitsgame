@@ -1,0 +1,53 @@
+{
+  "senseRange": 80000,
+  "reactive": {
+    "warnRange": 40000,
+    "burnSeconds": 6,
+    "throttle": 1,
+    "clearSeconds": 15
+  },
+  "anticipate": {
+    "commitSeconds": 80,
+    "prepareSeconds": 12,
+    "burnSeconds": 7,
+    "clearSeconds": 10,
+    "spentDeltaV": 30,
+    "missMargin": 4,
+    "emergencySeconds": 12
+  },
+  "heat": {
+    "calmCeiling": 0.5,
+    "emergencyCeiling": 0.95,
+    "resumeBelow": 0.3
+  },
+  "safety": {
+    "minAltitude": 40000,
+    "altitudeMargin": 15000,
+    "maxAltitude": 400000
+  },
+  "recover": {
+    "smaTolerance": 1500,
+    "throttle": 0.5
+  },
+  "pursuit": {
+    "standoffFraction": 0.8,
+    "approachGain": 0.01,
+    "maxApproachSpeed": 80,
+    "deadband": 0.5,
+    "pursueCeiling": 0.45,
+    "alignTolerance": 0.2,
+    "switchMargin": 0.1,
+    "taperSeconds": 1.5
+  },
+  "score": {
+    "escape": 1,
+    "alternate": 0.25,
+    "unsafe": 10,
+    "advantage": 0
+  },
+  "warp": {
+    "alertRange": 60000,
+    "alertCap": 4,
+    "burnCap": 10
+  }
+}

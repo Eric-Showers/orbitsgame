@@ -54,8 +54,8 @@ function shoot(run: MissionRun, tag: string): void {
 }
 
 describe('mission data', () => {
-  it('ships a valid ladder of twelve missions', () => {
-    expect(MISSIONS.length).toBe(12);
+  it('ships a valid ladder of seventeen missions', () => {
+    expect(MISSIONS.length).toBe(17);
     expect(validateMissions({ version: 1, missions: MISSIONS })).toEqual([]);
   });
 

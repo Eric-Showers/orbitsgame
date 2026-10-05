@@ -19,20 +19,20 @@ kinetic vehicle (KV), which is the only thing that kills.
 
 ## Constants (`crates/orbit-sim/src/vessel.rs`)
 
-| Item | Value |
-| --- | --- |
-| Mine battery | 1 MJ, starts full |
-| Battery per m/s of main-motor delta-v | 4 kJ |
-| Solar power in sunlight | 1 kW |
-| Mine wake range | 5 km |
-| KV launch range | 2.2 km |
-| Mine main motor | 150 m/s, 8 m/s^2, lifetime 900 s |
-| Mine RCS | 100 m/s, 3 m/s^2 |
-| KV delta-v | 80 m/s, 50 m/s^2 |
-| KV closing speed cap | 50 m/s (brakes) |
-| KV RCS | 60 m/s, 3 m/s^2 |
-| KV lifetime | 120 s |
-| KV blast | 40 m, 100 damage |
+| Item                                  | Value                            |
+| ------------------------------------- | -------------------------------- |
+| Mine battery                          | 1 MJ, starts full                |
+| Battery per m/s of main-motor delta-v | 4 kJ                             |
+| Solar power in sunlight               | 1 kW                             |
+| Mine wake range                       | 5 km                             |
+| KV launch range                       | 2.2 km                           |
+| Mine main motor                       | 150 m/s, 8 m/s^2, lifetime 900 s |
+| Mine RCS                              | 100 m/s, 3 m/s^2                 |
+| KV delta-v                            | 80 m/s, 50 m/s^2                 |
+| KV closing speed cap                  | 50 m/s (brakes)                  |
+| KV RCS                                | 60 m/s, 3 m/s^2                  |
+| KV lifetime                           | 120 s                            |
+| KV blast                              | 40 m, 100 damage                 |
 
 The sun is at 25 degrees from +x, read from `web/src/render/celestial.json`
 through `withSunFromConfig` in `web/src/sim/bridge.ts`.

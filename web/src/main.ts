@@ -115,7 +115,11 @@ async function main(): Promise<void> {
       advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock()),
   };
   const panel = new ControlPanel(document.body, () => session, client);
-  const flightHud = new FlightHud(document.body, () => session);
+  const flightHud = new FlightHud(
+    document.body,
+    () => session,
+    () => pilot,
+  );
   const hud = new MissionHud(document.body);
   const screens = new MissionScreens(document.body, missions, progress, {
     launch: startMission,

@@ -1,3 +1,4 @@
+import type { Pilot } from '../autopilot/pilot';
 import { EntityKind, SHIP_CLASS_NAMES } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 import { fmtDistance, fmtDuration, fmtPercent, fmtSpeed } from './format';
@@ -10,6 +11,7 @@ import {
   type MunitionStats,
   type OrbitStats,
 } from './hudData';
+import { OrbitWaveHud } from './orbitWaveHud';
 import './hud.css';
 
 /** Declutter levels, cycled with `I`. */
@@ -53,10 +55,12 @@ export class FlightHud {
   private toast = div('hud-toast');
   private toastTimer = 0;
   private last = new Map<HTMLElement, string>();
+  private wave: OrbitWaveHud;
 
   constructor(
     parent: HTMLElement,
     private session: () => FlightSession,
+    pilot: () => Pilot,
   ) {
     this.own.append(this.ownMinor);
     this.target.append(this.tgtHead, this.tgtRows, this.tgtOrbit);
@@ -70,6 +74,7 @@ export class FlightHud {
     this.stack.append(this.own, this.target, this.resources, this.warn);
     this.root.append(this.stack, this.munitions, this.toast);
     parent.append(this.root);
+    this.wave = new OrbitWaveHud(this.root, session, pilot);
     window.addEventListener('keydown', (ev) => {
       if (ev.code !== HUD_KEY || ev.repeat || ev.target instanceof HTMLInputElement) return;
       this.cycleMode();
@@ -134,6 +139,7 @@ export class FlightHud {
     this.setPips(this.pips.mines, res.mines, this.peak.mines);
 
     this.setMunitions(munitionStats(s));
+    this.wave.update();
 
     let warn = '';
     if (!me.alive) warn = '';

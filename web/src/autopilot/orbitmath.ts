@@ -1,7 +1,7 @@
 // Planar two-body helpers the maneuver planners share. Pure functions of
 // state vectors and orbital elements; no sim handle in here.
 
-import type { OrbitView, Vec3 } from '../sim/bridge';
+import { Attitude, type OrbitView, type Vec3 } from '../sim/bridge';
 
 export const TAU = Math.PI * 2;
 
@@ -19,6 +19,29 @@ export function angleBetween(a: Vec3, b: Vec3): number {
   if (la === 0 || lb === 0) return 0;
   const c = (a.x * b.x + a.y * b.y + a.z * b.z) / (la * lb);
   return Math.acos(Math.max(-1, Math.min(1, c)));
+}
+
+/** Planar unit direction of an orbit-relative attitude at a state; null for modes that need a target. */
+export function desiredDirection(mode: Attitude, pos: Vec3, vel: Vec3): Vec3 | null {
+  let d: Vec3;
+  switch (mode) {
+    case Attitude.Prograde:
+      d = vel;
+      break;
+    case Attitude.Retrograde:
+      d = scale(vel, -1);
+      break;
+    case Attitude.RadialOut:
+      d = pos;
+      break;
+    case Attitude.RadialIn:
+      d = scale(pos, -1);
+      break;
+    default:
+      return null;
+  }
+  const u = unit({ x: d.x, y: d.y, z: 0 });
+  return u.x === 0 && u.y === 0 ? null : u;
 }
 
 /** Wraps an angle into [0, 2pi). */

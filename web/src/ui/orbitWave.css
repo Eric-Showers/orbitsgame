@@ -1,0 +1,50 @@
+/* Orbit-wave widget: right edge under the comms panel, clear of mission objectives (top left) and ARGUS (bottom left). */
+
+.hud-wave {
+  right: 8px;
+  top: 160px;
+  transform: none;
+  width: 312px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hud-wave[hidden] {
+  display: none;
+}
+
+.wave-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.wave-legend {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.wave-legend i {
+  font-style: normal;
+}
+
+.wave-legend b {
+  color: var(--c-dim);
+  border: 1px solid var(--c-edge);
+  padding: 0 3px;
+  font-weight: 600;
+}
+
+.wave-readout {
+  font-size: 10px;
+  color: var(--c-text);
+  opacity: 0.85;
+  min-height: 12px;
+}
+
+.hud[data-mode='min'] .hud-wave {
+  display: none;
+}

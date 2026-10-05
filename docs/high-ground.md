@@ -174,3 +174,14 @@ shows the same numbers visually.
 - Should high ground be a visible bonus (A), an emergent effect (B), or both?
 - Should moving between bands cost heat (D)?
 - Do you want long-range sensors added so the horizon matters later?
+
+## 6. Decision
+
+Eric chose B with a visible HUD indicator. No horizon or line-of-sight effects
+for now, and moving between bands costs only the normal heat penalty.
+
+Implemented: `web/src/ui/highGround.ts` (pure helper) with tuning in
+`web/src/ui/highGround.json` (`evenBandM` 2 km, `kvDeltaV` 80 m/s). The target
+panel shows `GROUND HIGH/LOW/EVEN`, the altitude difference, the drift rate and
+the KV margin (positive: a KV can match the target; negative: the target
+outruns it).

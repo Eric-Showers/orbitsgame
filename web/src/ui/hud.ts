@@ -1,5 +1,5 @@
 import type { Pilot } from '../autopilot/pilot';
-import { EntityKind, SHIP_CLASS_NAMES } from '../sim/bridge';
+import { EntityKind, len, SHIP_CLASS_NAMES } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
 import { fmtDistance, fmtDuration, fmtPercent, fmtSpeed } from './format';
 import {
@@ -11,6 +11,7 @@ import {
   type MunitionStats,
   type OrbitStats,
 } from './hudData';
+import { highGround } from './highGround';
 import { OrbitWaveHud } from './orbitWaveHud';
 import './hud.css';
 
@@ -45,6 +46,7 @@ export class FlightHud {
   private tgtHead = div('hud-head-row');
   private tgtRows = div('hud-minor');
   private tgtOrbit = div('hud-minor l3');
+  private tgtGround = div('hud-minor hud-ground');
   private resources = div('hud-strip hud-resources l1');
   private heatFill = div('hud-bar-fill');
   private heatText = span('hud-bar-text');
@@ -63,7 +65,7 @@ export class FlightHud {
     pilot: () => Pilot,
   ) {
     this.own.append(this.ownMinor);
-    this.target.append(this.tgtHead, this.tgtRows, this.tgtOrbit);
+    this.target.append(this.tgtHead, this.tgtRows, this.tgtOrbit, this.tgtGround);
 
     const heat = div('hud-heat');
     const bar = div('hud-bar');
@@ -194,6 +196,32 @@ export class FlightHud {
       o
         ? `ORBIT AP ${o.apAlt === null ? 'ESCAPE' : fmtDistance(o.apAlt)} · PE ${fmtDistance(o.peAlt)} · ECC ${o.ecc.toFixed(4)} · PER ${fmtDuration(o.period)}`
         : 'ORBIT —',
+    );
+    this.setGround(s, me, target);
+  }
+
+  private setGround(
+    s: FlightSession,
+    me: ReturnType<FlightSession['player']>,
+    target: NonNullable<ReturnType<FlightSession['entity']>>,
+  ): void {
+    const mine = s.orbit(me.id);
+    const theirs = s.orbit(target.id);
+    if (!mine || !theirs) {
+      this.text(this.tgtGround, 'GROUND —');
+      return;
+    }
+    const g = highGround(
+      s.game.mu(),
+      { radius: len(me.pos), semiMajorAxis: mine.eccentricity < 1 ? mine.semiMajorAxis : null },
+      { radius: len(target.pos), semiMajorAxis: theirs.eccentricity < 1 ? theirs.semiMajorAxis : null },
+    );
+    this.tgtGround.dataset.side = g.side;
+    const tag = g.side === 'high' ? '▲ HIGH' : g.side === 'low' ? '▼ LOW' : '= EVEN';
+    const sign = g.altDiff >= 0 ? '+' : '−';
+    this.text(
+      this.tgtGround,
+      `GROUND ${tag} ${sign}${fmtDistance(Math.abs(g.altDiff))} · DRIFT ${fmtSpeed(g.drift)} · KV ${g.kvMargin >= 0 ? 'CATCHES' : 'LOSES'} ${fmtSpeed(Math.abs(g.kvMargin))}`,
     );
   }
 

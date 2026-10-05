@@ -263,3 +263,10 @@
     top: 190px;
   }
 }
+
+.hud-ground[data-side='high'] {
+  color: #7dffb0;
+}
+.hud-ground[data-side='low'] {
+  color: #ffb86b;
+}

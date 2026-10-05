@@ -71,7 +71,9 @@ async function main(): Promise<void> {
     unlistenPilot = p.subscribe((ev) => {
       sound.onPilot(ev);
       const cue = pilotCue(ev, p.speechVars());
-      if (cue) advisor.announce(cue, playerSnapshot(session, []), clock());
+      const snap = playerSnapshot(session, []);
+      if (cue) advisor.announce(cue, snap, clock());
+      if (ev.kind === 'done') advisor.guide(ev.maneuver.kind, snap, clock());
     });
     return p;
   };

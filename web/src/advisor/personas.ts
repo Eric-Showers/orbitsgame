@@ -3,6 +3,8 @@ import data from './personas.json';
 export interface Persona {
   id: string;
   name: string;
+  /** What this AI calls itself on the bridge, e.g. ARGUS. Replaces `{callsign}` for the player's hull. */
+  callsign: string;
   blurb: string;
   speech: {
     /** SpeechSynthesisUtterance.rate */

@@ -1,8 +1,9 @@
 import { len, SHIP_CLASS_NAMES, sub } from '../sim/bridge';
-import { DEFAULT_COMMANDER, addressCommander } from '../commander';
+import { DEFAULT_COMMANDER, addressCommander, appendName, stripCommander } from '../commander';
 import { fmtDistance } from '../ui/format';
 import type { AdvisoryChannel } from './channel';
-import { fillTemplate, VOICE, type VoiceConfig } from './config';
+import { guidanceAfter } from './guidance';
+import { fillTemplate, VOICE, type LineSpec, type Priority, type VoiceConfig } from './config';
 import { DEFAULT_PERSONA, type Persona } from './personas';
 import { SpeechQueue } from './queue';
 import {
@@ -12,6 +13,12 @@ import {
   type Cue,
   type VesselSnapshot,
 } from './triggers';
+
+const PLAYER_HULL = 'Corvette';
+
+/** Lines between uses of the player's name. */
+const NAME_GAP = 2;
+const NAMEABLE = new Set<string>(['ack', 'advise', 'order', 'status', 'guide']);
 
 interface Latch {
   latched: boolean;
@@ -41,6 +48,7 @@ export class VesselAdvisor {
   private greeted = false;
   private persona: Persona = DEFAULT_PERSONA;
   private commander = DEFAULT_COMMANDER;
+  private linesSinceName = Infinity;
 
   constructor(
     private channel: AdvisoryChannel,
@@ -57,6 +65,7 @@ export class VesselAdvisor {
     this.burnSeconds = 0;
     this.hullMax = 0;
     this.greeted = false;
+    this.linesSinceName = Infinity;
   }
 
   /** Switches the wording and reading pace to a voice persona. Lines already queued keep their text. */
@@ -142,13 +151,22 @@ export class VesselAdvisor {
     this.flush(now);
   }
 
+  /** Points the commander at the next sensible step after a finished maneuver. */
+  guide(kind: string, snap: VesselSnapshot, now: number): void {
+    if (!snap.self.alive) return;
+    const cue = guidanceAfter(kind, snap, this.cfg.thresholds);
+    if (cue) this.announce(cue, snap, now);
+  }
+
   /** Releases queued speech when the voice is free. Call every frame. */
   flush(now: number): void {
     for (let ev = this.queue.next(now); ev; ev = this.queue.next(now)) this.channel.publish(ev);
   }
 
   callsign(shipClass: number): string {
-    return this.cfg.callsigns[SHIP_CLASS_NAMES[shipClass] ?? ''] ?? this.cfg.defaultCallsign;
+    const hull = SHIP_CLASS_NAMES[shipClass] ?? '';
+    if (hull === PLAYER_HULL) return this.persona.callsign;
+    return this.cfg.callsigns[hull] ?? this.cfg.defaultCallsign;
   }
 
   private sayLatched(latch: Latch, cue: Cue, snap: VesselSnapshot, now: number): void {
@@ -159,22 +177,30 @@ export class VesselAdvisor {
   private say(requested: Cue, snap: VesselSnapshot, now: number): void {
     let cue = requested;
     if (!this.cfg.lines[cue.id] && cue.fallback) cue = { ...cue, id: cue.fallback };
-    const spec = cue.text
-      ? { priority: 'advise' as const, text: [cue.text] }
+    const spec: LineSpec | undefined = cue.text
+      ? { priority: 'advise', text: [cue.text] }
       : this.cfg.lines[cue.id];
     if (!spec || spec.text.length === 0) return;
     const variants = this.persona.lines[cue.id] ?? spec.text;
     const turn = this.rotation.get(cue.id) ?? 0;
     this.rotation.set(cue.id, turn + 1);
     const speaker = this.callsign(snap.self.shipClass);
-    const text = addressCommander(
-      fillTemplate(variants[turn % variants.length], { callsign: speaker, ...cue.vars }),
-      this.commander,
+    const text = this.addressPlayer(
+      fillTemplate(variants[turn % variants.length], {
+        callsign: speaker,
+        name: this.commander,
+        ...cue.vars,
+      }),
+      spec.priority,
     );
     this.queue.push(
       {
         id: cue.id,
         priority: spec.priority,
+        topic: spec.topic,
+        drops: spec.drops,
+        ttl: spec.ttl,
+        shed: spec.shed,
         rank: this.cfg.priorities[spec.priority].rank,
         text,
         vessel: snap.self.id,
@@ -183,5 +209,27 @@ export class VesselAdvisor {
       },
       now,
     );
+  }
+
+  /**
+   * Works the player's name into speech. A chosen name replaces "Commander" and
+   * is added to short routine lines every few lines; the default title is kept
+   * rare so it never becomes a tic.
+   */
+  private addressPlayer(text: string, priority: Priority): string {
+    const custom = this.commander !== DEFAULT_COMMANDER;
+    const spaced = this.linesSinceName >= NAME_GAP;
+    this.linesSinceName++;
+    if (/\bCommander\b/.test(text)) {
+      if (!custom && !spaced) return stripCommander(text);
+      this.linesSinceName = 0;
+      return addressCommander(text, this.commander);
+    }
+    if (custom && spaced && NAMEABLE.has(priority) && !text.includes(this.commander)) {
+      const named = appendName(text, this.commander);
+      if (named !== text) this.linesSinceName = 0;
+      return named;
+    }
+    return text;
   }
 }

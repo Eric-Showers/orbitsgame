@@ -11,6 +11,8 @@ The setting is a navy that happens to operate in orbit. Tone is terse and profes
 ## Ship intelligence
 
 - **ARGUS** is the Corvette's ship intelligence. It speaks on the bridge, reports, recommends and confirms. It never acts without an order (see the vessel AI notes).
+- Each voice persona is a different ship intelligence with its own callsign (ARGUS, HALCYON, MARSHAL, QUILL, `callsign` in `personas.json`); the player's hull uses the chosen persona's callsign for `{callsign}`.
+- The AI works the player's name in on routine lines (about every third) and keeps the default title "Commander" rare. Queue lines are tagged with topics so stale status is dropped; see `voice.json`.
 - Other hulls keep their callsigns in `voice.json`: BASTION (Gunboat), SEXTANT (Minelayer), DRONE CORE, BEACON.
 - Standard voice uses naval verbs: "aye", "unable", "standing by", "weapons free", "secured", "on station", "astern", "beam", "away". Missiles may be called "birds". Avoid slang and quips.
 - Alternate personas are other flavours of the same fleet intelligence: **Marshal** (gruff chief), **Halcyon** (calm), **Quill** (dry). They override lines only; identifiers and placeholders such as `{callsign}`, `{range}` and `{t}` must stay intact.

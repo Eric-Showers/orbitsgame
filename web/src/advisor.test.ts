@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { VesselAdvisor } from './advisor/advisor';
 import { AdvisoryChannel, type AdvisoryEvent } from './advisor/channel';
 import { fillTemplate, VOICE, type VoiceConfig } from './advisor/config';
+import { guidanceAfter } from './advisor/guidance';
+import { findPersona } from './advisor/personas';
 import { SpeechQueue, type PendingLine } from './advisor/queue';
 import {
   evaluateConditions,
@@ -357,5 +359,168 @@ describe('voice data', () => {
 
   it('fills placeholders and leaves unknown ones', () => {
     expect(fillTemplate('{a} and {b}', { a: 'x' })).toBe('x and {b}');
+  });
+});
+
+describe('speech queue pruning', () => {
+  const topical = (
+    id: string,
+    priority: PendingLine['priority'],
+    extra: Partial<PendingLine>,
+  ): PendingLine => ({ ...line(id, priority), ...extra });
+
+  it('replaces older lines of the same topic', () => {
+    const q = new SpeechQueue(VOICE);
+    q.push(topical('ack.prograde', 'ack', { topic: 'ack' }), 0);
+    q.push(topical('ack.retrograde', 'ack', { topic: 'ack' }), 0.1);
+    expect(q.size).toBe(1);
+    expect(q.next(0.1)?.id).toBe('ack.retrograde');
+  });
+
+  it('lets a result wipe stale progress and a new order wipe stale guidance', () => {
+    const q = new SpeechQueue(VOICE);
+    q.push(topical('ap.phase.burn', 'order', { topic: 'ap.progress' }), 0);
+    q.push(topical('guide.old', 'guide', { topic: 'guide' }), 0);
+    q.push(topical('ap.done', 'order', { topic: 'ap.result', drops: ['ap.progress'] }), 1);
+    expect(q.size).toBe(2);
+    q.push(topical('ap.start', 'order', { topic: 'ap.progress', drops: ['guide'] }), 2);
+    expect(q.size).toBe(2);
+    expect(q.next(2)?.id).toBe('ap.done');
+    expect(q.next(5)?.id).toBe('ap.start');
+  });
+
+  it('honours a per-line ttl', () => {
+    const q = new SpeechQueue(VOICE);
+    q.push(topical('p', 'order', { ttl: 3 }), 0);
+    expect(q.next(4)).toBeNull();
+  });
+
+  it('sheds the oldest status lines when the backlog runs long, never alerts', () => {
+    const cfg: VoiceConfig = { ...VOICE, speech: { ...VOICE.speech, maxBacklogSeconds: 3 } };
+    const q = new SpeechQueue(cfg);
+    q.push({ ...line('w', 'warning'), text: 'a b c d e f g h i j k l m n o p' }, 0);
+    for (let i = 0; i < 6; i++) q.push({ ...line(`s${i}`, 'status'), text: 'a b c d e f g h' }, 0);
+    expect(q.size).toBeLessThanOrEqual(3);
+    const ids: string[] = [];
+    for (let t = 0; t < 40; t += 3) {
+      const ev = q.next(t);
+      if (ev) ids.push(ev.id);
+    }
+    expect(ids[0]).toBe('w');
+    expect(ids).toContain('s5'); // newest survives
+    expect(ids).not.toContain('s0');
+  });
+
+  it('does not let several quick maneuvers pile up progress lines', () => {
+    const channel = new AdvisoryChannel();
+    const heard: AdvisoryEvent[] = [];
+    channel.subscribe((e) => heard.push(e));
+    const ai = new VesselAdvisor(channel);
+    const s = snap();
+    ai.observe(s, 0);
+    ai.flush(30);
+    heard.length = 0;
+    for (const id of ['ap.start', 'ap.phase.coast', 'ap.phase.burn', 'ap.done.circularize']) {
+      ai.announce({ id, vars: { label: 'x', pe: '1 km', ap: '2 km' } }, s, 100);
+    }
+    for (let t = 100; t < 160; t += 0.5) ai.flush(t);
+    expect(heard.map((e) => e.id)).toEqual(['ap.start', 'ap.done.circularize']);
+  });
+});
+
+describe('player and AI names', () => {
+  function rig(name: string, persona?: string): { ai: VesselAdvisor; heard: AdvisoryEvent[] } {
+    const channel = new AdvisoryChannel();
+    const heard: AdvisoryEvent[] = [];
+    channel.subscribe((e) => heard.push(e));
+    const ai = new VesselAdvisor(channel);
+    ai.setCommander(name);
+    if (persona) ai.setPersona(findPersona(persona));
+    return { ai, heard };
+  }
+
+  it('each AI introduces itself by its own name', () => {
+    for (const id of ['argus', 'halcyon', 'marshal', 'quill']) {
+      const { ai, heard } = rig('Eric', id);
+      ai.observe(snap(), 0);
+      expect(heard[0].speaker).toBe(id.toUpperCase());
+      expect(heard[0].text).toContain(id.toUpperCase());
+    }
+  });
+
+  it('uses a chosen name on routine lines, spaced out', () => {
+    const { ai, heard } = rig('Eric');
+    const s = snap();
+    ai.observe(s, 0);
+    ai.acknowledge({ id: 'prograde', ok: true }, s, 10);
+    ai.acknowledge({ id: 'retrograde', ok: true }, s, 20);
+    ai.acknowledge({ id: 'hold', ok: true }, s, 30);
+    const named = heard.filter((e) => e.text.includes('Eric')).length;
+    expect(named).toBeGreaterThanOrEqual(2);
+    expect(named).toBeLessThan(heard.length + 1);
+    expect(heard.every((e) => !/Commander/.test(e.text))).toBe(true);
+  });
+
+  it('keeps the default title from repeating on back-to-back lines', () => {
+    const { ai, heard } = rig('Commander', 'halcyon');
+    const s = snap();
+    ai.observe(s, 0);
+    ai.announce({ id: 'ap.aborted.override' }, s, 10);
+    ai.announce({ id: 'ap.propose.evade', vars: { count: '1' } }, s, 20);
+    ai.flush(40);
+    expect(heard.filter((e) => /Commander/.test(e.text)).length).toBeLessThan(heard.length);
+  });
+});
+
+describe('next-step guidance', () => {
+  it('points at MATCH SPEED when still closing after a maneuver', () => {
+    const me = ship({ target: 3 });
+    const tgt = near(me, 9_000, { id: 3, team: 1, vel: { x: 0, y: 2_300, z: 0 } });
+    const cue = guidanceAfter('circularize', snap({ self: me, entities: [me, tgt] }), T);
+    expect(cue?.id).toBe('guide.match_speed');
+    expect(VOICE.lines['guide.match_speed'].text.join(' ')).toContain('MATCH SPEED');
+  });
+
+  it('suggests RENDEZVOUS with a target and designating without one', () => {
+    const me = ship({ target: 3 });
+    const tgt = near(me, 9_000, { id: 3, team: 1 });
+    expect(guidanceAfter('circularize', snap({ self: me, entities: [me, tgt] }), T)?.id).toBe(
+      'guide.rendezvous',
+    );
+    expect(guidanceAfter('altitude', snap(), T)?.id).toBe('guide.designate');
+  });
+
+  it('offers a shot at a hostile after matching speed, and a hold otherwise', () => {
+    const me = ship({ target: 3 });
+    const foe = near(me, 2_000, { id: 3, team: 1 });
+    const friend = near(me, 2_000, { id: 3, team: 0 });
+    expect(guidanceAfter('rendezvous', snap({ self: me, entities: [me, foe] }), T)?.id).toBe(
+      'guide.fire_or_hold',
+    );
+    expect(guidanceAfter('rendezvous', snap({ self: me, entities: [me, friend] }), T)?.id).toBe(
+      'guide.hold_station',
+    );
+  });
+
+  it('is spoken as guidance, and acting on the helm clears it', () => {
+    const channel = new AdvisoryChannel();
+    const heard: AdvisoryEvent[] = [];
+    channel.subscribe((e) => heard.push(e));
+    const ai = new VesselAdvisor(channel);
+    ai.setCommander('Eric');
+    const s = snap();
+    ai.observe(s, 0);
+    ai.flush(30);
+    heard.length = 0;
+    ai.announce({ id: 'ap.done.circularize', vars: { pe: '1 km', ap: '2 km' } }, s, 100);
+    ai.guide('circularize', s, 100);
+    ai.acknowledge({ id: 'prograde', ok: true }, s, 100.5);
+    for (let t = 100; t < 130; t += 0.5) ai.flush(t);
+    expect(heard.some((e) => e.priority === 'guide')).toBe(false);
+    heard.length = 0;
+    ai.guide('circularize', s, 200);
+    ai.flush(200);
+    expect(heard[0]).toMatchObject({ priority: 'guide', id: 'guide.designate' });
+    expect(heard[0].text).toContain('Eric');
   });
 });

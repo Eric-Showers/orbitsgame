@@ -65,7 +65,7 @@ export class VoiceBar {
   private sample(): string {
     const p = this.tts.persona;
     const text = p.lines['status.online']?.[0] ?? VOICE.lines['status.online'].text[0];
-    return fillTemplate(text, { callsign: VOICE.callsigns.Corvette ?? VOICE.defaultCallsign });
+    return fillTemplate(text, { callsign: p.callsign });
   }
 
   private refresh(): void {

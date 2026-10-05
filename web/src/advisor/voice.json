@@ -11,7 +11,8 @@
     "wordsPerMinute": 250,
     "gapSeconds": 0.15,
     "minSeconds": 0.6,
-    "maxQueue": 6
+    "maxQueue": 6,
+    "maxBacklogSeconds": 6
   },
   "priorities": {
     "critical": {
@@ -25,20 +26,27 @@
     },
     "ack": {
       "rank": 2,
-      "ttl": 4
+      "ttl": 4,
+      "shed": true
     },
     "advise": {
       "rank": 3,
-      "ttl": 6
+      "ttl": 6,
+      "shed": true
     },
     "status": {
       "rank": 4,
-      "ttl": 6
+      "ttl": 6,
+      "shed": true
     },
     "order": {
       "rank": 1,
       "ttl": 20,
       "interrupt": true
+    },
+    "guide": {
+      "rank": 3,
+      "ttl": 15
     }
   },
   "thresholds": {
@@ -178,141 +186,203 @@
     },
     "ack.prograde": {
       "priority": "ack",
-      "text": ["Prograde, aye.", "Coming to prograde."]
+      "text": ["Prograde, aye.", "Coming to prograde."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.retrograde": {
       "priority": "ack",
-      "text": ["Retrograde, aye.", "Coming about, retrograde."]
+      "text": ["Retrograde, aye.", "Coming about, retrograde."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.radial-out": {
       "priority": "ack",
-      "text": ["Radial out, aye."]
+      "text": ["Radial out, aye."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.radial-in": {
       "priority": "ack",
-      "text": ["Radial in, aye."]
+      "text": ["Radial in, aye."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.target": {
       "priority": "ack",
-      "text": ["Bow on target."]
+      "text": ["Bow on target."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.anti-target": {
       "priority": "ack",
-      "text": ["Anti-target, aye."]
+      "text": ["Anti-target, aye."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.target-prograde": {
       "priority": "ack",
-      "text": ["Target prograde, aye."]
+      "text": ["Target prograde, aye."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.target-retrograde": {
       "priority": "ack",
-      "text": ["Target retrograde. Ready to match velocity."]
+      "text": ["Target retrograde. Ready to match velocity."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.hold": {
       "priority": "ack",
-      "text": ["Holding attitude."]
+      "text": ["Holding attitude."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.attitude.fail": {
       "priority": "ack",
-      "text": ["Unable. That mode needs a track.", "Negative. No track for that mode."]
+      "text": ["Unable. That mode needs a track.", "Negative. No track for that mode."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.attitude.planar": {
       "priority": "ack",
-      "text": ["Unable. Plane changes are locked out."]
+      "text": ["Unable. Plane changes are locked out."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.throttle-full": {
       "priority": "ack",
-      "text": ["Main engine, full ahead.", "All ahead full."]
+      "text": ["Main engine, full ahead.", "All ahead full."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.throttle-cut": {
       "priority": "ack",
-      "text": ["Engine cut.", "Main engine secured."]
+      "text": ["Engine cut.", "Main engine secured."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.target-next": {
       "priority": "ack",
-      "text": ["Tracking {target}, {range}.", "{target} designated. {range}."]
+      "text": ["Tracking {target}, {range}.", "{target} designated. {range}."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.target-clear": {
       "priority": "ack",
-      "text": ["Track dropped."]
+      "text": ["Track dropped."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.fire-missile": {
       "priority": "ack",
-      "text": ["Missile away.", "Bird away. Guidance nominal."]
+      "text": ["Missile away.", "Bird away. Guidance nominal."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.fire-missile.no_target": {
       "priority": "ack",
-      "text": ["No track designated. Holding fire."]
+      "text": ["No track designated. Holding fire."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.fire-missile.fail": {
       "priority": "ack",
-      "text": ["Launch inhibited. Magazine empty."]
+      "text": ["Launch inhibited. Magazine empty."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.drop-mine": {
       "priority": "ack",
-      "text": ["Mine away. It stays dormant until a hostile passes."]
+      "text": ["Mine away. It stays dormant until a hostile passes."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.drop-mine.fail": {
       "priority": "ack",
-      "text": ["Mine rack empty, Commander."]
+      "text": ["Mine rack empty, Commander."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ack.restart": {
       "priority": "ack",
-      "text": ["Systems reset. {callsign} standing by."]
+      "text": ["Systems reset. {callsign} standing by."],
+      "topic": "ack",
+      "drops": ["guide"]
     },
     "ap.propose": {
       "priority": "ack",
-      "text": ["{label}. {dv} of delta-v, about {eta}. Confirm to execute, or cancel."]
+      "text": ["{label}. {dv} of delta-v, about {eta}. Confirm to execute, or cancel."],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.circularize": {
       "priority": "ack",
       "text": [
         "Recommend circularizing at the safest apsis. {dv} of delta-v, about {eta}. Confirm?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.altitude": {
       "priority": "ack",
       "text": [
         "Two burns to a {alt} circular orbit: one to start the transfer, one to circularize. {dv} in all, about {eta}. Confirm?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.rendezvous": {
       "priority": "ack",
       "text": [
         "Contact is {range} out. I will match altitude, adjust phasing and arrive {standoff} off its beam. {dv} of delta-v, about {eta}. Confirm?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.intercept": {
       "priority": "ack",
       "text": [
         "Closing to firing range, about {standoff} astern of the target at matched speed. {dv} of delta-v, about {eta}. Confirm?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.match-velocity": {
       "priority": "ack",
-      "text": ["Burning against relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"]
+      "text": ["Burning against relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.station-keep": {
       "priority": "ack",
       "text": [
         "I will hold station on the target and cancel drift, closing if it opens past {hold}. Confirm?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.evade": {
       "priority": "ack",
-      "text": ["{count} inbound. I will burn across their line of sight. Confirm, Commander."]
+      "text": ["{count} inbound. I will burn across their line of sight. Confirm, Commander."],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.launch-missile": {
       "priority": "ack",
       "text": [
         "Target {range} out, closing at {relv}. Solution is good, flight time about {eta}. Confirm to fire?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.propose.drop-mine": {
       "priority": "ack",
       "text": [
         "Hostile will cross this orbit, {range} at closest approach. Confirm to lay the mine?"
-      ]
+      ],
+      "topic": "ap.progress",
+      "drops": ["guide"]
     },
     "ap.refused": {
       "priority": "warning",
@@ -320,55 +390,97 @@
     },
     "ap.cancelled": {
       "priority": "order",
-      "text": ["Order cancelled. Standing by."]
+      "text": ["Order cancelled. Standing by."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.start": {
       "priority": "order",
-      "text": ["Aye, executing. {label}."]
+      "text": ["Aye, executing. {label}."],
+      "topic": "ap.progress",
+      "drops": ["guide"],
+      "shed": true,
+      "ttl": 8
     },
     "ap.phase.coast": {
       "priority": "order",
-      "text": ["Coasting to the burn point."]
+      "text": ["Coasting to the burn point."],
+      "topic": "ap.progress",
+      "drops": ["guide"],
+      "shed": true,
+      "ttl": 8
     },
     "ap.phase.burn": {
       "priority": "order",
-      "text": ["Ignition. Burning."]
+      "text": ["Ignition. Burning."],
+      "topic": "ap.progress",
+      "drops": ["guide"],
+      "shed": true,
+      "ttl": 8
     },
     "ap.done": {
       "priority": "order",
-      "text": ["{label} complete."]
+      "text": ["{label} complete."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.circularize": {
       "priority": "order",
-      "text": ["Orbit is circular, {pe} by {ap}."]
+      "text": ["Orbit is circular, {pe} by {ap}."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.altitude": {
       "priority": "order",
-      "text": ["On station. Orbit {pe} by {ap}."]
+      "text": ["On station. Orbit {pe} by {ap}."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.rendezvous": {
       "priority": "order",
-      "text": ["Rendezvous complete. {range} off the contact, speeds matched."]
+      "text": ["Rendezvous complete. {range} off the contact, speeds matched."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.intercept": {
       "priority": "order",
-      "text": ["In position, {range} off the target. Solution is yours."]
+      "text": ["In position, {range} off the target. Solution is yours."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.match-velocity": {
       "priority": "order",
-      "text": ["Velocities matched."]
+      "text": ["Velocities matched."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.launch-missile": {
       "priority": "order",
-      "text": ["Missile away."]
+      "text": ["Missile away."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.drop-mine": {
       "priority": "order",
-      "text": ["Mine laid."]
+      "text": ["Mine laid."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.done.evade": {
       "priority": "order",
-      "text": ["Clear. Recommend recircularizing when convenient."]
+      "text": ["Clear. Recommend recircularizing when convenient."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.failed": {
       "priority": "warning",
@@ -376,19 +488,112 @@
     },
     "ap.aborted.commander": {
       "priority": "order",
-      "text": ["Aborted. Engine secured."]
+      "text": ["Aborted. Engine secured."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.aborted.override": {
       "priority": "order",
-      "text": ["You have the helm, Commander. Standing down."]
+      "text": ["You have the helm, Commander. Standing down."],
+      "topic": "ap.result",
+      "drops": ["ap.progress"],
+      "ttl": 12
     },
     "ap.assist.on": {
       "priority": "order",
-      "text": ["Assist online. Give me a heading."]
+      "text": ["Assist online. Give me a heading."],
+      "topic": "ap.assist",
+      "shed": true,
+      "ttl": 6
     },
     "ap.assist.off": {
       "priority": "order",
-      "text": ["Assist off. Manual helm."]
+      "text": ["Assist off. Manual helm."],
+      "topic": "ap.assist",
+      "shed": true,
+      "ttl": 6
+    },
+    "guide.match_speed": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Good work, {name}. We are still closing on {target} at {relv}. Press MATCH SPEED on the helm to kill it.",
+        "Nicely flown. {target} is still moving {relv} relative to us, {name}. Hit MATCH SPEED and I will null it."
+      ]
+    },
+    "guide.rendezvous": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Orbit set, {name}. {target} is designated, {range} off. Press RENDEZVOUS and I will bring us alongside.",
+        "That is the orbit we wanted. With {target} {range} out, RENDEZVOUS on the helm is the next step, {name}."
+      ]
+    },
+    "guide.designate": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Orbit set, {name}. Press T to designate a contact, then RENDEZVOUS on the helm and I will fly us to it.",
+        "Good orbit, {name}. Designate a contact with T and I can close on it. RENDEZVOUS is on the helm."
+      ]
+    },
+    "guide.fire_or_hold": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Alongside {target}, {name}. Press FIRE (CHECKED) for a clean shot, or STAY WITH to shadow it.",
+        "Speeds matched with {target}. FIRE (CHECKED) when you are ready, {name}, or STAY WITH to hold station."
+      ]
+    },
+    "guide.hold_station": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Alongside {target}, {name}. Press STAY WITH and I will hold station and cancel drift.",
+        "Speeds matched. STAY WITH on the helm keeps us beside {target}."
+      ]
+    },
+    "guide.fire": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "In position, {name}. Press FIRE (CHECKED) and I will confirm the solution before launch.",
+        "Solution is yours. FIRE (CHECKED) on the helm, {name}, and I will verify it first."
+      ]
+    },
+    "guide.recover": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Clear of the threat. Press CIRCULARIZE and I will recover a safe orbit, {name}.",
+        "Missiles clear, {name}. CIRCULARIZE on the helm will put us back in a stable orbit."
+      ]
+    },
+    "guide.after_launch": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Missile away, {name}. Watch the track. If it misses, press INTERCEPT to line up a second shot.",
+        "Bird is flying. Press EVADE if the contact fires back, {name}, or CIRCULARIZE to settle the orbit."
+      ]
+    },
+    "guide.after_mine": {
+      "priority": "guide",
+      "topic": "guide",
+      "drops": ["guide"],
+      "text": [
+        "Mine laid, {name}. Press GO TO ALTITUDE or CIRCULARIZE to clear the area before it wakes.",
+        "Minefield seeded. Move off with CIRCULARIZE on the helm, {name}, and let the hostile come to it."
+      ]
     }
   }
 }

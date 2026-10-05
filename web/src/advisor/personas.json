@@ -5,18 +5,29 @@
       "id": "argus",
       "name": "Argus",
       "blurb": "Standard fleet ship intelligence. Terse, professional, by the book.",
-      "speech": { "rate": 1.45, "pitch": 1.0, "volume": 1, "wordsPerMinute": 255 },
+      "speech": {
+        "rate": 1.45,
+        "pitch": 1.0,
+        "volume": 1,
+        "wordsPerMinute": 255
+      },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Male", "Daniel", "Microsoft Ryan", "Male"]
       },
-      "lines": {}
+      "lines": {},
+      "callsign": "ARGUS"
     },
     {
       "id": "halcyon",
       "name": "Halcyon",
       "blurb": "Calm and warm. Talks you through action stations as if nothing could go wrong.",
-      "speech": { "rate": 1.25, "pitch": 1.1, "volume": 1, "wordsPerMinute": 220 },
+      "speech": {
+        "rate": 1.25,
+        "pitch": 1.1,
+        "volume": 1,
+        "wordsPerMinute": 220
+      },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Female", "Samantha", "Microsoft Sonia", "Zira", "Female"]
@@ -99,13 +110,19 @@
         "ap.aborted.override": ["The helm is yours, Commander. I will stand back and keep watch."],
         "ap.assist.on": ["I am here to help, Commander. Just tell me where you would like to go."],
         "ap.assist.off": ["Assist is off. You have manual control, and I will keep advising."]
-      }
+      },
+      "callsign": "HALCYON"
     },
     {
       "id": "marshal",
       "name": "Marshal",
       "blurb": "Gruff old chief of the boat. Short fuse, long memory, secretly on your side.",
-      "speech": { "rate": 1.35, "pitch": 0.7, "volume": 1, "wordsPerMinute": 235 },
+      "speech": {
+        "rate": 1.35,
+        "pitch": 0.7,
+        "volume": 1,
+        "wordsPerMinute": 235
+      },
       "voice": {
         "lang": "en",
         "hints": ["Google UK English Male", "Microsoft David", "Alex", "Fred", "Male"]
@@ -178,13 +195,19 @@
         "ap.aborted.override": ["You have the helm. I am standing down, and she is all yours."],
         "ap.assist.on": ["Assist online. Give me a heading, Commander, and I will fly it."],
         "ap.assist.off": ["Assist off. Hands on the stick, Commander. Show me what you have."]
-      }
+      },
+      "callsign": "MARSHAL"
     },
     {
       "id": "quill",
       "name": "Quill",
       "blurb": "Dry wit and an unflappable tone. Treats a hull breach as a mild inconvenience.",
-      "speech": { "rate": 1.5, "pitch": 1.25, "volume": 1, "wordsPerMinute": 260 },
+      "speech": {
+        "rate": 1.5,
+        "pitch": 1.25,
+        "volume": 1,
+        "wordsPerMinute": 260
+      },
       "voice": {
         "lang": "en",
         "hints": ["Google US English", "Microsoft Aria", "Karen", "Moira", "Female"]
@@ -262,7 +285,8 @@
         ],
         "ap.assist.on": ["Assist online. Tell me where to go and I will pretend it was my idea."],
         "ap.assist.off": ["Assist off. Manual control only. Good luck, and I mean that, mostly."]
-      }
+      },
+      "callsign": "QUILL"
     }
   ]
 }

@@ -70,3 +70,19 @@ function safeStorage(): Storage | null {
     return null;
   }
 }
+
+const VOCATIVE = /,? Commander(?=[.,!?])|\bCommander, /g;
+
+/** Drops the spoken "Commander" from a line (kept short so the title is not overused). */
+export function stripCommander(text: string): string {
+  const out = text
+    .replace(VOCATIVE, '')
+    .replace(/\bCommander\b/g, 'sir')
+    .replace(/\s+([.,!?])/g, '$1');
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
+
+/** Adds the name before the final punctuation, or returns the text unchanged if it has no clean place. */
+export function appendName(text: string, name: string): string {
+  return /[.!?]$/.test(text) ? text.replace(/([.!?])$/, `, ${name}$1`) : text;
+}

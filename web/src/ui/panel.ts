@@ -81,7 +81,7 @@ export class ControlPanel {
     target.appendChild(targetRow);
     this.addButtons(targetRow, 'target', client);
 
-    const time = module(console_, 'CHRONO', 'time');
+    const time = module(console_, 'SHIP TIME', 'time');
     this.readouts.set('met', readout(time, 'MET'));
     this.readouts.set('warp', readout(time, 'WARP'));
     const timeRow = el('div', 'row');

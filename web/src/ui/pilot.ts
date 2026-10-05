@@ -38,7 +38,7 @@ export class PilotPanel {
     private session: () => FlightSession,
   ) {
     const mod = el('section', 'module pilot');
-    mod.appendChild(el('h2', 'module-title', 'ARGUS PILOT'));
+    mod.appendChild(el('h2', 'module-title', 'ARGUS HELM'));
     this.toggle = el('button', 'ctl pilot-toggle');
     this.toggle.type = 'button';
     this.toggle.title = 'Let ARGUS fly maneuvers for you. Manual controls always override it.';

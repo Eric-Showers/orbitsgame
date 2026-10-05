@@ -62,108 +62,114 @@
   "lines": {
     "status.online": {
       "priority": "status",
-      "text": ["{callsign} online. All systems nominal. The ship is yours, Commander."]
+      "text": ["{callsign} reporting. All systems nominal. Ship is yours, Commander."]
     },
     "hazard.impact": {
       "priority": "critical",
       "cooldown": 20,
       "text": [
-        "Commander, this orbit intersects the surface. Impact in {t}. Recommend a prograde burn.",
-        "Our periapsis is below ground. Contact in {t}. A prograde burn will lift it."
+        "Commander, we are on a collision course with the surface. Impact in {t}. Recommend a prograde burn.",
+        "Periapsis is below the deck. Impact in {t}. Burn prograde to climb."
       ]
     },
     "hazard.impact_imminent": {
       "priority": "critical",
       "repeat": 12,
-      "text": ["Impact in {t}. I need that burn, Commander.", "{t} to surface. Burn prograde now."]
+      "text": [
+        "Impact in {t}. Burn prograde, Commander. Now.",
+        "{t} to surface. Prograde burn, now."
+      ]
     },
     "hazard.low_periapsis": {
       "priority": "warning",
       "cooldown": 30,
       "text": [
-        "Periapsis {pe}. Lower than I like. Recommend a prograde burn at apoapsis.",
-        "We will skim {pe} at periapsis. Advise raising it."
+        "Periapsis {pe}. Insufficient clearance. Recommend a prograde burn at apoapsis.",
+        "Passing {pe} at periapsis. Advise raising it."
       ]
     },
     "threat.missile": {
       "priority": "critical",
       "repeat": 8,
       "text": [
-        "Missile inbound. Range {range}, closing {closing}. Contact in {t}.",
-        "Hostile missile has us. {range} and closing. Contact in {t}."
+        "Missile inbound. Range {range}, closing {closing}. Impact in {t}.",
+        "Hostile missile tracking us. {range}, closing. Impact in {t}."
       ]
     },
     "threat.mine_active": {
       "priority": "critical",
       "repeat": 10,
-      "text": ["A mine has woken and is hunting us. Range {range}."]
+      "text": ["Mine is live and tracking us. Range {range}."]
     },
     "threat.mine_near": {
       "priority": "warning",
       "cooldown": 30,
       "text": [
-        "Dormant mine at {range}. I would not linger near its trigger radius.",
-        "Mine on the scope, {range}. Still asleep. Let us keep it that way."
+        "Dormant mine at {range}. Stay clear of its trigger radius.",
+        "Mine on the scope, {range}. Still dormant. Keep it that way."
       ]
     },
     "heat.high": {
       "priority": "warning",
       "cooldown": 60,
-      "text": ["Drive heat at {pct}. Output starts to derate soon. Ease the throttle if you can."]
+      "text": ["Drive heat at {pct}. Derate approaching. Ease the throttle."]
     },
     "heat.limit": {
       "priority": "warning",
       "cooldown": 60,
-      "text": ["Drive heat at {pct}. Output is capped at {cap}. Coast and let the radiators work."]
+      "text": ["Drive heat at {pct}. Output capped at {cap}. Coast and let the radiators work."]
     },
     "heat.derate": {
       "priority": "warning",
       "text": [
-        "The drive is derating, Commander. Thrust is limited until it cools.",
-        "Thermal limit reached. We are on reduced output."
+        "Drive is derating, Commander. Thrust limited until it cools.",
+        "Thermal limit reached. Reduced output."
       ]
     },
     "damage.hull": {
       "priority": "warning",
       "cooldown": 4,
-      "text": ["We are hit. Hull integrity {hp}.", "Hull damage. Integrity {hp}. Systems holding."]
+      "text": ["Hit. Hull integrity {hp}.", "Hull damage. Integrity {hp}. Holding."]
     },
     "status.lost": {
       "priority": "critical",
-      "text": ["Hull integrity failing. It has been an honour, Commander."]
+      "text": ["Hull integrity failing. It was an honour to serve, Commander."]
     },
     "advise.target_in_range": {
       "priority": "advise",
       "cooldown": 45,
       "text": [
-        "{target} inside missile envelope at {range}. Weapons are yours, Commander.",
-        "Firing solution on {target}, {range}. On your word."
+        "{target} inside missile envelope at {range}. Weapons free on your order.",
+        "Firing solution on {target}, {range}. Standing by to fire."
       ]
     },
     "advise.match_velocity": {
       "priority": "advise",
       "cooldown": 40,
       "text": [
-        "Relative velocity {relv} at {range}. A target-retrograde burn would match {target}.",
-        "We are overrunning {target}, {relv}. Suggest target-retrograde to match."
+        "Relative velocity {relv} at {range}. Recommend target-retrograde burn to match {target}.",
+        "Overrunning {target} at {relv}. Recommend target-retrograde to match."
       ]
     },
     "status.orbit": {
       "priority": "status",
       "cooldown": 5,
-      "text": ["Burn complete. Periapsis {pe}, apoapsis {ap}.", "Engine off. Orbit {pe} by {ap}."]
+      "text": [
+        "Burn complete. Periapsis {pe}, apoapsis {ap}.",
+        "Engine secured. Orbit {pe} by {ap}."
+      ]
     },
     "status.splash": {
       "priority": "status",
-      "text": ["Splash. {target} destroyed.", "{target} is gone. Good shooting, Commander."]
+      "text": ["Splash. {target} destroyed.", "{target} is down. Good shooting, Commander."]
     },
     "status.missile_lost": {
       "priority": "status",
-      "text": ["Our missile has gone dark.", "Missile spent. No contact."]
+      "text": ["Our missile has gone dark.", "Missile expended. No contact."]
     },
     "status.mine_hunting": {
       "priority": "status",
-      "text": ["One of our mines has a contact."]
+      "text": ["Friendly mine has a contact."]
     },
     "status.hostile_launch": {
       "priority": "warning",
@@ -172,31 +178,31 @@
     },
     "ack.prograde": {
       "priority": "ack",
-      "text": ["Prograde.", "Aligning prograde."]
+      "text": ["Prograde, aye.", "Coming to prograde."]
     },
     "ack.retrograde": {
       "priority": "ack",
-      "text": ["Retrograde.", "Coming about, retrograde."]
+      "text": ["Retrograde, aye.", "Coming about, retrograde."]
     },
     "ack.radial-out": {
       "priority": "ack",
-      "text": ["Radial out."]
+      "text": ["Radial out, aye."]
     },
     "ack.radial-in": {
       "priority": "ack",
-      "text": ["Radial in."]
+      "text": ["Radial in, aye."]
     },
     "ack.target": {
       "priority": "ack",
-      "text": ["Nose on target."]
+      "text": ["Bow on target."]
     },
     "ack.anti-target": {
       "priority": "ack",
-      "text": ["Anti-target."]
+      "text": ["Anti-target, aye."]
     },
     "ack.target-prograde": {
       "priority": "ack",
-      "text": ["Target prograde."]
+      "text": ["Target prograde, aye."]
     },
     "ack.target-retrograde": {
       "priority": "ack",
@@ -208,7 +214,7 @@
     },
     "ack.attitude.fail": {
       "priority": "ack",
-      "text": ["Unable. That mode needs a target.", "Negative. No target for that mode."]
+      "text": ["Unable. That mode needs a track.", "Negative. No track for that mode."]
     },
     "ack.attitude.planar": {
       "priority": "ack",
@@ -216,11 +222,11 @@
     },
     "ack.throttle-full": {
       "priority": "ack",
-      "text": ["Main engine, full.", "Full burn."]
+      "text": ["Main engine, full ahead.", "All ahead full."]
     },
     "ack.throttle-cut": {
       "priority": "ack",
-      "text": ["Engine cut.", "Main engine off."]
+      "text": ["Engine cut.", "Main engine secured."]
     },
     "ack.target-next": {
       "priority": "ack",
@@ -228,7 +234,7 @@
     },
     "ack.target-clear": {
       "priority": "ack",
-      "text": ["Track released."]
+      "text": ["Track dropped."]
     },
     "ack.fire-missile": {
       "priority": "ack",
@@ -236,19 +242,19 @@
     },
     "ack.fire-missile.no_target": {
       "priority": "ack",
-      "text": ["No target designated. Holding fire."]
+      "text": ["No track designated. Holding fire."]
     },
     "ack.fire-missile.fail": {
       "priority": "ack",
-      "text": ["Launch inhibited. Magazine is dry."]
+      "text": ["Launch inhibited. Magazine empty."]
     },
     "ack.drop-mine": {
       "priority": "ack",
-      "text": ["Mine released. It will sleep until something hostile passes."]
+      "text": ["Mine away. It stays dormant until a hostile passes."]
     },
     "ack.drop-mine.fail": {
       "priority": "ack",
-      "text": ["Mine rack is empty, Commander."]
+      "text": ["Mine rack empty, Commander."]
     },
     "ack.restart": {
       "priority": "ack",
@@ -261,37 +267,35 @@
     "ap.propose.circularize": {
       "priority": "ack",
       "text": [
-        "I will round off our orbit at the safest high point. {dv} of delta-v, about {eta}. Confirm?"
+        "Recommend circularizing at the safest apsis. {dv} of delta-v, about {eta}. Confirm?"
       ]
     },
     "ap.propose.altitude": {
       "priority": "ack",
       "text": [
-        "Two burns to a {alt} circular orbit: one to start the climb or drop, one to settle. {dv} in all, about {eta}. Confirm?"
+        "Two burns to a {alt} circular orbit: one to start the transfer, one to circularize. {dv} in all, about {eta}. Confirm?"
       ]
     },
     "ap.propose.rendezvous": {
       "priority": "ack",
       "text": [
-        "Target is {range} away. I will line up altitudes, adjust our orbital timing, and arrive {standoff} off its side. {dv} of delta-v, about {eta}. Confirm?"
+        "Contact is {range} out. I will match altitude, adjust phasing and arrive {standoff} off its beam. {dv} of delta-v, about {eta}. Confirm?"
       ]
     },
     "ap.propose.intercept": {
       "priority": "ack",
       "text": [
-        "Closing to firing range, about {standoff} behind the target at matched speed. {dv} of delta-v, about {eta}. Confirm?"
+        "Closing to firing range, about {standoff} astern of the target at matched speed. {dv} of delta-v, about {eta}. Confirm?"
       ]
     },
     "ap.propose.match-velocity": {
       "priority": "ack",
-      "text": [
-        "I will burn against our relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"
-      ]
+      "text": ["Burning against relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"]
     },
     "ap.propose.station-keep": {
       "priority": "ack",
       "text": [
-        "I will hold station beside the target and cancel any drift, closing in if it strays past {hold}. Confirm?"
+        "I will hold station on the target and cancel drift, closing if it opens past {hold}. Confirm?"
       ]
     },
     "ap.propose.evade": {
@@ -301,24 +305,26 @@
     "ap.propose.launch-missile": {
       "priority": "ack",
       "text": [
-        "Target {range} out, closing at {relv}. Firing solution is good, flight time about {eta}. Confirm to fire?"
+        "Target {range} out, closing at {relv}. Solution is good, flight time about {eta}. Confirm to fire?"
       ]
     },
     "ap.propose.drop-mine": {
       "priority": "ack",
-      "text": ["A hostile will cross this orbit, {range} at its closest. Confirm to lay the mine?"]
+      "text": [
+        "Hostile will cross this orbit, {range} at closest approach. Confirm to lay the mine?"
+      ]
     },
     "ap.refused": {
       "priority": "warning",
-      "text": ["I can't do that. {reason}"]
+      "text": ["Unable. {reason}"]
     },
     "ap.cancelled": {
       "priority": "order",
-      "text": ["Standing by."]
+      "text": ["Order cancelled. Standing by."]
     },
     "ap.start": {
       "priority": "order",
-      "text": ["Executing. {label}."]
+      "text": ["Aye, executing. {label}."]
     },
     "ap.phase.coast": {
       "priority": "order",
@@ -326,7 +332,7 @@
     },
     "ap.phase.burn": {
       "priority": "order",
-      "text": ["Ignition."]
+      "text": ["Ignition. Burning."]
     },
     "ap.done": {
       "priority": "order",
@@ -334,19 +340,19 @@
     },
     "ap.done.circularize": {
       "priority": "order",
-      "text": ["Orbit is round, {pe} by {ap}."]
+      "text": ["Orbit is circular, {pe} by {ap}."]
     },
     "ap.done.altitude": {
       "priority": "order",
-      "text": ["On station. Orbit is {pe} by {ap}."]
+      "text": ["On station. Orbit {pe} by {ap}."]
     },
     "ap.done.rendezvous": {
       "priority": "order",
-      "text": ["Rendezvous complete. {range} off the target, speeds matched."]
+      "text": ["Rendezvous complete. {range} off the contact, speeds matched."]
     },
     "ap.done.intercept": {
       "priority": "order",
-      "text": ["In position, {range} off the target. Firing solution is yours."]
+      "text": ["In position, {range} off the target. Solution is yours."]
     },
     "ap.done.match-velocity": {
       "priority": "order",
@@ -370,7 +376,7 @@
     },
     "ap.aborted.commander": {
       "priority": "order",
-      "text": ["Aborted. Engine cut."]
+      "text": ["Aborted. Engine secured."]
     },
     "ap.aborted.override": {
       "priority": "order",
@@ -378,11 +384,11 @@
     },
     "ap.assist.on": {
       "priority": "order",
-      "text": ["Assist online. Tell me where to go."]
+      "text": ["Assist online. Give me a heading."]
     },
     "ap.assist.off": {
       "priority": "order",
-      "text": ["Assist off. Manual control only."]
+      "text": ["Assist off. Manual helm."]
     }
   }
 }

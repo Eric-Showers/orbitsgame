@@ -4,11 +4,11 @@
   "missions": [
     {
       "id": "first-burn",
-      "title": "First Burn",
+      "title": "Raising Station",
       "summary": "Raise your orbit to 120 km.",
       "briefing": [
-        "Command wants you parked higher before the exercise starts. Raise your orbit from 80 km to a circular 120 km.",
-        "Burn PROGRADE to lift the far side of the orbit. Coast half an orbit to the new apoapsis, then burn PROGRADE again to lift the periapsis to match."
+        "Fleet Command wants you on a higher station before the exercise begins. Raise your orbit from 80 km to a circular 120 km.",
+        "Burn PROGRADE to lift the far side of the orbit. Coast half an orbit to the new apoapsis, then burn PROGRADE again to bring the periapsis up to match."
       ],
       "player": {
         "class": "corvette",
@@ -48,24 +48,24 @@
           "when": {
             "start": true
           },
-          "text": "Lesson one, Commander. A burn changes the opposite side of the orbit. Burn prograde to raise the far side, then again at the top to round it off. You can also ask me to circularize."
+          "text": "Lesson one, Commander. A burn changes the opposite side of the orbit. Burn prograde to raise the far side, then again at the top to circularize. I can fly it on your order."
         },
         {
           "when": {
             "objective": "circularize",
             "status": "done"
           },
-          "text": "Orbit set. Remember it: every burn echoes half an orbit away."
+          "text": "On station. Remember: every burn takes effect half an orbit away."
         }
       ]
     },
     {
       "id": "beacon-rendezvous",
-      "title": "Rendezvous",
-      "summary": "Catch the beacon 25 km ahead and match its speed.",
+      "title": "Rendezvous at Station",
+      "summary": "Close on the nav beacon 25 km ahead and match its speed.",
       "briefing": [
-        "A navigation beacon shares your orbit 25 km ahead. Bring the ship within 300 m of it and hold relative speed under 2 m/s for 10 seconds.",
-        "Speeding up raises your orbit and slows you down. To catch something ahead, drop slightly lower, let it come to you, then burn TGT RETROGRADE to match speed."
+        "A navigation beacon holds your orbit 25 km ahead. Close to within 300 m and hold relative speed under 2 m/s for 10 seconds.",
+        "Speeding up raises your orbit and slows you down. To catch a contact ahead, drop slightly lower, let it come to you, then burn TGT RETROGRADE to match speed."
       ],
       "player": {
         "class": "corvette",
@@ -117,23 +117,23 @@
           "when": {
             "start": true
           },
-          "text": "The beacon is ahead in our own orbit. Do not accelerate toward it. Drop lower and I will catch up. The RENDEZVOUS order in the pilot panel will fly this for you."
+          "text": "Beacon is ahead in our own orbit. Do not accelerate at it. Drop lower and we will overhaul it. The RENDEZVOUS order will fly the approach on request."
         },
         {
           "when": {
             "atTime": 900
           },
-          "text": "Still closing? Watch the range readout. When it falls under a few kilometres, start matching speed with target retrograde."
+          "text": "Still closing? Watch the range readout. Inside a few kilometres, start matching speed with target retrograde."
         }
       ]
     },
     {
       "id": "round-trip",
-      "title": "Round Trip",
-      "summary": "Two beacons, one ahead and one behind. Catch both.",
+      "title": "Two-Beacon Patrol",
+      "summary": "Rendezvous with two beacons, one ahead and one astern.",
       "briefing": [
-        "Two navigation beacons share your orbit: one 25 km ahead, one 30 km behind. Rendezvous with the leading beacon first, then the trailing one.",
-        "You have already learned to catch what is ahead by dropping lower. Catching what is behind is the mirror image: climb higher, slow down, and let the beacon come to you. The skill is knowing which way to push, and when to stop."
+        "Two navigation beacons share your orbit: one 25 km ahead, one 30 km astern. Rendezvous with the lead beacon first, then the tail beacon.",
+        "You have learned to overhaul a contact ahead by dropping lower. A contact astern is the mirror image: climb higher, slow down, and let it come to you. The skill is knowing which way to push, and when to stop."
       ],
       "lesson": {
         "concept": "Phasing: pick your orbit to set the gap",
@@ -148,14 +148,14 @@
           "when": {
             "start": true
           },
-          "text": "Two beacons. Ahead first, so drop lower. When we have docked, we will have to climb to let the second one catch us."
+          "text": "Two beacons. Lead beacon first, so we drop lower. Once matched, we climb and let the tail beacon overhaul us."
         },
         {
           "when": {
             "objective": "front",
             "status": "done"
           },
-          "text": "First beacon matched. The second is behind us. We want a slower orbit now: burn retrograde to drop, then prograde to rise when it is close."
+          "text": "Lead beacon matched. Tail beacon is astern. We want a slower orbit now: retrograde to drop, then prograde to rise when it closes."
         }
       ],
       "player": {
@@ -219,10 +219,10 @@
     {
       "id": "live-fire",
       "title": "Live Fire",
-      "summary": "Two target drones. Missiles only.",
+      "summary": "Weapons qualification: two target drones, missiles only.",
       "briefing": [
-        "Weapons are hot. A target drone sits 15 km ahead in your orbit. Select it with T and fire a missile with F.",
-        "A second drone will show up lower and behind you once the first is down. Missiles hold a 400 m/s closing speed until their 800 m/s of delta-v runs out, so long shots work. You carry three."
+        "Weapons are free. A target drone sits 15 km ahead in your orbit. Designate it with T and fire a missile with F.",
+        "A second drone will appear lower and astern once the first is down. Missiles hold a 400 m/s closing speed until their 800 m/s of delta-v is spent, so long shots are viable. You carry three."
       ],
       "player": {
         "class": "corvette",
@@ -237,7 +237,7 @@
       "ships": [
         {
           "tag": "drone1",
-          "name": "Drone A",
+          "name": "Target Drone A",
           "class": "drone",
           "team": "enemy",
           "orbit": {
@@ -247,7 +247,7 @@
         },
         {
           "tag": "drone2",
-          "name": "Drone B",
+          "name": "Target Drone B",
           "class": "drone",
           "team": "enemy",
           "orbit": {
@@ -293,17 +293,17 @@
           "when": {
             "start": true
           },
-          "text": "Weapons hot. Select the drone with T, then fire with F. It sits in our own orbit, so the missile will spend very little fuel closing."
+          "text": "Weapons free. Designate the drone with T, then fire with F. It holds our orbit, so the missile will spend very little fuel closing."
         }
       ]
     },
     {
       "id": "crossing-traffic",
       "title": "Crossing Traffic",
-      "summary": "Two drones on elliptical orbits will cross yours. Be ready.",
+      "summary": "Two drones on elliptical orbits will cross your lane. Stand by.",
       "briefing": [
-        "Two unarmed drones are on elliptical orbits that cross your lane. They do not drift into range; they sweep through it, then swing away. Each pass lasts only minutes.",
-        "Use time warp to wait, but keep the range readout in view. When a drone closes inside about 30 km, select it with T and fire. You have one missile per drone."
+        "Two unarmed target drones are on elliptical orbits that cross your lane. They do not drift into range. They sweep through it, then swing away. Each pass lasts only minutes.",
+        "Use time warp to wait, but keep the range readout in view. When a drone closes inside about 30 km, designate it with T and fire. You have one missile per drone."
       ],
       "lesson": {
         "concept": "Timing: wait for the geometry",
@@ -318,13 +318,13 @@
           "when": {
             "start": true
           },
-          "text": "Drones are crossing our lane on ellipses. There is nothing to chase. We wait at the crossing point. I will warn you as they come into range."
+          "text": "Drones are crossing our lane on ellipses. Nothing to chase. We hold at the crossing point and I will call them as they enter range."
         },
         {
           "when": {
             "atTime": 2100
           },
-          "text": "The first crossing is close. Target the nearest drone and fire as soon as the range allows."
+          "text": "First crossing is close. Designate the nearest drone and fire as soon as range allows."
         }
       ],
       "player": {
@@ -340,7 +340,7 @@
       "ships": [
         {
           "tag": "cross1",
-          "name": "Drone Crossing A",
+          "name": "Target Crossing A",
           "class": "drone",
           "team": "enemy",
           "orbit": {
@@ -352,7 +352,7 @@
         },
         {
           "tag": "cross2",
-          "name": "Drone Crossing B",
+          "name": "Target Crossing B",
           "class": "drone",
           "team": "enemy",
           "orbit": {
@@ -387,10 +387,10 @@
     {
       "id": "long-reach",
       "title": "Long Reach",
-      "summary": "The target is farther than a missile can fly. Close first.",
+      "summary": "Target is beyond missile range. Close the distance first.",
       "briefing": [
-        "A target drone sits 130 km ahead in your orbit. A missile fired from here will run out of fuel before it arrives, and you only carry two.",
-        "Close the distance first, then shoot. Dropping into a lower orbit shortens the gap; the pilot's INTERCEPT order will do it for you and stop at missile range."
+        "A target drone sits 130 km ahead in your orbit. A missile fired from here will run dry before it arrives, and you carry only two.",
+        "Close the distance first, then fire. Dropping to a lower orbit shortens the gap. The pilot's INTERCEPT order will fly it and stop at missile range."
       ],
       "lesson": {
         "concept": "Weapon geometry: every shot has a reach",
@@ -405,7 +405,7 @@
           "when": {
             "start": true
           },
-          "text": "That target is farther than we can shoot. Ask me to INTERCEPT, or drop lower yourself. Close to under 70 kilometres before you fire."
+          "text": "Target is outside our reach. Order an INTERCEPT, or drop lower yourself. Close to under 70 kilometres before firing."
         }
       ],
       "player": {
@@ -421,7 +421,7 @@
       "ships": [
         {
           "tag": "far",
-          "name": "Far Drone",
+          "name": "Distant Target",
           "class": "drone",
           "team": "enemy",
           "orbit": {
@@ -446,11 +446,11 @@
     },
     {
       "id": "mine-corridor",
-      "title": "Mine the Corridor",
+      "title": "Operation Minefield",
       "summary": "Seed the 88-91 km lane, then let the convoy find it.",
       "briefing": [
-        "A two-drone convoy, flying 1.5 km apart, will run the 86.5 km lane. Climb into the 88-91 km corridor above it and lay three mines there. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
-        "Mines sleep until an enemy passes within 5 km, then chase it. A mine that gets within 2.2 km launches a kinetic vehicle, and that vehicle is what kills. Lower orbits are faster, so the convoy will overtake your field from behind and below."
+        "A two-drone convoy, 1.5 km apart, will transit the 86.5 km lane. Climb into the 88-91 km corridor above it and lay three mines. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
+        "Mines lie dormant until an enemy passes within 5 km, then pursue. A mine that closes to 2.2 km releases a kinetic vehicle, and that vehicle does the killing. Lower orbits are faster, so the convoy will overtake your field from astern and below."
       ],
       "player": {
         "class": "corvette",
@@ -525,17 +525,17 @@
             "objective": "lay",
             "status": "done"
           },
-          "text": "Field laid. Now we wait. Use time warp, but keep clear of your own mines."
+          "text": "Minefield laid. Now we wait. Use time warp, but keep clear of our own mines."
         }
       ]
     },
     {
       "id": "minelayer",
-      "title": "Minelayer",
-      "summary": "Kill a minelayer before you drift into its field.",
+      "title": "Counter-Minelayer",
+      "summary": "Sink the enemy minelayer before you drift into its field.",
       "briefing": [
-        "An enemy minelayer is 40 km ahead and 4 km above you, seeding mines once you come within 20 km. Its mines wake inside 5 km.",
-        "Your lower orbit carries you forward underneath it. Three missile hits will break its hull. Shoot early, or drop lower to pass beneath the field with room to spare."
+        "An enemy minelayer is 40 km ahead and 4 km above you, seeding mines once you come within 20 km. Its mines go live inside 5 km.",
+        "Your lower orbit carries you forward beneath it. Three missile hits will break its hull. Fire early, or drop lower and pass beneath the field with room to spare."
       ],
       "player": {
         "class": "corvette",
@@ -550,7 +550,7 @@
       "ships": [
         {
           "tag": "layer",
-          "name": "Minelayer",
+          "name": "Enemy Minelayer",
           "class": "minelayer",
           "team": "enemy",
           "orbit": {
@@ -595,17 +595,17 @@
           "when": {
             "start": true
           },
-          "text": "The minelayer is ahead and above. We close on it slowly from below. Shoot early, while it still has to dodge, and keep missiles in the air."
+          "text": "Minelayer is ahead and above. We close from below. Fire early, while it still has to dodge, and keep birds in the air."
         }
       ]
     },
     {
       "id": "under-fire",
       "title": "Under Fire",
-      "summary": "A gunboat shoots at you from far away. Stay alive.",
+      "summary": "A gunboat engages from beyond your reach. Survive.",
       "briefing": [
-        "A gunboat 60 km ahead will fire missiles at you from beyond your own reach. You carry none. Survive for six minutes after it opens fire.",
-        "A missile is only a threat while its fuel lasts. Each course correction spends delta-v. Burn sideways early and often, then leave your path alone so it must spend more to catch you. Waiting until the last few seconds is how pilots die."
+        "A gunboat 60 km ahead will fire missiles at you from outside your own range. You carry none. Survive six minutes after it opens fire.",
+        "A missile is only a threat while its fuel lasts. Every course correction costs it delta-v. Burn sideways early and often, then hold your course so it must spend more to catch you. Waiting until the last seconds is how ships are lost."
       ],
       "lesson": {
         "concept": "Evasion: make them spend their fuel",
@@ -620,7 +620,7 @@
           "when": {
             "start": true
           },
-          "text": "We are being shot at from long range. When a missile is in the air, burn radially. Early dodges cost them more than late ones. I can run EVADE if you like."
+          "text": "We are under fire at long range. With a missile in flight, burn radially. Early evasion costs it more than late. I can run EVADE on your order."
         }
       ],
       "player": {
@@ -671,10 +671,10 @@
     {
       "id": "gunboat-duel",
       "title": "Gunboat Duel",
-      "summary": "It shoots back. Outrange it.",
+      "summary": "It fires back. Outrange it.",
       "briefing": [
-        "A gunboat holds station 35 km ahead, 3 km above your orbit. Its fire control locks on inside 14 km and it carries two missiles. Two hits will kill you.",
-        "Your missiles have no such limit. It takes two hits and dodges when a missile closes inside 5 km, so make each shot count. When it is gone, a second gunboat will move in."
+        "A gunboat holds station 35 km ahead, 3 km above your orbit. Its fire control locks inside 14 km and it carries two missiles. Two hits will sink you.",
+        "Your missiles face no such limit. It takes two hits and evades when a missile closes inside 5 km, so make every shot count. When it is down, a second gunboat will move in."
       ],
       "player": {
         "class": "corvette",
@@ -773,17 +773,17 @@
           "when": {
             "start": true
           },
-          "text": "The gunboat's lock range is 14 kilometres. Stay outside it and use ours. If you must close, close from below, where you are faster."
+          "text": "Enemy lock range is 14 kilometres. Stay outside it and fire from range. If we must close, close from below, where we are faster."
         }
       ]
     },
     {
       "id": "convoy-escort",
       "title": "Convoy Escort",
-      "summary": "A raider is hunting the freighter, not you. Stop it.",
+      "summary": "A raider hunts the freighter, not you. Stop it.",
       "briefing": [
-        "A freighter shares your orbit, 4 km ahead. A raider is coming up from below and behind, and its missiles are aimed at the freighter. You are not its target, but you are the only escort.",
-        "The raider closes from a lower, faster orbit. It will pass beneath you before it reaches the freighter, which is your window. Missiles take time to arrive and it dodges, so fire early and fire twice."
+        "A freighter shares your orbit, 4 km ahead. A raider is coming up from below and astern, and its missiles are aimed at the freighter. You are not its target, but you are the only escort.",
+        "The raider closes from a lower, faster orbit. It will pass beneath you before it reaches the freighter, and that is your window. Missiles take time to arrive and it evades, so fire early and fire twice."
       ],
       "lesson": {
         "concept": "Multi-craft combat: protect a ship, not yourself",
@@ -798,7 +798,7 @@
           "when": {
             "start": true
           },
-          "text": "The raider is coming up from behind and below. It wants the freighter. Target it as soon as it enters missile range and keep missiles in the air."
+          "text": "Raider is coming up from astern and below. It wants the freighter. Designate it as soon as it enters missile range and keep birds in the air."
         }
       ],
       "player": {
@@ -868,10 +868,10 @@
     {
       "id": "task-force",
       "title": "Task Force",
-      "summary": "A wingman, a minelayer and a gunboat. Focus fire.",
+      "summary": "Lead a flight: a wingman against a gunboat and a minelayer. Focus fire.",
       "briefing": [
-        "You lead a two-ship flight. Your wingman, a gunboat, is 6 km ahead and will engage whatever the enemy sends at it. The enemy has a gunboat 40 km behind you and a minelayer 40 km ahead.",
-        "You cannot fight everything at once. Split the enemy: kill the gunboat first, because it can kill you, while the minelayer only seeds the lane. Then turn on the minelayer. Do not fly into its field."
+        "You lead a two-ship flight. Your wingman, a gunboat, is 6 km ahead and will engage whatever the enemy sends at it. The enemy has a gunboat 40 km astern of you and a minelayer 40 km ahead.",
+        "You cannot fight everything at once. Divide the enemy. Sink the gunboat first, because it can kill you, while the minelayer only seeds the lane. Then turn on the minelayer. Stay out of its field."
       ],
       "lesson": {
         "concept": "Engagements: sequence the fight",
@@ -886,14 +886,14 @@
           "when": {
             "start": true
           },
-          "text": "Two threats. The gunboat behind us can kill us; the minelayer only seeds. Deal with the gunboat first."
+          "text": "Two threats. The gunboat astern can sink us. The minelayer only seeds. Gunboat first."
         },
         {
           "when": {
             "objective": "gun",
             "status": "done"
           },
-          "text": "Gunboat down. Minelayer is next. Stay out of its mine field and let the wingman help."
+          "text": "Gunboat down. Minelayer next. Stay out of its minefield and let the wingman support."
         }
       ],
       "player": {

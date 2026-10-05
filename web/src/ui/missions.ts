@@ -42,7 +42,7 @@ export class MissionScreens {
 
   showBoard(): void {
     this.screen = { kind: 'board' };
-    const card = this.card('MISSION BOARD');
+    const card = this.card('OPERATIONS BOARD');
     const list = el('ol', 'mission-list');
     this.missions.forEach((m, i) => {
       const locked = !this.progress.unlocked(this.missions, i);
@@ -62,8 +62,8 @@ export class MissionScreens {
     const free = el('li', 'mission-item free');
     free.append(
       text('span', 'mission-num', '∞'),
-      text('span', 'mission-name', 'Free Flight'),
-      text('span', 'mission-sum', 'Sandbox with a beacon and two practice drones'),
+      text('span', 'mission-name', 'Free Patrol'),
+      text('span', 'mission-sum', 'Open patrol with a beacon and two target drones'),
       text('span', 'mission-stars', ''),
     );
     free.addEventListener('click', () => {
@@ -122,7 +122,7 @@ export class MissionScreens {
     this.lastRun = run;
     this.screen = { kind: 'result', index };
     const won = run.outcome === 'won';
-    const card = this.card(won ? 'MISSION COMPLETE' : 'MISSION FAILED');
+    const card = this.card(won ? 'OBJECTIVES MET' : 'OPERATION FAILED');
     card.classList.add(won ? 'won' : 'lost');
     card.appendChild(text('p', 'mission-reason', run.reason));
     if (won) card.appendChild(text('div', 'mission-big-stars', starString(run.stars())));
@@ -286,7 +286,7 @@ export class MissionHud {
       }
       this.box.appendChild(row);
     }
-    this.box.appendChild(hint('ESC mission board'));
+    this.box.appendChild(hint('ESC operations board'));
   }
 }
 

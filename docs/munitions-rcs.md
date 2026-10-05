@@ -9,12 +9,12 @@ Guidance is unchanged. It still asks for a desired acceleration. The munition th
 
 ## Defaults
 
-| Field                     | Missile | Mine |
-| ------------------------- | ------- | ---- |
-| `rcs_dv` (m/s)            | 60      | 100  |
-| `rcs_accel` (m/s^2)       | 1.5     | 3.0  |
-| `rcs_turn_rate` (rad/s)   | 6.0     | 3.0  |
-| `rcs_turn_cost` (m/s/rad) | 4.0     | 1.0  |
+| Field | Missile | Mine |
+| --- | --- | --- |
+| `rcs_dv` (m/s) | 60 | 100 |
+| `rcs_accel` (m/s^2) | 1.5 | 3.0 |
+| `rcs_turn_rate` (rad/s) | 6.0 | 3.0 |
+| `rcs_turn_cost` (m/s/rad) | 4.0 | 1.0 |
 
 Mines previously turned instantly. They now use the same RCS model, so the mine values were tuned so the mine-wake test still reaches its target.
 

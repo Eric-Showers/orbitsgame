@@ -4,6 +4,7 @@ import * as THREE from 'three';
 export const KIND_SHIP = 0;
 export const KIND_MISSILE = 1;
 export const KIND_MINE = 2;
+export const KIND_KV = 3;
 export const CLASS_CORVETTE = 0;
 export const CLASS_DRONE = 1;
 export const CLASS_GUNBOAT = 2;
@@ -87,10 +88,12 @@ const SHIP_LOOKS: Look[] = [
 ];
 const MISSILE_LOOK: Look = { file: 'missile', px: 24, rotates: true };
 const MINE_LOOK: Look = { file: 'mine', px: 20, rotates: false };
+const KV_LOOK: Look = { file: 'kv', px: 22, rotates: true };
 
 function lookFor(v: VesselDrawState): Look {
   if (v.kind === KIND_MISSILE) return MISSILE_LOOK;
   if (v.kind === KIND_MINE) return MINE_LOOK;
+  if (v.kind === KIND_KV) return KV_LOOK;
   return SHIP_LOOKS[v.shipClass] ?? SHIP_LOOKS[CLASS_DRONE];
 }
 

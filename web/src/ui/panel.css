@@ -235,6 +235,12 @@
   color: var(--c-glow);
 }
 
+.map-label[class*=' kv-'] {
+  color: #ffb547;
+  font-size: 10px;
+  transform: translate(0, -100%);
+}
+
 .map-label.tgt {
   color: #ff7ce5;
 }

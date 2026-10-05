@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {
   CLASS_BEACON,
+  KIND_KV,
   KIND_MINE,
   KIND_MISSILE,
   KIND_SHIP,
@@ -19,7 +20,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera();
 camera.position.z = 10;
 
-const COLS = CLASS_BEACON + 3; // five ship classes, missile, mine
+const COLS = CLASS_BEACON + 4; // five ship classes, missile, mine, kinetic vehicle
 const TEAMS = [0, 1];
 const resize = (): void => {
   const aspect = window.innerWidth / window.innerHeight;
@@ -39,7 +40,14 @@ const rows = SPRITE_STYLES.map((style, s) => {
   const vessels: VesselDrawState[] = [];
   for (const team of TEAMS) {
     for (let col = 0; col < COLS; col++) {
-      const kind = col <= CLASS_BEACON ? KIND_SHIP : col === COLS - 2 ? KIND_MISSILE : KIND_MINE;
+      const kind =
+        col <= CLASS_BEACON
+          ? KIND_SHIP
+          : col === COLS - 3
+            ? KIND_MISSILE
+            : col === COLS - 2
+              ? KIND_MINE
+              : KIND_KV;
       const row = s * TEAMS.length + team;
       vessels.push({
         id: row * COLS + col,

@@ -16,6 +16,7 @@ import {
 } from '../sprites';
 import { CameraRig } from './camera';
 import { CelestialLayer } from './celestialLayer';
+import { KvLayer } from './kv';
 import { MunitionLayer } from './munitions';
 
 const MIN_VIEW = 300; // m across the screen height
@@ -74,6 +75,7 @@ export class FlightView {
   private labels = new Map<string, HTMLElement>();
   private munitions = new MunitionLayer(this.scene);
   private layers: ViewLayer[] = [];
+  private kv: KvLayer | null = null;
   /** Screen pixels at the bottom covered by the console; the view centres above them. */
   private bottomInset = 0;
 
@@ -108,6 +110,9 @@ export class FlightView {
         (key, x, y, text) => this.placeBodyLabel(key, x, y, text),
       ),
     );
+
+    this.kv = new KvLayer(this.scene, (key, x, y, text) => this.placeBodyLabel(key, x, y, text));
+    this.layers.push(this.kv);
 
     this.orbitLine = orbitLine(COLORS.orbit, 0.9);
     this.targetOrbitLine = orbitLine(COLORS.targetOrbit, 0.5);
@@ -251,6 +256,7 @@ export class FlightView {
   /** Feeds sim events (detonations, kills) to the effects layer. */
   showEvents(events: readonly SimEvent[]): void {
     this.munitions.showEvents(events);
+    this.kv?.showEvents(events);
   }
 
   setBottomInset(px: number): void {

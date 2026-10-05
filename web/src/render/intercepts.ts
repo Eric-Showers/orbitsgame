@@ -13,11 +13,15 @@ const LEAD_MAX = 900;
 const MAX_TRACKS = 24;
 const CROSS_PX = 7;
 const RING_SEGMENTS = 64;
+/** Blast ring is backed by a fixed-size halo when its true radius is smaller than this (px). */
+const HALO_PX = 9;
+const HIT = 0xffb547;
 
 interface Track {
   line: THREE.LineSegments;
   trail: THREE.Line;
   ring: THREE.LineLoop;
+  halo: THREE.LineLoop;
   history: Vec3[];
   lastSample: number;
 }
@@ -37,14 +41,18 @@ export class InterceptLayer implements ViewLayer {
     const seen = new Set<number>();
     let n = 0;
     for (const e of session.all()) {
-      if (!e.alive || (e.kind !== EntityKind.Missile && e.kind !== EntityKind.Mine)) continue;
+      if (
+        !e.alive ||
+        (e.kind !== EntityKind.Missile && e.kind !== EntityKind.Mine && e.kind !== EntityKind.Kv)
+      )
+        continue;
       if (++n > MAX_TRACKS) break;
       seen.add(e.id);
       this.draw(this.track(e), e, session, local, mpp);
     }
     for (const [id, t] of this.tracks) {
       if (seen.has(id)) continue;
-      for (const o of [t.line, t.trail, t.ring]) {
+      for (const o of [t.line, t.trail, t.ring, t.halo]) {
         this.scene.remove(o);
         o.geometry.dispose();
       }
@@ -53,7 +61,7 @@ export class InterceptLayer implements ViewLayer {
   }
 
   private killRadius(kind: EntityKind): number {
-    this.blast ??= [0, 1, 2].map((k) => Game.munition_stats(k)[4] ?? 0);
+    this.blast ??= [0, 1, 2, 3].map((k) => Game.munition_stats(k)[4] ?? 0);
     return this.blast[kind] ?? 0;
   }
 
@@ -85,6 +93,7 @@ export class InterceptLayer implements ViewLayer {
     const live = target?.alive === true;
     t.line.visible = live;
     t.ring.visible = live;
+    t.halo.visible = false;
     if (!live || !target) return;
 
     const rel = { x: target.pos.x - e.pos.x, y: target.pos.y - e.pos.y, z: 0 };
@@ -117,8 +126,20 @@ export class InterceptLayer implements ViewLayer {
     p.needsUpdate = true;
     t.line.geometry.computeBoundingSphere();
 
+    const blast = Math.max(this.killRadius(e.kind), 1);
     t.ring.position.set(hx, hy, 1.3);
-    t.ring.scale.setScalar(Math.max(this.killRadius(e.kind), 1));
+    t.ring.scale.setScalar(blast);
+    // Predicted pass inside the blast radius: the ring and miss vector go amber.
+    const inside = Math.hypot(hit.x - shot.x, hit.y - shot.y) <= blast;
+    const tint = inside ? HIT : (TEAM_COLORS[e.team] ?? TEAM_COLORS[2]);
+    (t.ring.material as THREE.LineBasicMaterial).color.setHex(tint);
+    (t.line.material as THREE.LineBasicMaterial).color.setHex(
+      TEAM_COLORS[e.team] ?? TEAM_COLORS[2],
+    );
+    t.halo.visible = blast < HALO_PX * mpp;
+    t.halo.position.set(hx, hy, 1.3);
+    t.halo.scale.setScalar(HALO_PX * mpp);
+    (t.halo.material as THREE.LineBasicMaterial).color.setHex(tint);
   }
 
   private track(e: EntityView): Track {
@@ -143,11 +164,15 @@ export class InterceptLayer implements ViewLayer {
       unitCircle(RING_SEGMENTS),
       new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 }),
     );
-    for (const o of [line, trail, ring]) {
+    const halo = new THREE.LineLoop(
+      unitCircle(24),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3 }),
+    );
+    for (const o of [line, trail, ring, halo]) {
       o.frustumCulled = false;
       this.scene.add(o);
     }
-    t = { line, trail, ring, history: [], lastSample: -Infinity };
+    t = { line, trail, ring, halo, history: [], lastSample: -Infinity };
     this.tracks.set(e.id, t);
     return t;
   }

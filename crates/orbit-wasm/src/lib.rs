@@ -1,7 +1,7 @@
 //! Thin wasm-bindgen facade over `orbit_sim::World`. JS sends commands and
 //! reads flat `Float64Array` snapshots; it never mutates sim state directly.
 
-use orbit_sim::vessel::{Kind, MINE, MISSILE, SHIP_CLASSES};
+use orbit_sim::vessel::{Kind, KV, MINE, MISSILE, SHIP_CLASSES};
 use orbit_sim::{elements, AttitudeMode, OrbitSpec, Planet, World};
 use wasm_bindgen::prelude::*;
 
@@ -98,7 +98,7 @@ impl Game {
         })
     }
 
-    /// Static stats of a munition (1 = missile, 2 = mine): mass, delta-v,
+    /// Static stats of a munition (1 = missile, 2 = mine, 3 = kinetic vehicle): mass, delta-v,
     /// accel, closing speed, blast radius, damage, arm time, trigger range,
     /// lifetime, eject speed, RCS delta-v, RCS accel, RCS turn rate, RCS
     /// turn cost, battery capacity (J), energy per m/s (J), solar power (W). Empty for other kinds.
@@ -106,6 +106,7 @@ impl Game {
         let m = match kind {
             1 => &MISSILE,
             2 => &MINE,
+            3 => &KV,
             _ => return Vec::new(),
         };
         vec![
@@ -126,6 +127,7 @@ impl Game {
             m.battery_j,
             m.energy_per_dv,
             m.solar_w,
+            m.kv_range,
         ]
     }
 

@@ -176,7 +176,8 @@ export const ACTIONS: ControlAction[] = [
     id: 'drop-mine',
     group: 'target',
     label: 'MINE',
-    title: 'Leave a mine on your orbit. It sleeps until an enemy passes within 3 km.',
+    title:
+      'Leave a mine on your orbit. It sleeps until an enemy passes within 5 km, then launches a kinetic vehicle inside 2.2 km.',
     keys: ['KeyM'],
     keyHint: 'M',
   },

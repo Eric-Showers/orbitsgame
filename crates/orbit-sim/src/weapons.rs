@@ -15,7 +15,7 @@
 //! The module works on a plain entity slice: `World::step` integrates ships,
 //! then calls [`step`] once per tick with the same `dt`.
 
-use crate::vessel::{AttitudeMode, Entity, Kind, MunitionSpec, MINE, MISSILE};
+use crate::vessel::{AttitudeMode, Entity, Kind, MunitionSpec, KV, MINE, MISSILE};
 use crate::world::{Event, EventKind};
 use crate::{Planet, Vec3};
 
@@ -35,10 +35,10 @@ fn is_enemy_ship(e: &Entity, team: u8) -> bool {
 }
 
 fn new_munition(id: u32, kind: Kind, owner: &Entity, vel: Vec3, target: Option<u32>) -> Entity {
-    let spec = if kind == Kind::Missile {
-        &MISSILE
-    } else {
-        &MINE
+    let spec = match kind {
+        Kind::Missile => &MISSILE,
+        Kind::Kv => &KV,
+        _ => &MINE,
     };
     Entity {
         id,
@@ -131,6 +131,20 @@ pub fn drop_mine(entities: &mut Vec<Entity>, layer: u32, id: u32, events: &mut V
     true
 }
 
+/// Converts a mine into its kinetic vehicle in place: the mine vessel is only the delivery.
+fn launch_kv(m: &mut Entity, events: &mut Vec<Event>) {
+    m.kind = Kind::Kv;
+    m.main_dv_left = KV.delta_v;
+    m.rcs_dv_left = KV.rcs_dv;
+    m.charge = 0.0;
+    m.ai_timer = 0.0;
+    events.push(Event {
+        kind: EventKind::MissileLaunched,
+        id: m.id,
+        pos: m.pos,
+    });
+}
+
 /// Nearest live enemy ship to `pos` within `range`, by index.
 fn nearest_enemy(entities: &[Entity], team: u8, pos: Vec3, range: f64) -> Option<usize> {
     let mut best = None;
@@ -160,8 +174,9 @@ fn guidance_accel(m: &Entity, spec: &MunitionSpec, target: &Entity) -> Vec3 {
     let los = rel_p.normalize_or_zero();
     let closing = -rel_v.dot(los);
     let mut accel = Vec3::ZERO;
-    if spec.closing_speed - closing > GUIDANCE_DEADBAND {
-        accel = los * ((spec.closing_speed - closing) / GUIDANCE_TAU);
+    let excess = spec.closing_speed - closing;
+    if excess > GUIDANCE_DEADBAND || (spec.brakes && excess < -GUIDANCE_DEADBAND) {
+        accel = los * (excess / GUIDANCE_TAU);
     }
     let t_go = rel_p.length() / closing.max(spec.closing_speed);
     let zem = rel_p + rel_v * t_go;
@@ -289,10 +304,20 @@ fn fly(m: &mut Entity, spec: &MunitionSpec, want: Vec3, dt: f64) -> Vec3 {
 pub fn step(entities: &mut [Entity], planet: &Planet, sun: Vec3, dt: f64, events: &mut Vec<Event>) {
     let mut moved = Vec::new();
     for i in 0..entities.len() {
-        let Some(spec) = entities[i].munition().filter(|_| entities[i].alive) else {
+        let Some(mut spec) = entities[i].munition().filter(|_| entities[i].alive) else {
             continue;
         };
         let target = update_target(entities, i, spec, events);
+        if let Some(t) = target {
+            let m = &entities[i];
+            if m.kind == Kind::Mine
+                && m.active
+                && (entities[t].pos - m.pos).length() <= MINE.kv_range
+            {
+                launch_kv(&mut entities[i], events);
+                spec = &KV;
+            }
+        }
         let m = &entities[i];
         let mut want = Vec3::ZERO;
         if let (true, Some(t)) = (m.active, target) {
@@ -351,7 +376,7 @@ fn closest_approach(d0: Vec3, u: Vec3) -> (f64, f64) {
 /// The blast damages every ship inside the radius, friend or foe.
 fn fuse(entities: &mut [Entity], i: usize, m0: Vec3, dt: f64, events: &mut Vec<Event>) {
     let m = &entities[i];
-    if !m.alive || !m.active || !m.is_armed() {
+    if !m.alive || !m.active || !m.is_armed() || m.kind == Kind::Mine {
         return;
     }
     let spec = m.munition().expect("fuse only runs on munitions");
@@ -511,7 +536,7 @@ mod tests {
         // A drone 2 km lower drifts ahead at ~15 m/s and passes under the mine.
         let mut es = vec![
             orbiting(1, CORVETTE, 0, R, 0.0),
-            orbiting(2, DRONE, 1, R - 2_000.0, -8_000.0),
+            orbiting(2, DRONE, 1, R - 1_000.0, -8_000.0),
         ];
         let mut ev = Vec::new();
         assert!(drop_mine(&mut es, 1, 10, &mut ev));
@@ -519,6 +544,21 @@ mod tests {
         assert!(has(&ev, EventKind::MineTriggered, 10), "{ev:?}");
         assert!(has(&ev, EventKind::ShipDestroyed, 2), "{ev:?}");
         assert!(get(&es, 1).alive);
+    }
+
+    #[test]
+    fn fast_pass_outruns_the_kinetic_vehicle() {
+        let mut es = vec![
+            orbiting(1, CORVETTE, 0, R, 0.0),
+            orbiting(2, DRONE, 1, R - 1_000.0, -8_000.0),
+        ];
+        let fast = es[1].vel.normalize_or_zero() * 300.0;
+        es[1].vel += fast;
+        let mut ev = Vec::new();
+        assert!(drop_mine(&mut es, 1, 10, &mut ev));
+        run(&mut es, 900.0, &mut ev);
+        assert!(has(&ev, EventKind::MissileLaunched, 10), "{ev:?}");
+        assert!(!has(&ev, EventKind::ShipDestroyed, 2), "{ev:?}");
     }
 
     #[test]

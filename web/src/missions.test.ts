@@ -122,9 +122,9 @@ describe('missions are winnable as designed', () => {
     expect(run.outcome).toBe('won');
   });
 
-  it('mine corridor: three mines laid at 89.5 km catch the convoy', () => {
+  it('mine corridor: three mines laid at 88.5 km catch the convoy', () => {
     const run = start(mission('mine-corridor'));
-    hohmannUp(run, 89_500);
+    hohmannUp(run, 88_500);
     for (let i = 0; i < 3; i++) {
       expect(run.session.dropMine()).toBe(true);
       fly(run, 20);

@@ -12,6 +12,8 @@ pub enum Kind {
     Ship = 0,
     Missile = 1,
     Mine = 2,
+    /// A mine past its launch range, now a kinetic vehicle.
+    Kv = 3,
 }
 
 /// Attitude hold modes, named after their orbital-mechanics directions.
@@ -234,6 +236,10 @@ pub struct MunitionSpec {
     pub energy_per_dv: f64,
     /// Solar charging power in sunlight (W).
     pub solar_w: f64,
+    /// Range (m) at which a mine launches its kinetic vehicle. Zero for other munitions.
+    pub kv_range: f64,
+    /// Guidance may brake toward `closing_speed` when running faster than it.
+    pub brakes: bool,
 }
 
 pub const MISSILE: MunitionSpec = MunitionSpec {
@@ -256,6 +262,8 @@ pub const MISSILE: MunitionSpec = MunitionSpec {
     battery_j: 0.0,
     energy_per_dv: 0.0,
     solar_w: 0.0,
+    kv_range: 0.0,
+    brakes: false,
 };
 
 pub const MINE: MunitionSpec = MunitionSpec {
@@ -266,8 +274,8 @@ pub const MINE: MunitionSpec = MunitionSpec {
     blast_radius: 30.0,
     damage: 100.0,
     arm_time: 5.0,
-    trigger_range: 3_000.0,
-    lifetime: 300.0,
+    trigger_range: 5_000.0,
+    lifetime: 900.0,
     nav_gain: 3.0,
     eject_speed: 1.0,
     lose_track: 2.0,
@@ -278,6 +286,33 @@ pub const MINE: MunitionSpec = MunitionSpec {
     battery_j: 1.0e6,
     energy_per_dv: 4_000.0,
     solar_w: 1_000.0,
+    kv_range: 2_200.0,
+    brakes: false,
+};
+
+/// Kinetic vehicle a mine launches: a mini-missile with a tenth of the missile budget.
+pub const KV: MunitionSpec = MunitionSpec {
+    mass: 20.0,
+    delta_v: 80.0,
+    accel: 50.0,
+    closing_speed: 50.0,
+    blast_radius: 40.0,
+    damage: 100.0,
+    arm_time: 0.0,
+    trigger_range: 0.0,
+    lifetime: 120.0,
+    nav_gain: 3.0,
+    eject_speed: 0.0,
+    lose_track: 0.0,
+    rcs_dv: 60.0,
+    rcs_accel: 3.0,
+    rcs_turn_rate: 3.0,
+    rcs_turn_cost: 1.0,
+    battery_j: 0.0,
+    energy_per_dv: 0.0,
+    solar_w: 0.0,
+    kv_range: 0.0,
+    brakes: true,
 };
 
 /// One simulated object: a ship, a missile or a mine.
@@ -326,6 +361,7 @@ impl Entity {
             Kind::Ship => None,
             Kind::Missile => Some(&MISSILE),
             Kind::Mine => Some(&MINE),
+            Kind::Kv => Some(&KV),
         }
     }
 

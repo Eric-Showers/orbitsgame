@@ -161,7 +161,11 @@ export class MissionRun {
         case SimEventKind.ShipDestroyed:
           this.kills.set(
             ev.id,
-            blast === EntityKind.Missile ? 'missile' : blast === EntityKind.Mine ? 'mine' : 'other',
+            blast === EntityKind.Missile
+              ? 'missile'
+              : blast === EntityKind.Mine || blast === EntityKind.Kv
+                ? 'mine'
+                : 'other',
           );
           break;
         case SimEventKind.Crash:
@@ -305,7 +309,12 @@ export class MissionRun {
     const left = s.munitionsLeft(s.playerId)[d.by === 'missile' ? 'missiles' : 'mines'];
     const inFlight = s
       .all()
-      .some((e) => e.alive && e.kind === kind && e.team === TEAM_INDEX.player);
+      .some(
+        (e) =>
+          e.alive &&
+          e.team === TEAM_INDEX.player &&
+          (e.kind === kind || (d.by === 'mine' && e.kind === EntityKind.Kv)),
+      );
     if (left === 0 && !inFlight) this.failObjective(o, `Out of ${d.by}s`);
   }
 

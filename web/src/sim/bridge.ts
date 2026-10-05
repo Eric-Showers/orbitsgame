@@ -23,6 +23,7 @@ export enum EntityKind {
   Ship = 0,
   Missile = 1,
   Mine = 2,
+  Kv = 3,
 }
 
 /** Mirrors the class indices of `SHIP_CLASSES` in `orbit-sim`. */

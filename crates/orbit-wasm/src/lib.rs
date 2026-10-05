@@ -65,6 +65,11 @@ impl Game {
         self.world.spawn_ship_in_orbit(class, team, spec)
     }
 
+    /// Sets the sun direction, in degrees from +x in the orbital plane.
+    pub fn set_sun_angle_deg(&mut self, deg: f64) {
+        self.world.set_sun_angle_deg(deg);
+    }
+
     /// Sets a ship's missiles and mines.
     pub fn set_loadout(&mut self, id: u32, missiles: u32, mines: u32) {
         self.world.set_loadout(id, missiles, mines);

@@ -197,7 +197,7 @@ describe('weapons scripts', () => {
   });
 
   it('lays a mine only where a hostile will pass', () => {
-    const w = world(80_000, 80_000, 0, hostile(-20_000, 77_000, 77_000));
+    const w = world(80_000, 80_000, 0, hostile(-20_000, 78_000, 78_000));
     expect(fly(w, new DropMine()).ok).toBe(true);
     const lonely = world(80_000, 80_000);
     const r = fly(lonely, new DropMine());

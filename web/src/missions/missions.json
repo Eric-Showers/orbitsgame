@@ -449,8 +449,8 @@
       "title": "Mine the Corridor",
       "summary": "Seed the 88-91 km lane, then let the convoy find it.",
       "briefing": [
-        "A two-drone convoy, flying 1.5 km apart, will run the 86.5 km lane. Climb into the 88-91 km corridor above it and lay three mines there. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
-        "Mines sleep until an enemy passes within 5 km. Lower orbits are faster, so the convoy will overtake your field from behind and below."
+        "A two-drone convoy, flying 1.5 km apart, will run the 87 km lane. Climb into the 88-91 km corridor above it and lay three mines there. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
+        "Mines sleep until an enemy passes within 3 km. Lower orbits are faster, so the convoy will overtake your field from behind and below."
       ],
       "player": {
         "class": "corvette",
@@ -469,7 +469,7 @@
           "class": "drone",
           "team": "enemy",
           "orbit": {
-            "pe": 86500,
+            "pe": 87000,
             "lead": -15000
           },
           "spawn": {
@@ -482,7 +482,7 @@
           "class": "drone",
           "team": "enemy",
           "orbit": {
-            "pe": 86500,
+            "pe": 87000,
             "lead": -16500
           },
           "spawn": {

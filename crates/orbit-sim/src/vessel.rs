@@ -266,7 +266,7 @@ pub const MINE: MunitionSpec = MunitionSpec {
     blast_radius: 30.0,
     damage: 100.0,
     arm_time: 5.0,
-    trigger_range: 5_000.0,
+    trigger_range: 3_000.0,
     lifetime: 300.0,
     nav_gain: 3.0,
     eject_speed: 1.0,

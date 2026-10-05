@@ -13,6 +13,7 @@ import { MissionRun } from './missions/run';
 import { FlightView } from './render/view';
 import { InterceptLayer } from './render/intercepts';
 import { ZoneLayer } from './render/zones';
+import { withSunFromConfig } from './sim/bridge';
 import { FlightSession } from './sim/session';
 import { bindKeyboard, type ClientControl } from './ui/controls';
 import { CommsLog } from './ui/comms';
@@ -29,7 +30,7 @@ async function main(): Promise<void> {
   await init();
   const missions = loadMissions();
   const progress = new Progress(LOCK_PROGRESSION);
-  let session = new FlightSession(new Game());
+  let session = new FlightSession(withSunFromConfig(new Game()));
   /** The mission being flown, or null in free flight. */
   let run: MissionRun | null = null;
   let runIndex = -1;
@@ -89,14 +90,14 @@ async function main(): Promise<void> {
     sound.reset();
   };
   const startMission = (index: number): void => {
-    run = new MissionRun(new Game(), missions[index]);
+    run = new MissionRun(withSunFromConfig(new Game()), missions[index]);
     runIndex = index;
     debriefed = false;
     switchTo(run.session);
   };
   const freeFlight = (): void => {
     run = null;
-    switchTo(new FlightSession(new Game()));
+    switchTo(new FlightSession(withSunFromConfig(new Game())));
   };
 
   const client: ClientControl = {

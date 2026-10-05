@@ -508,10 +508,10 @@ mod tests {
 
     #[test]
     fn mine_wakes_and_kills_enemy_drifting_into_range() {
-        // A drone 3 km lower drifts ahead at ~15 m/s and passes under the mine.
+        // A drone 2 km lower drifts ahead at ~15 m/s and passes under the mine.
         let mut es = vec![
             orbiting(1, CORVETTE, 0, R, 0.0),
-            orbiting(2, DRONE, 1, R - 3_000.0, -8_000.0),
+            orbiting(2, DRONE, 1, R - 2_000.0, -8_000.0),
         ];
         let mut ev = Vec::new();
         assert!(drop_mine(&mut es, 1, 10, &mut ev));

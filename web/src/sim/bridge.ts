@@ -1,7 +1,9 @@
 // Typed views over the flat arrays the WASM `Game` returns. Field order must
 // match `crates/orbit-wasm/src/lib.rs`.
 
-export const ENTITY_STRIDE = 24;
+import { CELESTIAL } from '../render/celestial';
+
+export const ENTITY_STRIDE = 25;
 
 export enum Attitude {
   Hold = 0,
@@ -58,6 +60,8 @@ export interface EntityView {
   maxAccel: number;
   /** Motor delta-v remaining for munitions (m/s); ships have an unlimited drive and report 0. */
   deltaV: number;
+  /** Battery state of charge, 0..1; 0 for ships and munitions without a battery. */
+  charge: number;
 }
 
 export function decodeEntities(flat: Float64Array): EntityView[] {
@@ -83,6 +87,7 @@ export function decodeEntities(flat: Float64Array): EntityView[] {
       mass: v(21),
       maxAccel: v(22),
       deltaV: v(23),
+      charge: v(24),
     });
   }
   return out;
@@ -188,3 +193,9 @@ export function decodeEvents(flat: Float64Array): SimEvent[] {
 export const len = (v: Vec3): number => Math.hypot(v.x, v.y, v.z);
 export const sub = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
 export const dot = (a: Vec3, b: Vec3): number => a.x * b.x + a.y * b.y + a.z * b.z;
+
+/** Points the sim's sun at the sun in `celestial.json`, so eclipses match the render. */
+export function withSunFromConfig<G extends { set_sun_angle_deg(deg: number): void }>(game: G): G {
+  game.set_sun_angle_deg(CELESTIAL.sun.angleDeg);
+  return game;
+}

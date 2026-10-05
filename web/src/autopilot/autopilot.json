@@ -52,7 +52,7 @@
     "missileDvMargin": 1.25,
     "mineHorizon": 1800,
     "mineSampleSeconds": 10,
-    "mineRangeFraction": 0.8
+    "mineRangeFraction": 1.0
   },
   "autoWarp": {
     "enabled": true,

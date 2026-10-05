@@ -266,6 +266,12 @@ impl World {
         pos * (-self.planet.mu / (r2 * r2.sqrt()))
     }
 
+    /// Sets the sun direction, in degrees from +x in the orbital plane.
+    pub fn set_sun_angle_deg(&mut self, deg: f64) {
+        let a = deg.to_radians();
+        self.sun = Vec3::new(libm::cos(a), libm::sin(a), 0.0);
+    }
+
     /// Advances the world by `dt` seconds. Thrust is applied as a constant
     /// acceleration across a velocity Verlet step. Munitions fly themselves
     /// (see `weapons::step`) after the ships have moved.

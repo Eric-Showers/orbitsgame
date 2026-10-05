@@ -195,7 +195,7 @@ export function spawnSandbox(game: Game): number {
   // 3 km lower and 20 km behind that drifts past underneath at ~15 m/s, close
   // enough to wake a mine dropped near your own position.
   game.spawn_ship(DRONE, 1, LOW_ORBIT_ALT, LOW_ORBIT_ALT, 0, 15_000 / r);
-  const low = LOW_ORBIT_ALT - 3_000;
+  const low = LOW_ORBIT_ALT - 2_000;
   game.spawn_ship(DRONE, 1, low, low, 0, -20_000 / r);
   return player;
 }

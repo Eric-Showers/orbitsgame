@@ -93,8 +93,32 @@ describe('adversary decisions', () => {
     expect(max).toBe(0);
   });
 
-  it('keeps the orbital advantage hook neutral until high-ground scoring exists', () => {
-    expect(orbitalAdvantage(view([]), Attitude.Prograde)).toBe(0);
+  it('scores orbit-size burns by their effect on drift to the foe', () => {
+    const mu = 3.5316e12;
+    const at = (alt: number, ang: number) => {
+      const r = 600000 + alt;
+      const v = Math.sqrt(mu / r);
+      return {
+        pos: { x: r * Math.cos(ang), y: r * Math.sin(ang), z: 0 },
+        vel: { x: -v * Math.sin(ang), y: v * Math.cos(ang), z: 0 },
+      };
+    };
+    const me = { ...view([threat()]).me, ...at(100000, 0) };
+    const foe = { ...me, id: 2, ...at(80000, 0.3) };
+    const p = {
+      ...view([threat()]),
+      me,
+      foe,
+      orbit: { ...view([]).orbit, semiMajorAxis: 700000, eccentricity: 0 },
+    } as unknown as Perception;
+    // Under threat: pulling further from the foe's orbit (prograde) gains drift.
+    expect(orbitalAdvantage(p, Attitude.Prograde)).toBeGreaterThan(0);
+    expect(orbitalAdvantage(p, Attitude.Retrograde)).toBeLessThan(0);
+    expect(orbitalAdvantage(p, Attitude.RadialOut)).toBe(0);
+    // Nothing inbound: the sign flips, staying matched is preferred.
+    const calm = { ...p, threats: [] } as Perception;
+    expect(orbitalAdvantage(calm, Attitude.Prograde)).toBeLessThan(0);
+    expect(orbitalAdvantage({ ...p, foe: undefined } as Perception, Attitude.Prograde)).toBe(0);
   });
 });
 

@@ -43,7 +43,7 @@
     "escape": 1,
     "alternate": 0.25,
     "unsafe": 10,
-    "advantage": 0
+    "advantage": 2
   },
   "warp": {
     "alertRange": 60000,

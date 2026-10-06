@@ -1,13 +1,20 @@
-/* Orbit-wave widget: right edge under the comms panel, clear of mission objectives (top left) and ARGUS (bottom left). */
+/* Orbit-wave widget: bottom centre between the helm and sound panels, sitting on top of the control console, wide enough for three hours. */
 
-.hud-wave {
-  right: 8px;
-  top: 160px;
-  transform: none;
-  width: 312px;
+.hud .hud-wave {
+  top: auto;
+  bottom: calc(var(--console-h, 0px) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, max(420px, calc(100vw - 760px)));
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.hud .hud-wave canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 680 / 130;
 }
 
 .hud-wave[hidden] {

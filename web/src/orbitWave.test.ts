@@ -1,147 +1,95 @@
 import { describe, expect, it } from 'vitest';
+import { TAU } from './autopilot/orbitmath';
 import { Attitude } from './sim/bridge';
-import {
-  apoapsisOf,
-  periapsisOf,
-  projectBurns,
-  sampleWave,
-  waveCrossings,
-  waveFromState,
-  waveRadius,
-  type WaveOrbit,
-} from './ui/orbitWave';
+import { alignments, phaseGap, phaseOf, phaseTrack, plannedBurnsUsable } from './ui/orbitWave';
 
 const MU = 3.986e14;
+const period = (r: number): number => TAU * Math.sqrt(r ** 3 / MU);
 
-const circ = (
-  r: number,
-): { pos: { x: number; y: number; z: number }; vel: { x: number; y: number; z: number } } => ({
-  pos: { x: r, y: 0, z: 0 },
-  vel: { x: 0, y: Math.sqrt(MU / r), z: 0 },
+const circ = (r: number, at = 0) => ({
+  pos: { x: r * Math.cos(at), y: r * Math.sin(at), z: 0 },
+  vel: { x: -Math.sin(at) * Math.sqrt(MU / r), y: Math.cos(at) * Math.sqrt(MU / r), z: 0 },
 });
 
-describe('wave sampling', () => {
-  const o: WaveOrbit = { p: 7_000_000 * (1 - 0.01 ** 2), e: 0.01, w: 0.5 };
-
-  it('peaks at apoapsis and bottoms at periapsis, half a turn apart', () => {
-    const e: WaveOrbit = { p: 8_000_000 * 0.75, e: 0.25, w: 1 };
-    expect(waveRadius(e, e.w)).toBeCloseTo(periapsisOf(e), 3);
-    expect(waveRadius(e, e.w + Math.PI)).toBeCloseTo(apoapsisOf(e)!, 3);
-    const s = sampleWave(e, 361).filter((v): v is number => v !== null);
-    expect(Math.max(...s)).toBeCloseTo(apoapsisOf(e)!, -2);
-    expect(Math.min(...s)).toBeCloseTo(periapsisOf(e)!, -2);
+describe('phase', () => {
+  it('folds gaps into half a turn either side', () => {
+    expect(phaseGap(0.1, TAU - 0.1)).toBeCloseTo(0.2, 9);
+    expect(phaseGap(TAU - 0.1, 0.1)).toBeCloseTo(-0.2, 9);
   });
 
-  it('closes the loop and keeps a circle flat', () => {
-    const s = sampleWave(o, 181);
-    expect(s[0]).toBeCloseTo(s[180]!, 3);
-    const c = sampleWave({ p: 7e6, e: 0, w: 0 }, 50);
-    expect(new Set(c.map((v) => Math.round(v!))).size).toBe(1);
-  });
-
-  it('leaves gaps where an open orbit has no point', () => {
-    const hyper: WaveOrbit = { p: 1e7, e: 1.5, w: 0 };
-    expect(apoapsisOf(hyper)).toBeNull();
-    const s = sampleWave(hyper, 181);
-    expect(s[90]).toBeNull();
-    expect(s[0]).not.toBeNull();
-  });
-
-  it('caps radii above the plot ceiling', () => {
-    expect(sampleWave({ p: 1e7, e: 0.9, w: 0 }, 181, 2e7).some((v) => v === null)).toBe(true);
+  it('wraps the angle of a position into [0, 2pi)', () => {
+    expect(phaseOf({ x: 1, y: -1, z: 0 })).toBeCloseTo(TAU - Math.PI / 4, 9);
   });
 });
 
-describe('elements from a state', () => {
-  it('recovers a circular orbit', () => {
-    const { pos, vel } = circ(7e6);
-    const w = waveFromState(MU, pos, vel)!;
-    expect(w.e).toBeCloseTo(0, 6);
-    expect(periapsisOf(w)).toBeCloseTo(7e6, 0);
+describe('phase tracks', () => {
+  it('advances one turn per period on a circular orbit', () => {
+    const r = 7e6;
+    const { pos, vel } = circ(r);
+    const p = period(r);
+    const track = phaseTrack(MU, pos, vel, 5, p * 4);
+    expect(track).toHaveLength(5);
+    for (const a of track) expect(Math.min(a, TAU - a)).toBeLessThan(1e-6);
+    const quarter = phaseTrack(MU, pos, vel, 2, p / 4);
+    expect(quarter[1]).toBeCloseTo(Math.PI / 2, 6);
   });
 
-  it('puts periapsis at the burn point after a prograde kick', () => {
-    const { pos, vel } = circ(7e6);
-    const w = waveFromState(MU, pos, { x: 0, y: vel.y + 100, z: 0 })!;
-    expect(w.e).toBeGreaterThan(0);
-    expect(Math.cos(w.w)).toBeCloseTo(1, 6);
-    expect(periapsisOf(w)).toBeCloseTo(7e6, 0);
-    expect(apoapsisOf(w)!).toBeGreaterThan(7e6);
+  it('a lower orbit pulls ahead of a higher one', () => {
+    const low = circ(6.6e6);
+    const high = circ(7.4e6);
+    const a = phaseTrack(MU, low.pos, low.vel, 31, 3000);
+    const b = phaseTrack(MU, high.pos, high.vel, 31, 3000);
+    expect(phaseGap(a[10], b[10])).toBeGreaterThan(0);
   });
 
-  it('rejects a radial state', () => {
-    expect(waveFromState(MU, { x: 7e6, y: 0, z: 0 }, { x: 10, y: 0, z: 0 })).toBeNull();
+  it('applies a planned prograde burn that slows the angular rate afterwards', () => {
+    const { pos, vel } = circ(7e6);
+    const coast = phaseTrack(MU, pos, vel, 61, 3000);
+    const burned = phaseTrack(MU, pos, vel, 61, 3000, {
+      now: 0,
+      nodes: [{ time: 0, mode: Attitude.Prograde, dv: 150, label: 'raise' }],
+    });
+    expect(burned[0]).toBeCloseTo(coast[0], 9);
+    expect(phaseGap(burned[60], coast[60])).not.toBeCloseTo(0, 2);
+  });
+
+  it('ignores a target-relative node it cannot place', () => {
+    const { pos, vel } = circ(7e6);
+    const nodes = [{ time: 0, mode: Attitude.TargetPrograde, dv: 10, label: 'match' }];
+    expect(plannedBurnsUsable(pos, vel, nodes)).toBe(false);
+    const coast = phaseTrack(MU, pos, vel, 11, 1000);
+    const same = phaseTrack(MU, pos, vel, 11, 1000, { now: 0, nodes });
+    expect(same).toEqual(coast);
   });
 });
 
-describe('crossings', () => {
-  it('finds two intersections of an ellipse and a circle through it', () => {
-    const ell: WaveOrbit = { p: 7.5e6 * (1 - 0.1 ** 2), e: 0.1, w: 0 };
-    const hits = waveCrossings(ell, { p: 7.5e6, e: 0, w: 0 });
-    expect(hits).toHaveLength(2);
-    for (const th of hits) expect(waveRadius(ell, th)).toBeCloseTo(7.5e6, 0);
+describe('alignments', () => {
+  it('finds when a chaser laps its target, spaced by the synodic period', () => {
+    const rA = 6.6e6;
+    const rB = 1.0e7;
+    const a = circ(rA);
+    const b = circ(rB, 1);
+    const horizon = 6 * 3600;
+    const ta = phaseTrack(MU, a.pos, a.vel, 721, horizon);
+    const tb = phaseTrack(MU, b.pos, b.vel, 721, horizon);
+    const hits = alignments(ta, tb, horizon);
+    const synodic = 1 / (1 / period(rA) - 1 / period(rB));
+    expect(hits.length).toBeGreaterThanOrEqual(2);
+    expect(hits[1] - hits[0]).toBeCloseTo(synodic, -2);
+    // The first one is when the chaser covers the 1 rad head start.
+    expect(hits[0]).toBeCloseTo(synodic / TAU, -2);
   });
 
-  it('reports nothing for the same orbit, even with float noise', () => {
-    expect(waveCrossings({ p: 7e6, e: 0, w: 0 }, { p: 7e6 + 0.001, e: 1e-9, w: 1 })).toHaveLength(
-      0,
-    );
-  });
-
-  it('finds none between nested circles', () => {
-    expect(waveCrossings({ p: 7e6, e: 0, w: 0 }, { p: 8e6, e: 0, w: 0 })).toHaveLength(0);
-  });
-
-  it('finds two between ellipses rotated against each other', () => {
-    const a: WaveOrbit = { p: 7e6 * 0.96, e: 0.2 * 0 + 0.2, w: 0 };
-    const b: WaveOrbit = { p: 7e6 * 0.96, e: 0.2, w: Math.PI / 2 };
-    const hits = waveCrossings(a, b);
-    expect(hits).toHaveLength(2);
-    for (const th of hits) expect(waveRadius(a, th)).toBeCloseTo(waveRadius(b, th)!, 0);
-  });
-});
-
-describe('projected burns', () => {
-  it('a prograde burn raises the far side, and a second one at apoapsis circularizes higher', () => {
-    const { pos, vel } = circ(7e6);
-    const dv1 = 80;
-    const [first] = projectBurns(MU, pos, vel, 0, [
-      { time: 0, mode: Attitude.Prograde, dv: dv1, label: 'raise' },
-    ]);
-    expect(periapsisOf(first.after)).toBeCloseTo(7e6, 0);
-    expect(apoapsisOf(first.after)!).toBeGreaterThan(7.3e6);
-    expect(first.theta).toBeCloseTo(0, 9);
-    expect(first.radius).toBeCloseTo(7e6, 3);
-
-    const half = Math.PI * Math.sqrt(((7e6 + apoapsisOf(first.after)!) / 2) ** 3 / MU);
-    const vAp = Math.sqrt(MU / apoapsisOf(first.after)!);
-    const vApActual = Math.sqrt(
-      MU * (2 / apoapsisOf(first.after)! - 2 / (7e6 + apoapsisOf(first.after)!)),
-    );
-    const burns = projectBurns(MU, pos, vel, 0, [
-      { time: 0, mode: Attitude.Prograde, dv: dv1, label: 'raise' },
-      { time: half, mode: Attitude.Prograde, dv: vAp - vApActual, label: 'circ' },
-    ]);
-    expect(burns).toHaveLength(2);
-    expect(burns[1].after.e).toBeLessThan(1e-3);
-    expect(burns[1].after.p).toBeCloseTo(apoapsisOf(first.after)!, -1);
-  });
-
-  it('a retrograde burn lowers the opposite side', () => {
-    const { pos, vel } = circ(7e6);
-    const [b] = projectBurns(MU, pos, vel, 0, [
-      { time: 0, mode: Attitude.Retrograde, dv: 60, label: 'lower' },
-    ]);
-    expect(periapsisOf(b.after)).toBeLessThan(7e6 - 1e5);
-    expect(apoapsisOf(b.after)).toBeCloseTo(7e6, 0);
-  });
-
-  it('stops at a target-relative node it cannot place', () => {
-    const { pos, vel } = circ(7e6);
+  it('reports none for co-orbiting ships that never meet', () => {
+    const a = circ(7e6);
+    const b = circ(7e6, 1);
+    const horizon = 3600;
     expect(
-      projectBurns(MU, pos, vel, 0, [
-        { time: 0, mode: Attitude.TargetPrograde, dv: 10, label: 'match' },
-      ]),
-    ).toHaveLength(0);
+      alignments(
+        phaseTrack(MU, a.pos, a.vel, 61, horizon),
+        phaseTrack(MU, b.pos, b.vel, 61, horizon),
+        horizon,
+      ),
+    ).toEqual([]);
   });
 });

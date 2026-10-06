@@ -25,6 +25,7 @@ import { ControlPanel } from './ui/panel';
 import { AudioPanel } from './ui/audio';
 import { PilotPanel } from './ui/pilot';
 import { FlightHud } from './ui/hud';
+import { AlarmIcons } from './ui/alarms';
 
 async function main(): Promise<void> {
   await init();
@@ -120,6 +121,7 @@ async function main(): Promise<void> {
     () => session,
     () => pilot,
   );
+  const alarms = new AlarmIcons(document.body, () => session, voice);
   const hud = new MissionHud(document.body);
   const screens = new MissionScreens(document.body, missions, progress, {
     launch: startMission,
@@ -179,6 +181,7 @@ async function main(): Promise<void> {
     panel.update();
     pilotPanel.update();
     flightHud.update();
+    alarms.update();
     hud.update(run);
     requestAnimationFrame(frame);
   };

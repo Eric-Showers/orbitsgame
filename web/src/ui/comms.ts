@@ -4,7 +4,7 @@ import './comms.css';
 
 const MAX_LINES = 6;
 
-/** Text log of the vessel AI's speech: the first listener on the advisory channel. */
+/** Text log of the vessel AI's speech. Alarms flash as icons and status is read off the HUD, so neither is logged. */
 export class CommsLog {
   readonly box: HTMLElement;
   private list: HTMLElement;
@@ -28,6 +28,7 @@ export class CommsLog {
   }
 
   private show(ev: AdvisoryEvent): void {
+    if (ev.category === 'alarm' || ev.category === 'status') return;
     this.title.textContent = `VESSEL AI · ${ev.speaker}`;
     const li = document.createElement('li');
     li.className = `comms-line p-${ev.priority} c-${ev.category}`;

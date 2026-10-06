@@ -33,6 +33,7 @@ const COLORS = {
   target: 0xff7ce5,
   orbit: 0x3fd2ff,
   targetOrbit: 0xff7ce5,
+  impact: 0xff4d5e,
 };
 
 /** Extra scene content owned elsewhere (e.g. mission zones), updated every frame. */
@@ -70,6 +71,9 @@ export class FlightView {
   private styleToast = 0;
   private orbitLine: THREE.Line;
   private targetOrbitLine: THREE.Line;
+  /** Dotted red stand-ins for the orbit lines while their orbit dips below the surface. */
+  private orbitCut: THREE.Line;
+  private targetOrbitCut: THREE.Line;
   private apsides: THREE.Points;
   private vectors: THREE.LineSegments;
   private labels = new Map<string, HTMLElement>();
@@ -116,7 +120,9 @@ export class FlightView {
 
     this.orbitLine = orbitLine(COLORS.orbit, 0.9);
     this.targetOrbitLine = orbitLine(COLORS.targetOrbit, 0.5);
-    this.scene.add(this.orbitLine, this.targetOrbitLine);
+    this.orbitCut = cutLine(0.95);
+    this.targetOrbitCut = cutLine(0.6);
+    this.scene.add(this.orbitLine, this.targetOrbitLine, this.orbitCut, this.targetOrbitCut);
 
     this.apsides = new THREE.Points(
       new THREE.BufferGeometry().setAttribute(
@@ -304,8 +310,15 @@ export class FlightView {
     this.planet.position.set(px, py, 0);
 
     const target = session.entity(me.target);
-    this.drawOrbit(this.orbitLine, me.alive ? session.orbit(me.id) : null);
-    this.drawOrbit(this.targetOrbitLine, target?.alive ? session.orbit(target.id) : null);
+    const R = session.planetRadius;
+    this.drawOrbit(this.orbitLine, this.orbitCut, me.alive ? session.orbit(me.id) : null, R, mpp);
+    this.drawOrbit(
+      this.targetOrbitLine,
+      this.targetOrbitCut,
+      target?.alive ? session.orbit(target.id) : null,
+      R,
+      mpp,
+    );
     this.drawApsides(me.alive ? session.orbit(me.id) : null, session.planetRadius);
 
     // Ships and munitions share the sprite layer, in floating-origin coordinates.
@@ -336,21 +349,53 @@ export class FlightView {
     this.renderer.render(this.scene, this.camera);
   }
 
-  private drawOrbit(line: THREE.Line, orbit: OrbitView | null): void {
-    line.visible = orbit !== null;
+  private drawOrbit(
+    line: THREE.Line,
+    cut: THREE.Line,
+    orbit: OrbitView | null,
+    R: number,
+    mpp: number,
+  ): void {
+    const impact = orbit !== null && orbit.eccentricity > 1e-9 && orbit.periapsis < R;
+    line.visible = orbit !== null && !impact;
+    cut.visible = impact;
     if (!orbit) return;
-    const pos = line.geometry.getAttribute('position') as THREE.BufferAttribute;
     const { eccentricity: e, semiLatusRectum: p, argPeriapsis: w } = orbit;
     // Elliptic: whole loop. Open orbits: the arc where the conic is defined, capped in range.
-    const span = e < 1 ? Math.PI : Math.min(Math.acos(-1 / e) - 1e-3, Math.PI);
+    let from: number;
+    let to: number;
+    if (!impact) {
+      const span = e < 1 ? Math.PI : Math.min(Math.acos(-1 / e) - 1e-3, Math.PI);
+      from = -span;
+      to = span;
+    } else {
+      // The orbit is cut where it meets the surface: only the arc above ground is drawn.
+      const hit = Math.acos(Math.max(-1, Math.min(1, (p / R - 1) / e)));
+      if (e < 1) {
+        from = hit;
+        to = 2 * Math.PI - hit;
+      } else {
+        const asymptote = Math.min(Math.acos(-1 / e) - 1e-3, Math.PI);
+        const ta = Math.atan2(Math.sin(orbit.trueAnomaly), Math.cos(orbit.trueAnomaly));
+        [from, to] = ta <= 0 ? [-asymptote, -hit] : [hit, asymptote];
+      }
+    }
+    const target = impact ? cut : line;
+    const pos = target.geometry.getAttribute('position') as THREE.BufferAttribute;
     for (let i = 0; i < ORBIT_POINTS; i++) {
-      const nu = -span + (2 * span * i) / (ORBIT_POINTS - 1);
+      const nu = from + ((to - from) * i) / (ORBIT_POINTS - 1);
       const r = Math.min(p / (1 + e * Math.cos(nu)), 5e7);
       const [x, y] = this.local({ x: r * Math.cos(nu + w), y: r * Math.sin(nu + w), z: 0 });
       pos.setXYZ(i, x, y, 0);
     }
     pos.needsUpdate = true;
-    line.geometry.computeBoundingSphere();
+    target.geometry.computeBoundingSphere();
+    if (impact) {
+      const m = cut.material as THREE.LineDashedMaterial;
+      m.dashSize = 6 * mpp;
+      m.gapSize = 5 * mpp;
+      cut.computeLineDistances();
+    }
   }
 
   private drawApsides(orbit: OrbitView | null, R: number): void {
@@ -478,4 +523,23 @@ function orbitLine(color: number, opacity: number): THREE.Line {
     new THREE.Float32BufferAttribute(new Float32Array(ORBIT_POINTS * 3), 3),
   );
   return new THREE.Line(geom, new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+}
+
+function cutLine(opacity: number): THREE.Line {
+  const geom = new THREE.BufferGeometry().setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(new Float32Array(ORBIT_POINTS * 3), 3),
+  );
+  const line = new THREE.Line(
+    geom,
+    new THREE.LineDashedMaterial({
+      color: COLORS.impact,
+      transparent: true,
+      opacity,
+      dashSize: 1,
+      gapSize: 1,
+    }),
+  );
+  line.visible = false;
+  return line;
 }

@@ -1,0 +1,65 @@
+/* Alarm icons flank the top centre HUD strip; width mirrors .hud-stack in hud.css. */
+
+.alarms {
+  --stack-w: clamp(340px, calc(100vw - 740px), 600px);
+  position: fixed;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.alarms-left {
+  right: calc(50% + var(--stack-w) / 2 + 8px);
+  flex-direction: row-reverse;
+}
+
+.alarms-right {
+  left: calc(50% + var(--stack-w) / 2 + 8px);
+}
+
+.alarm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 52px;
+  padding: 4px 2px 3px;
+  box-sizing: border-box;
+  color: var(--c-amber);
+  background: rgba(40, 22, 0, 0.75);
+  border: 1px solid var(--c-amber);
+  border-radius: 2px;
+  font: 600 8px/1 var(--font-title);
+  letter-spacing: 0.1em;
+  animation: alarm-flash 1s steps(2, start) infinite;
+}
+
+.alarm[hidden] {
+  display: none;
+}
+
+.alarm.crit {
+  color: var(--c-red);
+  background: rgba(40, 0, 6, 0.8);
+  border-color: var(--c-red);
+  animation-duration: 0.5s;
+}
+
+.alarm svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes alarm-flash {
+  to {
+    opacity: 0.25;
+  }
+}

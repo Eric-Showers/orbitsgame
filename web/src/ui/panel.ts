@@ -29,18 +29,6 @@ export class ControlPanel {
     const console_ = el('div', 'console');
     root.appendChild(console_);
 
-    const nav = module(console_, 'NAV', 'nav');
-    for (const [k, label] of [
-      ['alt', 'ALT'],
-      ['spd', 'ORB VEL'],
-      ['ap', 'APOAPSIS'],
-      ['pe', 'PERIAPSIS'],
-      ['period', 'PERIOD'],
-      ['ecc', 'ECC'],
-    ] as const) {
-      this.readouts.set(k, readout(nav, label));
-    }
-
     const attitude = module(console_, 'ATTITUDE CONTROL', 'attitude');
     const grid = el('div', 'grid');
     attitude.appendChild(grid);
@@ -119,8 +107,6 @@ export class ControlPanel {
   update(): void {
     const s = this.session();
     const me = s.player();
-    const orbit = s.orbit(me.id);
-    const R = s.planetRadius;
     const target = s.entity(me.target);
 
     for (const action of ACTIONS) {
@@ -140,12 +126,6 @@ export class ControlPanel {
     this.buttons.get('throttle-cut')?.classList.toggle('active', me.throttle === 0);
 
     const r = this.readouts;
-    r.get('alt')?.set(fmtDistance(len(me.pos) - R));
-    r.get('spd')?.set(fmtSpeed(len(me.vel)));
-    r.get('ap')?.set(orbit ? fmtDistance(orbit.apoapsis - R) : '—');
-    r.get('pe')?.set(orbit ? fmtDistance(orbit.periapsis - R) : '—');
-    r.get('period')?.set(orbit ? fmtDuration(orbit.period) : '—');
-    r.get('ecc')?.set(orbit ? orbit.eccentricity.toFixed(4) : '—');
 
     this.throttleFill.style.height = fmtPercent(me.throttle);
     r.get('thr')?.set(fmtPercent(me.throttle));
@@ -170,10 +150,7 @@ export class ControlPanel {
     r.get('met')?.set(fmtDuration(s.time));
     r.get('warp')?.set(s.paused ? 'PAUSED' : `×${warp}${capped ? ' (ENGINE)' : ''}`);
 
-    let alert = '';
-    if (!me.alive) alert = 'VESSEL LOST · PRESS R TO RESET';
-    else if (me.outputCap < 1) alert = 'DRIVE DERATED · COAST TO COOL';
-    else if (orbit && orbit.periapsis < R) alert = 'IMPACT TRAJECTORY';
+    const alert = me.alive ? '' : 'VESSEL LOST · PRESS R TO RESET';
     this.alert.textContent = alert;
     this.alert.classList.toggle('show', alert !== '');
   }

@@ -169,16 +169,12 @@ energy difference, and a HUD line showing them for the targeted enemy. The orbit
 visualization (two waves whose peaks and troughs are periapsis and apoapsis)
 shows the same numbers visually.
 
-## 5. Questions for the game owner
+## 5. Decision
 
-- Should high ground be a visible bonus (A), an emergent effect (B), or both?
-- Should moving between bands cost heat (D)?
-- Do you want long-range sensors added so the horizon matters later?
-
-## 6. Decision
-
-Eric chose B with a visible HUD indicator. No horizon or line-of-sight effects
-for now, and moving between bands costs only the normal heat penalty.
+Option B (an emergent effect) with a visible HUD indicator. No horizon or
+line-of-sight effects for now, and moving between bands costs only the normal
+heat penalty. Long-range sensors, which would make the horizon matter, are
+deferred.
 
 Implemented: `web/src/ui/highGround.ts` (pure helper) with tuning in
 `web/src/ui/highGround.json` (`evenBandM` 2 km, `kvDeltaV` 80 m/s). The target

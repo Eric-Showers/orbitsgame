@@ -6,3 +6,6 @@ web/src/wasm-pkg/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Claude Code local state
+.claude/

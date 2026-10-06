@@ -1,5 +1,5 @@
 import type { AdvisoryChannel, AdvisoryEvent } from '../advisor/channel';
-import { DEFAULT_PERSONA, findPersona, type Persona } from '../advisor/personas';
+import { DEFAULT_PERSONA, selectablePersona, type Persona } from '../advisor/personas';
 
 const ENABLED_KEY = 'orbits.tts';
 const PERSONA_KEY = 'orbits.voicePersona';
@@ -75,7 +75,7 @@ export class TtsPlayer {
       new SpeechSynthesisUtterance(t),
   ) {
     this.on = this.supported && load(ENABLED_KEY) === 'on';
-    this.current = findPersona(load(PERSONA_KEY));
+    this.current = selectablePersona(load(PERSONA_KEY));
     channel.subscribe((ev) => this.hear(ev));
   }
 

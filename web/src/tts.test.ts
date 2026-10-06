@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { VesselAdvisor } from './advisor/advisor';
 import { AdvisoryChannel, type AdvisoryEvent } from './advisor/channel';
 import { VOICE } from './advisor/config';
-import { findPersona, PERSONAS } from './advisor/personas';
+import { findPersona, PERSONAS, SELECTABLE_PERSONAS, selectablePersona } from './advisor/personas';
 import { pickVoice, TtsPlayer, type Synth } from './ui/tts';
 
 const PLACEHOLDER = /\{(\w+)\}/g;
@@ -47,6 +47,13 @@ describe('personas', () => {
     expect(PERSONAS.length).toBeGreaterThan(2);
     const sigs = PERSONAS.map((p) => `${p.speech.rate}/${p.speech.pitch}`);
     expect(new Set(sigs).size).toBe(PERSONAS.length);
+  });
+
+  it('offers every persona but BRASS, which is kept for later', () => {
+    expect(SELECTABLE_PERSONAS.map((p) => p.id)).toEqual(['argus', 'halcyon', 'quill']);
+    expect(findPersona('marshal').callsign).toBe('BRASS');
+    expect(selectablePersona('marshal').id).toBe('argus'); // a saved BRASS choice falls back
+    expect(selectablePersona('quill').id).toBe('quill');
   });
 
   it('only reword real lines, keeping the cue placeholders', () => {

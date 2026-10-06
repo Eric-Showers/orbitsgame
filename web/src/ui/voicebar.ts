@@ -1,5 +1,5 @@
 import { fillTemplate, VOICE } from '../advisor/config';
-import { PERSONAS } from '../advisor/personas';
+import { SELECTABLE_PERSONAS } from '../advisor/personas';
 import type { CommanderName } from '../commander';
 import type { TtsPlayer } from './tts';
 
@@ -27,7 +27,7 @@ export class VoiceBar {
     this.select = document.createElement('select');
     this.select.className = 'voicebar-select';
     this.select.setAttribute('aria-label', 'AI voice');
-    for (const p of PERSONAS) this.select.append(new Option(p.name, p.id));
+    for (const p of SELECTABLE_PERSONAS) this.select.append(new Option(p.name, p.id));
     this.select.addEventListener('change', () => {
       this.onPersona(this.select.value);
       if (tts.enabled) tts.say(this.sample());

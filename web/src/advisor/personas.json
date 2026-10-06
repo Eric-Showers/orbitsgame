@@ -171,6 +171,7 @@
     {
       "id": "marshal",
       "name": "Brass",
+      "hidden": true,
       "blurb": "Self-declared tactical genius who calls every fight like a play-by-play announcer. Loud, wrong about history, right about the fundamentals.",
       "speech": {
         "rate": 1.6,

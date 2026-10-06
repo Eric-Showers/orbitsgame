@@ -2,10 +2,8 @@ import type { Pilot } from '../autopilot/pilot';
 import type { FlightSession } from '../sim/session';
 import { fmtDuration } from './format';
 import {
-  alignments,
-  phaseGap,
-  phaseOf,
-  phaseTrack,
+  altitudeOf,
+  altitudeTrack,
   plannedBurnsUsable,
   WAVE_HORIZON,
   WAVE_SAMPLES,
@@ -14,7 +12,6 @@ import './orbitWave.css';
 
 export const WAVE_KEY = 'KeyO';
 const STORAGE_KEY = 'orbits.wave-visible';
-const TAU = Math.PI * 2;
 const W = 680;
 const H = 130;
 const PAD = { l: 36, r: 10, t: 16, b: 16 };
@@ -26,9 +23,9 @@ const AMBER = '#ffb547';
 const DIM = '#5c8797';
 
 /**
- * Beat-matching view: x is game time over the next three hours, y is each ship's angle around the
- * planet. Ships on a lower orbit sweep faster, so the lines drift apart or together, and where they
- * cross the two ships sit on the same bearing. Shown only while a target is selected. Read-only.
+ * Orbit view: x is game time over the next three hours, y is each ship's altitude above the surface.
+ * Elliptic orbits show as waves, circular ones as flat lines; a dotted red line marks the ground.
+ * Shown only while a target is selected. Read-only.
  */
 export class OrbitWaveHud {
   readonly root = document.createElement('div');
@@ -47,7 +44,7 @@ export class OrbitWaveHud {
     this.root.className = 'hud-side hud-wave';
     const head = document.createElement('div');
     head.className = 'wave-head';
-    head.innerHTML = `<span class="hud-label">ORBIT WAVES · NEXT 3 HOURS</span><span class="wave-legend"><i style="color:${CYAN}">YOU</i><i style="color:${PINK}">TGT</i><i style="color:${AMBER}">┄ AFTER BURN</i><b>${WAVE_KEY.slice(3)}</b></span>`;
+    head.innerHTML = `<span class="hud-label">ORBIT WAVES · NEXT 3 HOURS</span><span class="wave-legend"><i style="color:${CYAN}">YOU</i><i style="color:${PINK}">TGT</i><i style="color:${AMBER}">┄ AFTER BURN</i><i style="color:${RED}">··· GROUND</i><b>${WAVE_KEY.slice(3)}</b></span>`;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     this.canvas.width = W * dpr;
     this.canvas.height = H * dpr;
@@ -102,32 +99,39 @@ export class OrbitWaveHud {
     tgt: NonNullable<ReturnType<FlightSession['entity']>>,
   ): void {
     const mu = s.game.mu();
-    const hostile = tgt.team === 1;
-    const tgtColor = hostile ? RED : PINK;
-    const you = phaseTrack(mu, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON);
-    const them = phaseTrack(mu, tgt.pos, tgt.vel, WAVE_SAMPLES, WAVE_HORIZON);
+    const R = s.planetRadius;
+    const tgtColor = tgt.team === 1 ? RED : PINK;
+    const you = altitudeTrack(mu, R, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON);
+    const them = altitudeTrack(mu, R, tgt.pos, tgt.vel, WAVE_SAMPLES, WAVE_HORIZON);
     const plan = this.pilot().proposal?.plan ?? null;
     const burned =
       plan?.feasible && plannedBurnsUsable(me.pos, me.vel, plan.nodes)
-        ? phaseTrack(mu, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON, {
+        ? altitudeTrack(mu, R, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON, {
             now: s.time,
             nodes: plan.nodes,
           })
         : null;
 
+    const all = [...you, ...them, ...(burned ?? [])];
+    const lo = Math.min(0, ...all);
+    const top = Math.max(1000, ...all);
+    const pad = (top - lo) * 0.08;
+    const [yMin, yMax] = [lo === 0 ? 0 : lo - pad, top + pad];
     const X = (t: number): number => PAD.l + (t / WAVE_HORIZON) * (W - PAD.l - PAD.r);
-    const Y = (a: number): number => H - PAD.b - (a / TAU) * (H - PAD.t - PAD.b);
+    const Y = (alt: number): number =>
+      H - PAD.b - ((alt - yMin) / (yMax - yMin)) * (H - PAD.t - PAD.b);
     g.clearRect(0, 0, W, H);
 
     g.lineWidth = 1;
     g.strokeStyle = 'rgba(29, 74, 94, 0.7)';
-    for (let q = 0; q <= 4; q++) {
-      const y = Y((q * TAU) / 4);
+    const step = niceStep((yMax - yMin) / 4);
+    for (let v = Math.ceil(yMin / step) * step; v <= yMax; v += step) {
+      const y = Y(v);
       g.beginPath();
       g.moveTo(PAD.l, y);
       g.lineTo(W - PAD.r, y);
       g.stroke();
-      this.text(g, `${q * 90}°`, PAD.l - 4, y + 3, DIM, 'right');
+      this.text(g, `${Math.round(v / 1000)} km`, PAD.l - 4, y + 3, DIM, 'right');
     }
     for (let m = 0; m <= 6; m++) {
       const t = m * 1800;
@@ -144,36 +148,39 @@ export class OrbitWaveHud {
         m === 0 ? 'left' : m === 6 ? 'right' : 'center',
       );
     }
+    g.save();
+    g.strokeStyle = RED;
+    g.lineWidth = 1.5;
+    g.setLineDash([2, 4]);
+    g.beginPath();
+    g.moveTo(PAD.l, Y(0));
+    g.lineTo(W - PAD.r, Y(0));
+    g.stroke();
+    g.restore();
 
     this.stroke(g, them, tgtColor, false, X, Y);
     this.stroke(g, you, CYAN, false, X, Y);
     if (burned) this.stroke(g, burned, AMBER, true, X, Y);
-
-    const meets = alignments(you, them, WAVE_HORIZON);
-    for (const t of meets) this.ring(g, X(t), Y(trackAt(you, t)), CYAN, fmtOffset(t));
-    const burnedMeets = burned ? alignments(burned, them, WAVE_HORIZON) : [];
-    for (const t of burnedMeets) this.ring(g, X(t), Y(trackAt(burned!, t)), AMBER, fmtOffset(t));
-
     this.dot(g, X(0), Y(you[0]), CYAN);
     this.dot(g, X(0), Y(them[0]), tgtColor);
 
-    const gap = phaseGap(phaseOf(tgt.pos), phaseOf(me.pos));
-    let readout = `PHASE ${gap >= 0 ? '+' : ''}${Math.round((gap * 180) / Math.PI)}° · TGT ${gap >= 0 ? 'AHEAD' : 'BEHIND'} · ${
-      meets.length ? `NEXT ALIGN ${fmtOffset(meets[0])}` : 'NO ALIGNMENT IN 3 H'
-    }`;
-    if (burned)
-      readout += ` · AFTER BURN ${burnedMeets.length ? `ALIGN ${fmtOffset(burnedMeets[0])}` : 'NO ALIGNMENT'}`;
+    const dh = altitudeOf(tgt.pos, R) - altitudeOf(me.pos, R);
+    const km = (m: number): string => `${Math.round(m / 1000).toLocaleString('en-US')} km`;
+    let readout = `YOU ${km(altitudeOf(me.pos, R))} · TGT ${km(altitudeOf(tgt.pos, R))} · TGT ${km(Math.abs(dh))} ${dh >= 0 ? 'HIGHER' : 'LOWER'}`;
+    const hit = you.findIndex((a) => a < 0);
+    if (hit >= 0)
+      readout += ` · YOU IMPACT ${fmtOffset((hit * WAVE_HORIZON) / (WAVE_SAMPLES - 1))}`;
     if (this.readout.textContent !== readout) this.readout.textContent = readout;
   }
 
-  /** One track as a line; where the angle wraps past 0/360 the line runs to the edge and restarts on the other. */
+  /** One altitude track as a line. */
   private stroke(
     g: CanvasRenderingContext2D,
     track: readonly number[],
     color: string,
     dashed: boolean,
     X: (t: number) => number,
-    Y: (a: number) => number,
+    Y: (alt: number) => number,
   ): void {
     const step = WAVE_HORIZON / (track.length - 1);
     g.save();
@@ -184,18 +191,7 @@ export class OrbitWaveHud {
     g.setLineDash(dashed ? [5, 4] : []);
     g.beginPath();
     g.moveTo(X(0), Y(track[0]));
-    for (let i = 1; i < track.length; i++) {
-      const prev = track[i - 1];
-      const cur = track[i];
-      if (Math.abs(cur - prev) > Math.PI) {
-        const up = prev > cur;
-        const span = up ? cur + TAU - prev : cur - TAU - prev;
-        const x = X((i - 1 + (up ? TAU - prev : -prev) / span) * step);
-        g.lineTo(x, Y(up ? TAU : 0));
-        g.moveTo(x, Y(up ? 0 : TAU));
-      }
-      g.lineTo(X(i * step), Y(cur));
-    }
+    for (let i = 1; i < track.length; i++) g.lineTo(X(i * step), Y(track[i]));
     g.stroke();
     g.restore();
   }
@@ -219,34 +215,18 @@ export class OrbitWaveHud {
     g.strokeStyle = '#06121a';
     g.lineWidth = 2;
     g.beginPath();
-    g.arc(x, y, 4, 0, TAU);
+    g.arc(x, y, 4, 0, Math.PI * 2);
     g.stroke();
     g.fill();
-  }
-
-  private ring(
-    g: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    color: string,
-    label: string,
-  ): void {
-    g.strokeStyle = color;
-    g.lineWidth = 1.5;
-    g.beginPath();
-    g.arc(x, y, 5.5, 0, TAU);
-    g.stroke();
-    this.text(g, label, x, y < H / 2 ? y + 16 : y - 9, color, x > W - 50 ? 'right' : 'center');
   }
 }
 
 const fmtOffset = (t: number): string => `+${fmtDuration(t).replace(/^00:/, '')}`;
 
-/** Track value at an arbitrary offset, by nearest sample. */
-function trackAt(track: readonly number[], t: number): number {
-  return track[
-    Math.max(0, Math.min(track.length - 1, Math.round((t / WAVE_HORIZON) * (track.length - 1))))
-  ];
+/** Rounds a grid spacing up to 1, 2 or 5 times a power of ten. */
+function niceStep(raw: number): number {
+  const p = 10 ** Math.floor(Math.log10(Math.max(raw, 1)));
+  return ([1, 2, 5, 10].find((m) => m * p >= raw) ?? 10) * p;
 }
 
 function loadVisible(): boolean {

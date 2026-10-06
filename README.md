@@ -104,3 +104,10 @@ to the player), loadouts, hostile AI (`gunner`, `miner`, `evade`), objectives
 `after`), late spawns, failure rules and par scores. The loader validates tags
 and references on start, and `npm test` flies each shipped mission's intended
 solution, so a balance change that makes a mission unwinnable fails a test.
+
+## License
+
+Copyright (C) 2026 Eric-Showers. Orbits is free software: you can redistribute
+it and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version. See [LICENSE](LICENSE).

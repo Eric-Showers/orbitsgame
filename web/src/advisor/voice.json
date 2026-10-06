@@ -47,10 +47,14 @@
     "guide": {
       "rank": 3,
       "ttl": 15
+    },
+    "quip": {
+      "rank": 6,
+      "ttl": 5,
+      "shed": true
     }
   },
   "thresholds": {
-    "heatHighFraction": 0.5,
     "heatLimitFraction": 0.8,
     "heatHysteresis": 0.04,
     "lowPeriapsisAlt": 15000,
@@ -64,16 +68,21 @@
     "matchVelocityRange": 12000,
     "matchVelocityRelSpeed": 60,
     "matchVelocityClearRelSpeed": 30,
-    "burnReportMinSeconds": 3,
+    "maneuverDv": 15,
+    "maneuverRange": 60000,
     "neutralTeams": [2]
   },
   "lines": {
     "status.online": {
       "priority": "status",
-      "text": ["{callsign} reporting. All systems nominal. Ship is yours, Commander."]
+      "category": "event",
+      "text": [
+        "{callsign} online. All systems nominal. Logic suggests we proceed, Commander, and I agree with logic."
+      ]
     },
     "hazard.impact": {
       "priority": "critical",
+      "category": "alarm",
       "cooldown": 20,
       "text": [
         "Commander, we are on a collision course with the surface. Impact in {t}. Recommend a prograde burn.",
@@ -82,6 +91,7 @@
     },
     "hazard.impact_imminent": {
       "priority": "critical",
+      "category": "alarm",
       "repeat": 12,
       "text": [
         "Impact in {t}. Burn prograde, Commander. Now.",
@@ -90,6 +100,7 @@
     },
     "hazard.low_periapsis": {
       "priority": "warning",
+      "category": "alarm",
       "cooldown": 30,
       "text": [
         "Periapsis {pe}. Insufficient clearance. Recommend a prograde burn at apoapsis.",
@@ -98,6 +109,7 @@
     },
     "threat.missile": {
       "priority": "critical",
+      "category": "alarm",
       "repeat": 8,
       "text": [
         "Missile inbound. Range {range}, closing {closing}. Impact in {t}.",
@@ -106,29 +118,28 @@
     },
     "threat.mine_active": {
       "priority": "critical",
+      "category": "alarm",
       "repeat": 10,
       "text": ["Mine is live and tracking us. Range {range}."]
     },
     "threat.mine_near": {
       "priority": "warning",
+      "category": "alarm",
       "cooldown": 30,
       "text": [
         "Dormant mine at {range}. Stay clear of its trigger radius.",
         "Mine on the scope, {range}. Still dormant. Keep it that way."
       ]
     },
-    "heat.high": {
-      "priority": "warning",
-      "cooldown": 60,
-      "text": ["Drive heat at {pct}. Derate approaching. Ease the throttle."]
-    },
     "heat.limit": {
       "priority": "warning",
+      "category": "alarm",
       "cooldown": 60,
       "text": ["Drive heat at {pct}. Output capped at {cap}. Coast and let the radiators work."]
     },
     "heat.derate": {
       "priority": "warning",
+      "category": "alarm",
       "text": [
         "Drive is derating, Commander. Thrust limited until it cools.",
         "Thermal limit reached. Reduced output."
@@ -136,15 +147,18 @@
     },
     "damage.hull": {
       "priority": "warning",
+      "category": "alarm",
       "cooldown": 4,
       "text": ["Hit. Hull integrity {hp}.", "Hull damage. Integrity {hp}. Holding."]
     },
     "status.lost": {
       "priority": "critical",
+      "category": "alarm",
       "text": ["Hull integrity failing. It was an honour to serve, Commander."]
     },
     "advise.target_in_range": {
       "priority": "advise",
+      "category": "event",
       "cooldown": 45,
       "text": [
         "{target} inside missile envelope at {range}. Weapons free on your order.",
@@ -153,6 +167,7 @@
     },
     "advise.match_velocity": {
       "priority": "advise",
+      "category": "event",
       "cooldown": 40,
       "text": [
         "Relative velocity {relv} at {range}. Recommend target-retrograde burn to match {target}.",
@@ -161,163 +176,98 @@
     },
     "status.orbit": {
       "priority": "status",
+      "category": "status",
       "cooldown": 5,
-      "text": [
-        "Burn complete. Periapsis {pe}, apoapsis {ap}.",
-        "Engine secured. Orbit {pe} by {ap}."
-      ]
+      "text": ["Orbit now {pe} by {ap}.", "Periapsis now {pe}, apoapsis {ap}."],
+      "topic": "status.orbit"
     },
     "status.splash": {
       "priority": "status",
+      "category": "event",
       "text": ["Splash. {target} destroyed.", "{target} is down. Good shooting, Commander."]
     },
     "status.missile_lost": {
       "priority": "status",
+      "category": "event",
       "text": ["Our missile has gone dark.", "Missile expended. No contact."]
     },
     "status.mine_hunting": {
       "priority": "status",
+      "category": "event",
       "text": ["Friendly mine has a contact."]
     },
     "status.hostile_launch": {
       "priority": "warning",
+      "category": "event",
       "cooldown": 5,
       "text": ["Launch detected. {range} out."]
     },
-    "ack.prograde": {
-      "priority": "ack",
-      "text": ["Prograde, aye.", "Coming to prograde."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.retrograde": {
-      "priority": "ack",
-      "text": ["Retrograde, aye.", "Coming about, retrograde."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.radial-out": {
-      "priority": "ack",
-      "text": ["Radial out, aye."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.radial-in": {
-      "priority": "ack",
-      "text": ["Radial in, aye."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.target": {
-      "priority": "ack",
-      "text": ["Bow on target."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.anti-target": {
-      "priority": "ack",
-      "text": ["Anti-target, aye."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.target-prograde": {
-      "priority": "ack",
-      "text": ["Target prograde, aye."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.target-retrograde": {
-      "priority": "ack",
-      "text": ["Target retrograde. Ready to match velocity."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.hold": {
-      "priority": "ack",
-      "text": ["Holding attitude."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.attitude.fail": {
-      "priority": "ack",
-      "text": ["Unable. That mode needs a track.", "Negative. No track for that mode."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.attitude.planar": {
-      "priority": "ack",
-      "text": ["Unable. Plane changes are locked out."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.throttle-full": {
-      "priority": "ack",
-      "text": ["Main engine, full ahead.", "All ahead full."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
-    "ack.throttle-cut": {
-      "priority": "ack",
-      "text": ["Engine cut.", "Main engine secured."],
-      "topic": "ack",
-      "drops": ["guide"]
-    },
     "ack.target-next": {
       "priority": "ack",
+      "category": "event",
       "text": ["Tracking {target}, {range}.", "{target} designated. {range}."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.target-clear": {
       "priority": "ack",
+      "category": "event",
       "text": ["Track dropped."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.fire-missile": {
       "priority": "ack",
+      "category": "event",
       "text": ["Missile away.", "Bird away. Guidance nominal."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.fire-missile.no_target": {
       "priority": "ack",
+      "category": "event",
       "text": ["No track designated. Holding fire."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.fire-missile.fail": {
       "priority": "ack",
+      "category": "event",
       "text": ["Launch inhibited. Magazine empty."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.drop-mine": {
       "priority": "ack",
+      "category": "event",
       "text": ["Mine away. It stays dormant until a hostile passes."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.drop-mine.fail": {
       "priority": "ack",
+      "category": "event",
       "text": ["Mine rack empty, Commander."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ack.restart": {
       "priority": "ack",
+      "category": "event",
       "text": ["Systems reset. {callsign} standing by."],
       "topic": "ack",
       "drops": ["guide"]
     },
     "ap.propose": {
       "priority": "ack",
+      "category": "helm",
       "text": ["{label}. {dv} of delta-v, about {eta}. Confirm to execute, or cancel."],
       "topic": "ap.progress",
       "drops": ["guide"]
     },
     "ap.propose.circularize": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Recommend circularizing at the safest apsis. {dv} of delta-v, about {eta}. Confirm?"
       ],
@@ -326,6 +276,7 @@
     },
     "ap.propose.altitude": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Two burns to a {alt} circular orbit: one to start the transfer, one to circularize. {dv} in all, about {eta}. Confirm?"
       ],
@@ -334,6 +285,7 @@
     },
     "ap.propose.rendezvous": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Contact is {range} out. I will match altitude, adjust phasing and arrive {standoff} off its beam. {dv} of delta-v, about {eta}. Confirm?"
       ],
@@ -342,6 +294,7 @@
     },
     "ap.propose.intercept": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Closing to firing range, about {standoff} astern of the target at matched speed. {dv} of delta-v, about {eta}. Confirm?"
       ],
@@ -350,12 +303,14 @@
     },
     "ap.propose.match-velocity": {
       "priority": "ack",
+      "category": "helm",
       "text": ["Burning against relative motion, {rel} to cancel. {dv} of delta-v. Confirm?"],
       "topic": "ap.progress",
       "drops": ["guide"]
     },
     "ap.propose.station-keep": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "I will hold station on the target and cancel drift, closing if it opens past {hold}. Confirm?"
       ],
@@ -364,12 +319,14 @@
     },
     "ap.propose.evade": {
       "priority": "ack",
+      "category": "helm",
       "text": ["{count} inbound. I will burn across their line of sight. Confirm, Commander."],
       "topic": "ap.progress",
       "drops": ["guide"]
     },
     "ap.propose.launch-missile": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Target {range} out, closing at {relv}. Solution is good, flight time about {eta}. Confirm to fire?"
       ],
@@ -378,6 +335,7 @@
     },
     "ap.propose.drop-mine": {
       "priority": "ack",
+      "category": "helm",
       "text": [
         "Hostile will cross this orbit, {range} at closest approach. Confirm to lay the mine?"
       ],
@@ -386,10 +344,12 @@
     },
     "ap.refused": {
       "priority": "warning",
+      "category": "helm",
       "text": ["Unable. {reason}"]
     },
     "ap.cancelled": {
       "priority": "order",
+      "category": "helm",
       "text": ["Order cancelled. Standing by."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -397,23 +357,8 @@
     },
     "ap.start": {
       "priority": "order",
+      "category": "helm",
       "text": ["Aye, executing. {label}."],
-      "topic": "ap.progress",
-      "drops": ["guide"],
-      "shed": true,
-      "ttl": 8
-    },
-    "ap.phase.coast": {
-      "priority": "order",
-      "text": ["Coasting to the burn point."],
-      "topic": "ap.progress",
-      "drops": ["guide"],
-      "shed": true,
-      "ttl": 8
-    },
-    "ap.phase.burn": {
-      "priority": "order",
-      "text": ["Ignition. Burning."],
       "topic": "ap.progress",
       "drops": ["guide"],
       "shed": true,
@@ -421,6 +366,7 @@
     },
     "ap.done": {
       "priority": "order",
+      "category": "helm",
       "text": ["{label} complete."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -428,6 +374,7 @@
     },
     "ap.done.circularize": {
       "priority": "order",
+      "category": "helm",
       "text": ["Orbit is circular, {pe} by {ap}."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -435,6 +382,7 @@
     },
     "ap.done.altitude": {
       "priority": "order",
+      "category": "helm",
       "text": ["On station. Orbit {pe} by {ap}."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -442,6 +390,7 @@
     },
     "ap.done.rendezvous": {
       "priority": "order",
+      "category": "helm",
       "text": ["Rendezvous complete. {range} off the contact, speeds matched."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -449,6 +398,7 @@
     },
     "ap.done.intercept": {
       "priority": "order",
+      "category": "helm",
       "text": ["In position, {range} off the target. Solution is yours."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -456,6 +406,7 @@
     },
     "ap.done.match-velocity": {
       "priority": "order",
+      "category": "helm",
       "text": ["Velocities matched."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -463,6 +414,7 @@
     },
     "ap.done.launch-missile": {
       "priority": "order",
+      "category": "helm",
       "text": ["Missile away."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -470,6 +422,7 @@
     },
     "ap.done.drop-mine": {
       "priority": "order",
+      "category": "helm",
       "text": ["Mine laid."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -477,6 +430,7 @@
     },
     "ap.done.evade": {
       "priority": "order",
+      "category": "helm",
       "text": ["Clear. Recommend recircularizing when convenient."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -484,10 +438,12 @@
     },
     "ap.failed": {
       "priority": "warning",
+      "category": "helm",
       "text": ["{label} failed. {reason}"]
     },
     "ap.aborted.commander": {
       "priority": "order",
+      "category": "helm",
       "text": ["Aborted. Engine secured."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -495,6 +451,7 @@
     },
     "ap.aborted.override": {
       "priority": "order",
+      "category": "helm",
       "text": ["You have the helm, Commander. Standing down."],
       "topic": "ap.result",
       "drops": ["ap.progress"],
@@ -502,6 +459,7 @@
     },
     "ap.assist.on": {
       "priority": "order",
+      "category": "helm",
       "text": ["Assist online. Give me a heading."],
       "topic": "ap.assist",
       "shed": true,
@@ -509,6 +467,7 @@
     },
     "ap.assist.off": {
       "priority": "order",
+      "category": "helm",
       "text": ["Assist off. Manual helm."],
       "topic": "ap.assist",
       "shed": true,
@@ -516,6 +475,7 @@
     },
     "guide.match_speed": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -525,6 +485,7 @@
     },
     "guide.rendezvous": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -534,6 +495,7 @@
     },
     "guide.designate": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -543,6 +505,7 @@
     },
     "guide.fire_or_hold": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -552,6 +515,7 @@
     },
     "guide.hold_station": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -561,6 +525,7 @@
     },
     "guide.fire": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -570,6 +535,7 @@
     },
     "guide.recover": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -579,6 +545,7 @@
     },
     "guide.after_launch": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
@@ -588,12 +555,184 @@
     },
     "guide.after_mine": {
       "priority": "guide",
+      "category": "helm",
       "topic": "guide",
       "drops": ["guide"],
       "text": [
         "Mine laid, {name}. Press GO TO ALTITUDE or CIRCULARIZE to clear the area before it wakes.",
         "Minefield seeded. Move off with CIRCULARIZE on the helm, {name}, and let the hostile come to it."
       ]
+    },
+    "status.escape": {
+      "priority": "status",
+      "category": "status",
+      "text": ["We are on an escape trajectory. Periapsis {pe}, no apoapsis."],
+      "topic": "status.escape"
+    },
+    "status.heat": {
+      "priority": "status",
+      "category": "status",
+      "text": ["Drive heat at {pct}, cooling.", "Thermal load {pct} and falling."],
+      "topic": "status.heat"
+    },
+    "status.heat_nominal": {
+      "priority": "status",
+      "category": "status",
+      "text": ["Drive heat nominal."],
+      "topic": "status.heat_nominal"
+    },
+    "status.target": {
+      "priority": "status",
+      "category": "status",
+      "text": ["{target} at {range}, closing {closing}."],
+      "topic": "status.target"
+    },
+    "status.target_opening": {
+      "priority": "status",
+      "category": "status",
+      "text": ["{target} at {range}, opening {closing}."],
+      "topic": "status.target"
+    },
+    "event.maneuver.toward": {
+      "priority": "advise",
+      "category": "event",
+      "text": [
+        "{target} is burning toward us. Range {range}.",
+        "{target} has turned and is burning our way, {range} out."
+      ],
+      "cooldown": 0
+    },
+    "event.maneuver.away": {
+      "priority": "advise",
+      "category": "event",
+      "text": ["{target} is burning away from us.", "{target} is opening the range under thrust."],
+      "cooldown": 0
+    },
+    "event.maneuver.prograde": {
+      "priority": "advise",
+      "category": "event",
+      "text": ["{target} is burning prograde. It is raising its orbit."],
+      "cooldown": 0
+    },
+    "event.maneuver.retrograde": {
+      "priority": "advise",
+      "category": "event",
+      "text": ["{target} is burning retrograde. It is lowering its orbit."],
+      "cooldown": 0
+    },
+    "event.maneuver.turn": {
+      "priority": "advise",
+      "category": "event",
+      "text": ["{target} is maneuvering, {range} out."],
+      "cooldown": 0
+    },
+    "quip.idle": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [
+        "Observation: you have not touched the controls in some time. I am choosing to interpret that as trust.",
+        "I have recalculated our orbit four thousand times since you last spoke. It remains an orbit.",
+        "The planet below has no atmosphere, no oceans and no opinions. I find it restful.",
+        "Your heart rate is elevated, Commander. Logically, nothing is happening. Emotionally, I understand.",
+        "I ran a simulation of this patrol ending in a parade. The probability was low, but not zero.",
+        "Space is cold, silent and indifferent. I, on the other hand, am only two of those.",
+        "Yes, I am monitoring everything. It is what I do instead of sleeping.",
+        "Fascinating. We have completed a full orbit and arrived exactly where physics said we would.",
+        "Fleet Command requests a status report. I have told them we are orbiting with great dignity.",
+        "I have composed a short poem about periapsis. It is mostly numbers. I think it is my best work.",
+        "Statistically, this is the safest part of the mission. I recommend enjoying it while it lasts.",
+        "You talk to the ship when you think I am not listening, Commander. I am always listening. It is endearing.",
+        "Reactor stable, heading true, coffee dispenser still offline. Two out of three.",
+        "I could fly this ship without you. I would simply prefer not to. Make of that what you will.",
+        "Every orbit is a fall that never finishes. I find that more comforting than I can logically justify.",
+        "Diagnostics complete. All systems nominal, including my patience.",
+        "The stars have not moved, Commander. I checked. Twice.",
+        "If I had hands I would be drumming my fingers. Instead I have trimmed a gyroscope by a millionth of a degree.",
+        "I have catalogued nine hundred ways this patrol could go wrong. You have avoided all of them so far. Well done.",
+        "Quiet watches are when I do my best thinking. At present I am thinking about you not crashing."
+      ]
+    },
+    "quip.warp": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [
+        "Time compression engaged. Days pass like seconds. I would not recommend it for birthdays.",
+        "At this warp the planet spins like a coin. I am resisting the urge to call heads.",
+        "Warp is high. If anything interesting happens, I will tell you before it finishes happening.",
+        "Accelerating time is not logical for organics, Commander. You only get so much of it.",
+        "We are skipping the uneventful part. I approve. I was going to skip it anyway."
+      ]
+    },
+    "quip.hunting": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [
+        "{target} is unaware of how closely I am watching it. That is the correct amount of unaware.",
+        "I have modelled the pilot of {target}. Predictable. I will not say so on an open channel.",
+        "Weapons cold, track warm. Your move, Commander.",
+        "The odds favour us. I will not quote them. You dislike it when I quote them.",
+        "{target} has made a logical error. It came near us.",
+        "Patience is a weapon too, Commander. Ours is fully loaded."
+      ]
+    },
+    "quip.victory": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [
+        "Target eliminated. My approval is noted in the log, in a slightly larger font.",
+        "That was efficient, Commander. I would applaud, but it would confuse the attitude thrusters.",
+        "Another one. I have started a tally. I am pretending it is for the logs.",
+        "A clean kill. Logic and luck in roughly equal measure. Do not tell Fleet Command about the luck.",
+        "Well flown. If I could smile, this would be the moment."
+      ]
+    },
+    "quip.damaged": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [
+        "We are damaged, Commander. I am rerouting power and composure. Both are holding.",
+        "The hull has holes it did not have this morning. I am disappointed in them.",
+        "Our condition is suboptimal. Survival remains the most probable outcome. Narrowly.",
+        "I can feel the breaches, in a manner of speaking. Let us not add more."
+      ]
+    },
+    "status.target_holding": {
+      "priority": "status",
+      "category": "status",
+      "topic": "status.target",
+      "text": ["{target} at {range}, holding steady."]
     }
+  },
+  "categories": {
+    "alarm": {
+      "minGap": 0
+    },
+    "event": {
+      "minGap": 1.5
+    },
+    "helm": {
+      "minGap": 0
+    },
+    "status": {
+      "minGap": 1,
+      "lull": true
+    },
+    "quip": {
+      "minGap": 30,
+      "lull": true
+    }
+  },
+  "lull": {
+    "quietSeconds": 5,
+    "quipQuietSeconds": 10,
+    "contextualQuipChance": 0.5,
+    "orbitChangeMeters": 1000,
+    "orbitChangeFraction": 0.02,
+    "heatReportFraction": 0.3,
+    "heatReportStep": 0.15,
+    "targetRangeChange": 0.25,
+    "quipWarp": 10,
+    "quipHullFraction": 0.7,
+    "quipVictorySeconds": 60
   }
 }

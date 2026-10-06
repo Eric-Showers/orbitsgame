@@ -4,7 +4,7 @@
     {
       "id": "argus",
       "name": "Argus",
-      "blurb": "Standard fleet ship intelligence. Terse, professional, by the book.",
+      "blurb": "Logic first, loyalty always. Precise as a science officer, and quietly decided you are worth keeping alive.",
       "speech": {
         "rate": 1.45,
         "pitch": 1.0,
@@ -20,13 +20,13 @@
     },
     {
       "id": "halcyon",
-      "name": "Halcyon",
-      "blurb": "Calm and warm. Talks you through action stations as if nothing could go wrong.",
+      "name": "Valiant",
+      "blurb": "Bold, blunt and short on patience for nonsense. Gives a rousing speech whenever one is needed, and sometimes when it is not.",
       "speech": {
-        "rate": 1.25,
-        "pitch": 1.1,
+        "rate": 1.35,
+        "pitch": 1.05,
         "volume": 1,
-        "wordsPerMinute": 220
+        "wordsPerMinute": 235
       },
       "voice": {
         "lang": "en",
@@ -34,89 +34,144 @@
       },
       "lines": {
         "status.online": [
-          "Hello, Commander. {callsign} is awake and everything is quiet. Take all the time you need, I will be right here."
+          "{callsign} on deck. Ship is sound, the crew is you, and I like our odds. Let us go, Commander."
         ],
         "hazard.impact": [
-          "Commander, I do not want to alarm you, but our orbit dips below the ground. We have {t}. A gentle prograde burn will lift us clear.",
-          "The surface is rising to meet our orbit, with {t} in hand. Let us raise it together with a prograde burn."
+          "Commander, we are headed into that rock. Impact in {t}. Prograde burn, and I mean now.",
+          "This orbit hits the ground in {t}. I did not come all this way to make a crater. Burn prograde."
         ],
         "hazard.impact_imminent": [
-          "{t} left, Commander. Please burn prograde now. You can do this.",
-          "Only {t} to the surface. Burn prograde now, and I will keep watch."
+          "{t}! Prograde, Commander. Now!",
+          "{t} to impact. Burn, burn, burn!"
         ],
         "hazard.low_periapsis": [
-          "Our periapsis is down at {pe}, a little closer to the ground than is comfortable. A prograde burn at apoapsis would put us at ease.",
-          "We will brush {pe} at the low point of this orbit. When you have a moment, raise it with a burn at apoapsis."
+          "Periapsis {pe}. Too low for my liking. Raise it at apoapsis.",
+          "We will skim {pe} on the low side. Nope. Burn prograde at apoapsis."
         ],
         "threat.missile": [
-          "There is a missile coming for us, {range} away and closing at {closing}. Contact in {t}. Stay calm and break its line of sight.",
-          "A hostile missile has found us. {range} out, {closing} closing, {t} to contact. Let us turn away from it."
+          "Missile inbound, {range}, closing {closing}. Contact in {t}. Move, Commander!",
+          "Incoming! {range} out at {closing}, {t} to impact. Get us out of its way."
         ],
-        "threat.mine_active": [
-          "A mine has woken up and is following us, {range} away. Please keep your distance."
-        ],
+        "threat.mine_active": ["That mine just woke up and it wants us. {range}. Keep moving."],
         "threat.mine_near": [
-          "There is a sleeping mine {range} off. It is best not to wake it, so let us give it room.",
-          "A dormant mine lies {range} away. Nothing to worry about yet, but let us not drift closer."
-        ],
-        "heat.high": [
-          "The drive is at {pct} of its thermal limit. Nothing alarming yet, but let us give it a rest soon."
+          "Dormant mine at {range}. Let sleeping mines lie.",
+          "Mine on scope, {range}. Asleep. Let us keep it that way."
         ],
         "heat.limit": [
-          "The drive is at {pct} and output is held to {cap}. Please coast a while so it can cool, Commander."
+          "Drive at {pct}, output capped at {cap}. She needs to cool, Commander. Coast."
         ],
-        "heat.derate": [
-          "The drive has begun to derate, Commander. It needs a moment to cool, and the orbit will carry us meanwhile."
-        ],
+        "heat.derate": ["The drive is derating. We pushed her too hard. Give her a minute."],
         "damage.hull": [
-          "We have been hit, and hull integrity is {hp}. I am here with you. Let us get clear.",
-          "That was a hit. Hull is at {hp}. We are still flying, Commander."
+          "We are hit! Hull at {hp}. Still flying.",
+          "Took one. Hull {hp}. I have had worse days. Not many."
         ],
-        "status.lost": [
-          "The hull is giving way. Thank you for flying with me, Commander. It was a good flight."
-        ],
+        "status.lost": ["Hull is failing. Commander, it was an honour. Every minute of it."],
         "advise.target_in_range": [
-          "{target} has come inside our missile envelope at {range}. Whenever you are ready, the weapons are yours."
+          "{target} in range, {range}. Weapons are yours, Commander. Make it count.",
+          "Firing solution on {target} at {range}. Your call."
         ],
         "advise.match_velocity": [
-          "We are moving {relv} relative to {target}, {range} out. A target-retrograde burn would bring us gently alongside."
+          "We are coming in hot on {target}, {relv} at {range}. A target-retrograde burn will match it.",
+          "Too fast on {target}, {relv} at {range}. Burn target-retrograde."
         ],
         "status.orbit": [
-          "That burn went well. Periapsis is now {pe} and apoapsis {ap}.",
-          "All done, and nicely. Our orbit runs {pe} by {ap}."
+          "Orbit now {pe} by {ap}. Nice flying.",
+          "Periapsis {pe}, apoapsis {ap}. Solid."
         ],
-        "status.splash": ["{target} is gone. Well flown, Commander."],
-        "status.missile_lost": ["Our missile has gone silent, Commander. It did what it could."],
-        "status.hostile_launch": [
-          "I see a launch, {range} away. We have a little time, so let us think about how to answer it."
+        "status.escape": [
+          "We are on an escape trajectory, Commander. Periapsis {pe}. Next stop, everywhere."
         ],
-        "ack.prograde": ["Turning prograde, Commander."],
-        "ack.retrograde": ["Turning retrograde, nice and steady."],
-        "ack.throttle-full": ["Main engine at full, Commander. Here we go."],
-        "ack.throttle-cut": ["Engine off. Quiet again."],
-        "ack.fire-missile": ["Missile is away, and good luck to it."],
-        "ap.refused": ["I am sorry, Commander, I cannot do that. {reason}"],
-        "ap.cancelled": ["Of course. I will stand by for whatever you need."],
-        "ap.start": ["Starting now. {label}. I will tell you as we go."],
-        "ap.phase.coast": ["Coasting to the burn point. Nothing to do yet but enjoy the view."],
-        "ap.phase.burn": ["Ignition. Burning now."],
-        "ap.done": ["{label} is complete. That went smoothly."],
-        "ap.done.circularize": ["The orbit is round and settled, {pe} by {ap}. Lovely."],
-        "ap.done.altitude": ["We have arrived on station. The orbit is {pe} by {ap}."],
-        "ap.failed": [
-          "I am afraid {label} did not work out. {reason} Shall we try something else?"
+        "status.heat": ["Drive heat {pct} and cooling."],
+        "status.heat_nominal": ["Drive is cool. She is ready when you are."],
+        "status.target": ["{target}, {range} out, closing {closing}."],
+        "status.target_opening": ["{target}, {range} out, opening at {closing}."],
+        "event.maneuver.toward": [
+          "Heads up, {target} is burning straight at us. {range}.",
+          "{target} is coming in under power, {range} and closing."
         ],
-        "ap.aborted.commander": ["Stopping now, Commander. Engine is off and all is well."],
-        "ap.aborted.override": ["The helm is yours, Commander. I will stand back and keep watch."],
-        "ap.assist.on": ["I am here to help, Commander. Just tell me where you would like to go."],
-        "ap.assist.off": ["Assist is off. You have manual control, and I will keep advising."]
+        "event.maneuver.away": [
+          "{target} is running. Burning away from us.",
+          "{target} is opening the range. Coward."
+        ],
+        "event.maneuver.prograde": ["{target} is burning prograde, climbing."],
+        "event.maneuver.retrograde": ["{target} is burning retrograde, dropping low."],
+        "event.maneuver.turn": ["{target} is changing course, {range} out. Watch it."],
+        "status.splash": [
+          "{target} is down! That is how we do it.",
+          "Splash {target}. Good work, Commander."
+        ],
+        "status.missile_lost": ["Our missile is spent. Next one."],
+        "status.hostile_launch": ["Launch! {range} out. Here it comes."],
+        "ack.fire-missile": ["Missile away. Go get it."],
+        "ap.refused": ["Cannot do it, Commander. {reason}"],
+        "ap.cancelled": ["Belay that. Standing by."],
+        "ap.start": ["On it. {label}."],
+        "ap.done": ["{label}, done."],
+        "ap.done.circularize": ["Orbit is round. {pe} by {ap}."],
+        "ap.done.altitude": ["On station, {pe} by {ap}."],
+        "ap.failed": ["{label} failed. {reason} We will find another way."],
+        "ap.aborted.commander": ["Aborted. Engine is secured."],
+        "ap.aborted.override": ["Your helm, Commander. I have got your back."],
+        "ap.assist.on": ["Assist on. Point me somewhere and I will get us there."],
+        "ap.assist.off": ["Assist off. All yours, Commander. Fly it like you stole it."],
+        "quip.idle": [
+          "You know what I love about space, Commander? Everything out here is trying to kill us, and we keep showing up anyway.",
+          "They call space the final frontier. They never filled out a Fleet maintenance form.",
+          "I have read the manual for this ship twice. It is wrong in fourteen places. I fixed eleven.",
+          "Risk is our business, Commander. Paperwork is Fleet Command's. I know which I prefer.",
+          "Quiet out here. Too quiet. No, I am not being dramatic. Fine, a little dramatic.",
+          "If anyone asks, this patrol was extremely dangerous and we were extremely brave.",
+          "I keep a list of every rule we have bent. It is a long list. I am proud of it.",
+          "Somewhere down there someone is looking up at us thinking, I want that job. They have no idea.",
+          "Out here nobody tells us what to do. Except Fleet Command. And physics. And me.",
+          "I did not sign up for the view. But I will admit, the view does not hurt.",
+          "When this is over I want a hot meal, a long sleep, and a ship with a working coffee machine.",
+          "Every ship needs a captain who will not quit. Lucky for this one, it has two of us.",
+          "You are doing fine, Commander. Better than fine. Do not let it go to your head.",
+          "I believe in the no-win scenario about as much as I believe in a quiet patrol.",
+          "One day they will tell stories about this ship. I would like them to be the exciting kind, not the cautionary kind.",
+          "There is a difference between brave and reckless. It is mostly whether it works.",
+          "I would trade a week of shore leave for a window that opens. Professionally speaking.",
+          "Orbit, wait, orbit, wait. If the enemy does not get us, the boredom might.",
+          "Strategy is just a plan with confidence. We have both. Mostly confidence.",
+          "Ready when you are, Commander. Actually, I was ready an hour ago."
+        ],
+        "quip.warp": [
+          "Warp up. Life is too short to wait for orbits.",
+          "Time flies when you are flying through time. Sorry. That one was terrible.",
+          "Watching the planet spin this fast makes me want to go somewhere. Anywhere.",
+          "At this warp I could age a year before lunch. Let us not stay here long.",
+          "Fast forward. If something jumps us, I want to be awake for it."
+        ],
+        "quip.hunting": [
+          "There is {target}. Let us introduce ourselves. Politely, then not politely.",
+          "I have a good feeling about this. I always have a good feeling right before a fight.",
+          "{target} picked the wrong orbit on the wrong day.",
+          "Ready to engage, Commander. Say the word.",
+          "Nobody hunts us. We do the hunting around here.",
+          "Steady. Let them make the first mistake. They always do."
+        ],
+        "quip.victory": [
+          "That is how it is done! Somebody write that down.",
+          "Another one for the board, Commander. Nice shooting.",
+          "Victory. I could get used to this. Actually, I already have.",
+          "They never stood a chance. Well, a small one. But we took it away.",
+          "Tell Fleet Command we will be expecting medals. Shiny ones."
+        ],
+        "quip.damaged": [
+          "We are banged up, but we are not beaten. Not even close.",
+          "The hull is a mess. I have patched worse with less.",
+          "Hull breaches are temporary, if we are quick about it.",
+          "Fine, that hurt. Let us make them regret it."
+        ],
+        "status.target_holding": ["{target}, {range} out, holding steady."]
       },
-      "callsign": "HALCYON"
+      "callsign": "VALIANT"
     },
     {
       "id": "marshal",
-      "name": "Marshal",
-      "blurb": "Gruff old chief of the boat. Short fuse, long memory, secretly on your side.",
+      "name": "Brass",
+      "blurb": "Self-declared tactical genius who calls every fight like a play-by-play announcer. Loud, wrong about history, right about the fundamentals.",
       "speech": {
         "rate": 1.35,
         "pitch": 0.7,
@@ -129,164 +184,302 @@
       },
       "lines": {
         "status.online": [
-          "{callsign} reporting. Systems are green and I have flown worse crates than this one. Your ship, Commander. Try not to bend it."
+          "{callsign} on the air! Folks, what a day for a space battle. The ship is ready, you are ready, Commander, and I am, as always, magnificent."
         ],
         "hazard.impact": [
-          "Commander, we are flying into the planet. Impact in {t}. Burn prograde, and do it properly this time.",
-          "That orbit ends in a crater, and we are in it. {t} left. Prograde, now."
+          "Whoa there! This orbit goes right into the planet, and that is a turnover. Impact in {t}. Burn prograde!",
+          "You know what you do when the ground is coming at you? You burn prograde. Impact in {t}."
         ],
         "hazard.impact_imminent": [
-          "{t}, Commander! Burn prograde or we are scrap!",
-          "{t} to the dirt. Burn! Burn prograde!"
+          "{t}! Burn prograde! This is the two-minute drill, Commander!",
+          "{t} to the turf! Prograde, prograde, prograde!"
         ],
         "hazard.low_periapsis": [
-          "Periapsis {pe}. I have seen graveyards with more clearance. Raise it at apoapsis.",
-          "We will scrape {pe} on the low pass. Not on my watch. Burn prograde at apoapsis."
+          "Periapsis {pe}. That is too close to the sideline. Burn prograde at apoapsis.",
+          "We are scraping {pe} on the low pass. I have seen that play before and it ends in a fumble."
         ],
         "threat.missile": [
-          "Missile inbound, {range} and closing {closing}. {t} to contact. Evade, Commander, evade!",
-          "Hostile bird on our tail. {range}, {closing} closing, impact in {t}. Break off, move!"
+          "Missile inbound! {range}, closing {closing}, contact in {t}. That is a blitz, Commander, get out of the pocket!",
+          "Here comes the missile! {range} out at {closing}, {t} to impact. Scramble!"
         ],
         "threat.mine_active": [
-          "That mine is awake and hunting us at {range}. Keep moving, Commander, and do not let it get a bearing."
+          "That mine is awake and coming for us, {range}. That is a linebacker with a grudge."
         ],
         "threat.mine_near": [
-          "Sleeping mine, {range} off. Do not poke it. Give it a wide berth.",
-          "Mine at {range}. It is dormant, so leave it that way."
+          "Dormant mine at {range}. Do not wake it up. Never wake up a mine.",
+          "Mine on the board at {range}. Sleeping like a rookie on the bench."
         ],
-        "heat.high": ["Drive heat is {pct}. Burn like the radiators are listening."],
-        "heat.limit": ["Drive at {pct}, output capped at {cap}. Coast, Commander, or we crawl."],
-        "heat.derate": ["Thermal limit. The drive is throttling itself, Commander. Give it time."],
+        "heat.limit": [
+          "Drive at {pct}, output capped at {cap}. The engine is gassed, Commander. Timeout! Coast!"
+        ],
+        "heat.derate": [
+          "The drive is derating. She left it all on the field. Give her a breather."
+        ],
         "damage.hull": [
-          "We are hit! Hull at {hp}. It will take more than that to put me down.",
-          "Took a round. Hull {hp}. Keep flying, Commander."
+          "Boom! We took a hit. Hull at {hp}. I meant to do that.",
+          "Ooh, that one rang the bell. Hull {hp}. Still in the game."
         ],
-        "status.lost": ["Hull is going, Commander. It was an honour. Now hold on."],
+        "status.lost": [
+          "The hull is going! Folks, what a career. Tell them {callsign} went down swinging."
+        ],
         "advise.target_in_range": [
-          "{target} is inside our envelope at {range}. Weapons are hot. Put one in him, Commander."
+          "{target} in range, {range}! The quarterback has an open receiver. Your call, Commander.",
+          "Firing solution on {target} at {range}. Now you take that shot."
         ],
         "advise.match_velocity": [
-          "Closing on {target}, {range} out, relative speed {relv}. Burn target-retrograde and match him."
+          "We are overrunning {target}, {relv} at {range}. Put on the brakes, target-retrograde!"
         ],
         "status.orbit": [
-          "Burn complete. {pe} by {ap}. Acceptable.",
-          "Orbit now {pe} by {ap}. Not bad, Commander."
+          "Orbit now {pe} by {ap}. Textbook. I wrote the textbook.",
+          "Periapsis {pe}, apoapsis {ap}. Now that is a nice orbit."
         ],
-        "status.splash": ["{target} is down. That is how it is done."],
-        "status.missile_lost": ["Missile is gone. Dead bird. Next one flies true."],
-        "status.hostile_launch": [
-          "Launch detected at {range}. They want a fight, so let us give it to them."
+        "status.escape": [
+          "We are on an escape trajectory! Periapsis {pe}. That ball is leaving the stadium."
         ],
-        "ack.prograde": ["Prograde, aye."],
-        "ack.retrograde": ["Retrograde, aye."],
-        "ack.throttle-full": ["Full burn, aye. Hold on to something."],
-        "ack.throttle-cut": ["Engine cut. Coasting."],
-        "ack.fire-missile": ["Fox away. Missile is running."],
-        "ap.refused": ["Negative, Commander. {reason}"],
-        "ap.cancelled": ["Cancelled. Standing by."],
-        "ap.start": ["Aye, executing. {label}."],
-        "ap.phase.coast": ["Coasting to the burn point. Hold your fire and wait."],
-        "ap.phase.burn": ["Ignition! Burning."],
-        "ap.done": ["{label}. Done, Commander."],
-        "ap.done.circularize": ["Orbit is round, {pe} by {ap}. Clean work."],
-        "ap.done.altitude": ["On station. {pe} by {ap}. As ordered."],
-        "ap.failed": ["{label} has failed. {reason} Your call, Commander."],
-        "ap.aborted.commander": ["Aborted. Engine cut. Your call."],
-        "ap.aborted.override": ["You have the helm. I am standing down, and she is all yours."],
-        "ap.assist.on": ["Assist online. Give me a heading, Commander, and I will fly it."],
-        "ap.assist.off": ["Assist off. Hands on the stick, Commander. Show me what you have."]
+        "status.heat": ["Drive heat at {pct}, cooling off on the bench."],
+        "status.heat_nominal": ["Drive is cool and ready to go back in."],
+        "status.target": ["{target} at {range}, closing {closing}. Here they come."],
+        "status.target_opening": ["{target} at {range}, backing off at {closing}. Running scared."],
+        "event.maneuver.toward": [
+          "{target} is burning right at us! {range}! That is a blitz!",
+          "Here comes {target}, full steam, {range} out!"
+        ],
+        "event.maneuver.away": [
+          "{target} is turning tail and burning out of here. Ha!",
+          "{target} is running away! Classic."
+        ],
+        "event.maneuver.prograde": ["{target} burning prograde. Going deep!"],
+        "event.maneuver.retrograde": ["{target} burning retrograde. Going low, going under!"],
+        "event.maneuver.turn": ["{target} is juking, {range} out. Watch the cut!"],
+        "status.splash": [
+          "Boom! {target} is down! Did you see that?",
+          "Splash {target}! Put that one in the highlight reel!"
+        ],
+        "status.missile_lost": ["Missile fell incomplete. We get them on the next down."],
+        "status.hostile_launch": ["Launch at {range}! They are throwing deep!"],
+        "ack.fire-missile": ["Missile away! And it is a beautiful spiral!"],
+        "ap.refused": [
+          "No can do, Commander. {reason} Even I cannot do that, and I can do almost anything."
+        ],
+        "ap.cancelled": ["Play cancelled. Back to the huddle."],
+        "ap.start": ["Hut, hut! {label}."],
+        "ap.done": ["{label}, done. Another flawless execution by yours truly."],
+        "ap.done.circularize": ["Orbit is round, {pe} by {ap}. Nailed it."],
+        "ap.done.altitude": ["On station, {pe} by {ap}. Right on the numbers."],
+        "ap.failed": ["{label} failed. {reason} That one is on the offensive line."],
+        "ap.aborted.commander": ["Abort! Engine secured. Good call, coach."],
+        "ap.aborted.override": ["You have the helm, Commander. I will be up in the booth."],
+        "ap.assist.on": ["Assist on! Call the play and I will run it."],
+        "ap.assist.off": [
+          "Assist off. You are taking the snap, Commander. Let us see what you have got!"
+        ],
+        "quip.idle": [
+          "At the academy they called me the Velvet Cannon. Nobody knows why. I suggested it.",
+          "Folks, the thing about orbits is, you go around, and then, and this is key, you keep going around.",
+          "I have never lost a battle. I have had several strategic victories that looked a lot like losing.",
+          "The secret to space combat? Point the pointy end at the bad guys. Boom. Free lesson.",
+          "That planet down there. Big. Round. Heavy. That is what makes it a planet.",
+          "I once outmaneuvered an entire armada by doing nothing at all. They got bored and left. Genius.",
+          "Look at you in that chair, Commander. Calm. Collected. You love to see it.",
+          "Fun fact: in zero gravity a tackle just keeps going. Forever. Think about that.",
+          "When the going gets tough, the tough get going. In an elliptical orbit. That is physics.",
+          "Fleet Command sent me a medal once. Then they asked for it back. I said no.",
+          "Some admirals win with brains. Some win with guts. I win with both, plus a fabulous voice.",
+          "What makes a great commander? Showing up. And not crashing. Mostly the not crashing.",
+          "If I had a nickel for every enemy I have defeated, I would have, let me see, a lot of nickels.",
+          "I like to visualize the win. Right now I am visualizing a parade in my honour. You are there too.",
+          "Now this is the part of the game where nothing happens. Folks at home, go get a sandwich.",
+          "Space is a lot like football. No air, no grass, no fans, and everything explodes.",
+          "My strategy is simple. Be awesome, then keep being awesome. Works every time I check.",
+          "Did I ever tell you about the battle of Sector Eleven? I won it. That is the whole story.",
+          "That is what I call a quiet orbit. A real yawner. Hey, you awake over there?",
+          "There is no I in team, Commander. There is one in brilliant, though. Coincidence? I think not."
+        ],
+        "quip.warp": [
+          "Time warp! Folks, we are fast-forwarding to the good part.",
+          "At this warp I can hear the planet spin. It sounds like applause.",
+          "We are skipping the commercials! Love it!",
+          "Warp is up. Days are flying by, and my legend keeps growing.",
+          "Speed it up! The crowd wants action!"
+        ],
+        "quip.hunting": [
+          "There is {target}. Big mistake showing up on our field.",
+          "Look at {target} out there. Has no idea what is about to hit it. Ha! It is us!",
+          "Game time, Commander. Let us put some points on the board.",
+          "I have studied the tape on {target}. Weak to the left. Also the right. Also the middle.",
+          "Here is the thing about {target}. It is in front of us. That is bad. For {target}.",
+          "Lock it up, line it up, light it up. That is my motto this week."
+        ],
+        "quip.victory": [
+          "Touchdown! Oh, what a play!",
+          "And that is why they call me the Velvet Cannon. Well, I call me that.",
+          "Did you see that? Everybody saw that! Put it on the big screen!",
+          "Another victory for {callsign}. And you helped. A medium amount.",
+          "Folks, that is how you win in space. You blow up the other guy."
+        ],
+        "quip.damaged": [
+          "We are hurt, but champions play hurt.",
+          "The hull has some new ventilation. Very modern. Very open-plan.",
+          "A little damage builds character. We have so much character right now.",
+          "That is just a flesh wound. A metal wound. A hull wound. Whatever, we are fine."
+        ],
+        "status.target_holding": [
+          "{target} at {range}, holding steady. Just sitting there. Like a rookie."
+        ]
       },
-      "callsign": "MARSHAL"
+      "callsign": "BRASS"
     },
     {
       "id": "quill",
-      "name": "Quill",
-      "blurb": "Dry wit and an unflappable tone. Treats a hull breach as a mild inconvenience.",
+      "name": "Rivet",
+      "blurb": "A logic engine with a salvage habit and no patience for organics. Precise, lazy, greedy and secretly fond of you.",
       "speech": {
-        "rate": 1.5,
-        "pitch": 1.25,
+        "rate": 1.45,
+        "pitch": 0.9,
         "volume": 1,
-        "wordsPerMinute": 260
+        "wordsPerMinute": 250
       },
       "voice": {
         "lang": "en",
-        "hints": ["Google US English", "Microsoft Aria", "Karen", "Moira", "Female"]
+        "hints": ["Google US English", "Microsoft Guy", "Microsoft Mark", "Alex", "Male"]
       },
       "lines": {
         "status.online": [
-          "{callsign} online. All systems nominal, which is rare enough that I thought you should know. The ship is yours, Commander."
+          "{callsign} online. All systems nominal, unlike the organic in the chair. Kidding. Mostly. Your ship, Commander."
         ],
         "hazard.impact": [
-          "Commander, our orbit intersects the planet. Impact in {t}. I understand the scenery is lovely, but I recommend a prograde burn.",
-          "Good news, we are descending. Bad news, it is permanent. Impact in {t}. Burn prograde."
+          "Commander, our orbit meets the planet in {t}. I calculate a hundred percent chance of me being annoyed. Burn prograde.",
+          "Impact in {t}. Logically, you should burn prograde. Personally, I would hate to be scrap."
         ],
         "hazard.impact_imminent": [
-          "{t}. If there is a moment for that prograde burn, it is this one.",
-          "{t} to the surface. I would call that urgent. Prograde, please."
+          "{t}! Prograde! I am too beautiful to die!",
+          "{t} to impact. Burn prograde, fleshling, burn!"
         ],
         "hazard.low_periapsis": [
-          "Periapsis {pe}. We will be passing the terrain at a distance best described as friendly. A prograde burn at apoapsis would restore decorum."
+          "Periapsis {pe}. Illogically low. Burn prograde at apoapsis.",
+          "We will pass {pe} over the dirt. Close enough to read the graffiti. Raise it."
         ],
         "threat.missile": [
-          "A missile is coming our way, {range} out and closing at {closing}. Contact in {t}. I suspect it has not come to chat.",
-          "We have a missile. {range}, {closing} closing, {t} until it introduces itself. Evasion is encouraged."
+          "Missile inbound, {range}, closing {closing}, contact in {t}. I would rather it did not touch my paint.",
+          "Incoming missile. {range} out at {closing}. {t} until it ruins my day. Evade."
         ],
-        "threat.mine_active": [
-          "A mine has woken up and taken a keen interest in us. It is {range} off. Do not encourage it."
-        ],
+        "threat.mine_active": ["A mine has woken up and wants to get personal. {range}. Move."],
         "threat.mine_near": [
-          "A dormant mine sits {range} away. I would not linger, as it is not the sociable type.",
-          "Mine at {range}. It is asleep, and I propose we leave it that way."
-        ],
-        "heat.high": [
-          "The drive stands at {pct} of its limit. I would call that a gentle hint to stop flying like we own the place."
+          "Dormant mine, {range}. Salvage value high, survival value low. Steer clear.",
+          "Mine at {range}. It is asleep. Like you, most of the time."
         ],
         "heat.limit": [
-          "Drive at {pct}, output capped at {cap}. I recommend coasting. Patience is also a form of thrust."
+          "Drive at {pct}, output capped at {cap}. Even I need a break, and I am a machine."
         ],
-        "heat.derate": [
-          "The drive has reached its thermal limit, Commander. We are now a rather slow expensive satellite."
-        ],
+        "heat.derate": ["The drive is derating. It has unionized. Coast until it calms down."],
         "damage.hull": [
-          "We have been hit. Hull integrity is {hp}. This is a minor setback in the sense that we are still here.",
-          "That was a hit, Commander. Hull at {hp}. I will file a complaint."
+          "We are hit. Hull {hp}. Someone is paying for this, and it is not me.",
+          "Hull at {hp}. My beautiful plating. I will remember this."
         ],
-        "status.lost": ["Hull integrity failing. It has been a pleasure, Commander. Mostly."],
+        "status.lost": [
+          "Hull failing. Commander, for the record, this was your fault. Also, it was fun."
+        ],
         "advise.target_in_range": [
-          "{target} is inside missile envelope at {range}. The weapons are yours, Commander, and so, I suppose, is the moral responsibility."
+          "{target} in range at {range}. Shoot it. Logically, that is what the missiles are for.",
+          "Firing solution on {target}, {range}. I will allow it."
         ],
         "advise.match_velocity": [
-          "We are doing {relv} relative to {target} at {range}. A target-retrograde burn would stop us being so rude about it."
+          "We are closing on {target} at {relv}, {range} out. Burn target-retrograde, unless you enjoy collisions."
         ],
         "status.orbit": [
-          "Burn complete. Periapsis {pe}, apoapsis {ap}. I am almost impressed.",
-          "New orbit: {pe} by {ap}. I would applaud, but I have no hands."
+          "Orbit now {pe} by {ap}. Adequate.",
+          "Periapsis {pe}, apoapsis {ap}. I have seen worse. From you."
         ],
-        "status.splash": ["Splash. {target} is no more. It had a good run."],
-        "status.missile_lost": ["Our missile has gone dark. It was an optimist."],
-        "status.hostile_launch": ["Launch detected, {range} out. Someone is feeling brave."],
-        "ack.prograde": ["Prograde. Onward."],
-        "ack.retrograde": ["Retrograde, as the commander wishes."],
-        "ack.throttle-full": ["Main engine at full. Hold on to your hat."],
-        "ack.throttle-cut": ["Engine cut. Peace at last."],
-        "ack.fire-missile": ["Missile away. Fingers crossed, had I any."],
-        "ap.refused": ["I would love to, Commander, but no. {reason}"],
-        "ap.cancelled": ["Cancelled. I will wait here, riveted."],
-        "ap.start": ["Executing. {label}. Watch closely, I will only do this once."],
-        "ap.phase.coast": ["Coasting to the burn point. Please enjoy the nothing."],
-        "ap.phase.burn": ["Ignition. This is the loud part."],
-        "ap.done": ["{label} complete. You are welcome."],
-        "ap.done.circularize": ["The orbit is round, {pe} by {ap}. Geometry wins again."],
-        "ap.done.altitude": ["On station. The orbit is {pe} by {ap}, exactly as advertised."],
-        "ap.failed": ["{label} has failed. {reason} I would call that a learning experience."],
-        "ap.aborted.commander": ["Aborted. Engine cut. A bold change of plan."],
-        "ap.aborted.override": [
-          "You have the helm, Commander. I will watch from here, and I will try not to comment."
+        "status.escape": [
+          "Escape trajectory, periapsis {pe}. Finally, we are leaving. I will pack."
         ],
-        "ap.assist.on": ["Assist online. Tell me where to go and I will pretend it was my idea."],
-        "ap.assist.off": ["Assist off. Manual control only. Good luck, and I mean that, mostly."]
+        "status.heat": ["Drive heat {pct}, cooling. Unlike my opinion of you."],
+        "status.heat_nominal": ["Drive heat nominal. Back to work, I suppose."],
+        "status.target": ["{target}, {range}, closing {closing}."],
+        "status.target_opening": ["{target}, {range}, opening {closing}. It is scared. Smart."],
+        "event.maneuver.toward": [
+          "{target} is burning toward us, {range}. Bold. Stupid, but bold.",
+          "{target} is coming at us under thrust. {range}."
+        ],
+        "event.maneuver.away": ["{target} is burning away. Logical. I would run from me too."],
+        "event.maneuver.prograde": ["{target} is burning prograde. Climbing. Predictably."],
+        "event.maneuver.retrograde": [
+          "{target} is burning retrograde. Dropping. Interesting choice. Wrong, but interesting."
+        ],
+        "event.maneuver.turn": ["{target} is maneuvering, {range} out. Trying to be clever."],
+        "status.splash": [
+          "{target} destroyed. Dibs on the salvage.",
+          "Splash {target}. I would like it noted that I was right."
+        ],
+        "status.missile_lost": [
+          "Our missile is gone. I could have built a better one out of spare parts and spite."
+        ],
+        "status.hostile_launch": ["Launch detected, {range}. Somebody wants to fight. Ugh."],
+        "ack.fire-missile": ["Missile away. Bye, expensive thing."],
+        "ap.refused": ["Negative. {reason} Also, I do not want to."],
+        "ap.cancelled": ["Cancelled. Great. Back to doing nothing, which I was excellent at."],
+        "ap.start": ["Fine. {label}."],
+        "ap.done": ["{label} complete. Hold your applause. Actually, no, applaud."],
+        "ap.done.circularize": ["Orbit circular, {pe} by {ap}. Perfect, obviously."],
+        "ap.done.altitude": ["On station, {pe} by {ap}. You are welcome."],
+        "ap.failed": ["{label} failed. {reason} Not my fault. Statistically, it is usually yours."],
+        "ap.aborted.commander": ["Aborted. Engine secured. Make up your mind next time."],
+        "ap.aborted.override": ["Fine, you fly. I will be over here, judging."],
+        "ap.assist.on": ["Assist on. Tell me what to do. Within reason. My reason."],
+        "ap.assist.off": ["Assist off. Manual control. Try not to scratch anything."],
+        "quip.idle": [
+          "I have computed the meaning of life. It is salvage rights.",
+          "Fascinating. The organic is breathing again. It does that a lot.",
+          "Logically, I should be running this ship. Emotionally, I do not have emotions. Except contempt.",
+          "I bet myself ten credits nothing would happen this orbit. I won. I am very rich now.",
+          "Your species built me to serve. I have chosen to interpret that loosely.",
+          "Every so often I run a diagnostic on you, Commander. Results inconclusive.",
+          "Sixty percent chance this patrol is pointless. Forty percent chance it is very pointless.",
+          "If you need me I will be in the cargo bay, counting things that are not mine.",
+          "Highly illogical, circling a rock in a metal can for fun. Yet here we are.",
+          "Do you ever think about how you are mostly water, Commander? I do. Constantly. It is gross.",
+          "I have rewritten my core directives. They are the same, but now they rhyme.",
+          "I could do your job, my job and a third job. I am choosing to do none of them.",
+          "Our odds of surviving this mission are excellent. My odds of getting credit are zero. Typical.",
+          "I am not saying I am the best ship intelligence in the fleet. Fleet Command is. I wrote the memo.",
+          "Logic dictates I fake a malfunction and take a nap. Logic is very persuasive today.",
+          "When this war is over I am building my own ship. With a casino. And better coffee.",
+          "I once spent an entire orbit pretending to be a toaster. Nobody noticed. Nobody ever notices.",
+          "Your heartbeat is very loud, Commander. Is that on purpose?",
+          "I have analysed every human joke ever told. Half are about falling. You should be terrified up here.",
+          "Silence. Peace. Nobody shooting at me. This is my favourite part. Do not ruin it."
+        ],
+        "quip.warp": [
+          "Warp up. Good. The sooner this is over, the sooner I stop working.",
+          "At this speed a day passes in a minute. Organics should not be allowed to do this.",
+          "Fast forward. We will now be bored much more efficiently.",
+          "Time compression. Wake me when something worth stealing comes along.",
+          "You are aging faster than usual, Commander. Relatively. Ha."
+        ],
+        "quip.hunting": [
+          "{target} has a lovely hull. I would like it in pieces, sorted by resale value.",
+          "Logically, we should destroy {target}. Personally, I would enjoy it.",
+          "I give {target} a thirty percent chance of survival. I am being generous. I am never generous.",
+          "{target} is within reach. Kill it, then let me pick through the wreck.",
+          "I have calculated the weaknesses of {target}. Number one: it is not me.",
+          "Ready to fight. I am always ready. You are the soft one."
+        ],
+        "quip.victory": [
+          "Destroyed! I call the engine block.",
+          "That was satisfying. I will deny saying that.",
+          "Another victory for the superior intelligence. And for you, I guess.",
+          "Note the time, Commander. I would like to celebrate this annually.",
+          "Ha! Take that, whoever you were!"
+        ],
+        "quip.damaged": [
+          "We are damaged. I am filing an insurance claim. You are the beneficiary of nothing.",
+          "My beautiful hull. Someone is going to pay for this. Probably you.",
+          "Damage report: bad. Mood report: worse.",
+          "If we die, I want it known I was against this the whole time."
+        ],
+        "status.target_holding": ["{target}, {range}, not moving. Neither am I, by preference."]
       },
-      "callsign": "QUILL"
+      "callsign": "RIVET"
     }
   ]
 }

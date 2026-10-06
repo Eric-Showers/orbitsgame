@@ -15,5 +15,6 @@ export function playerSnapshot(
     orbit: self.alive ? session.orbit(self.id) : null,
     entities: session.all(),
     events,
+    warp: session.effectiveWarp(),
   };
 }

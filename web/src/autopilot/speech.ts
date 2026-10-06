@@ -1,9 +1,6 @@
 import type { Cue } from '../advisor/triggers';
 import type { PilotEvent } from './pilot';
 
-/** Phases worth announcing; the rest stay quiet so ARGUS does not chatter. */
-const SPOKEN_PHASES = new Set(['coast', 'burn']);
-
 /**
  * Turns pilot events into ARGUS lines. The ids resolve against `voice.json`
  * (`ap.*`); `vars` are values to fill in. Returns null when nothing should be said.
@@ -23,7 +20,7 @@ export function pilotCue(ev: PilotEvent, world: Record<string, string>): Cue | n
     case 'started':
       return { id: 'ap.start', vars: { label: ev.maneuver.label } };
     case 'phase':
-      return SPOKEN_PHASES.has(ev.phase) ? { id: `ap.phase.${ev.phase}` } : null;
+      return null; // engine and heading changes are not called out; the HUD shows them
     case 'done':
       return {
         id: `ap.done.${ev.maneuver.kind}`,

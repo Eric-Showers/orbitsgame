@@ -30,7 +30,7 @@ export class CommsLog {
   private show(ev: AdvisoryEvent): void {
     this.title.textContent = `VESSEL AI · ${ev.speaker}`;
     const li = document.createElement('li');
-    li.className = `comms-line p-${ev.priority}`;
+    li.className = `comms-line p-${ev.priority} c-${ev.category}`;
     const stamp = document.createElement('span');
     stamp.className = 'comms-time';
     stamp.textContent = fmtDuration(ev.simTime);

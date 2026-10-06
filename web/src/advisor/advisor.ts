@@ -3,14 +3,27 @@ import { DEFAULT_COMMANDER, addressCommander, appendName, stripCommander } from 
 import { fmtDistance } from '../ui/format';
 import type { AdvisoryChannel } from './channel';
 import { guidanceAfter } from './guidance';
-import { fillTemplate, VOICE, type LineSpec, type Priority, type VoiceConfig } from './config';
+import {
+  fillTemplate,
+  VOICE,
+  type Category,
+  type LineSpec,
+  type Priority,
+  type VoiceConfig,
+} from './config';
 import { DEFAULT_PERSONA, type Persona } from './personas';
 import { SpeechQueue } from './queue';
 import {
+  currentReadings,
   entityName,
   evaluateConditions,
   evaluateCues,
+  evaluateManeuvers,
+  evaluateStatus,
+  isHostile,
+  type BurnTrack,
   type Cue,
+  type Reported,
   type VesselSnapshot,
 } from './triggers';
 
@@ -19,6 +32,12 @@ const PLAYER_HULL = 'Corvette';
 /** Lines between uses of the player's name. */
 const NAME_GAP = 2;
 const NAMEABLE = new Set<string>(['ack', 'advise', 'order', 'status', 'guide']);
+/** Categories that mean something is happening; status and quips wait for them to clear. */
+const ACTION: Category[] = ['alarm', 'event', 'helm'];
+/** Client actions that are not flying the ship (time, camera). */
+const NOT_HELM = /^(pause|warp|zoom|focus|camera|recentre|pan|free|restart)/;
+/** Situational quip pools, tried before general banter when they fit. */
+const QUIP_POOLS = ['quip.damaged', 'quip.victory', 'quip.hunting', 'quip.warp'] as const;
 
 interface Latch {
   latched: boolean;
@@ -43,8 +62,16 @@ export class VesselAdvisor {
   private latches = new Map<string, Latch>();
   private rotation = new Map<string, number>();
   private prev: VesselSnapshot | null = null;
-  private burnSeconds = 0;
   private hullMax = 0;
+  private tracks = new Map<number, BurnTrack>();
+  private reported: Reported | null = null;
+  /** Real time of the last burn, maneuver, alarm or event; lulls are measured from it. */
+  private lastAction = -Infinity;
+  private lastQuip = -Infinity;
+  private lastKill = -Infinity;
+  private statusNow = false;
+  private maneuvering = false;
+  private bags = new Map<string, number[]>();
   private greeted = false;
   private persona: Persona = DEFAULT_PERSONA;
   private commander = DEFAULT_COMMANDER;
@@ -53,6 +80,7 @@ export class VesselAdvisor {
   constructor(
     private channel: AdvisoryChannel,
     private cfg: VoiceConfig = VOICE,
+    private random: () => number = Math.random,
   ) {
     this.queue = new SpeechQueue(cfg);
   }
@@ -62,8 +90,12 @@ export class VesselAdvisor {
     this.queue.clear();
     this.latches.clear();
     this.prev = null;
-    this.burnSeconds = 0;
     this.hullMax = 0;
+    this.tracks.clear();
+    this.reported = null;
+    this.lastAction = this.lastQuip = this.lastKill = -Infinity;
+    this.statusNow = false;
+    this.maneuvering = false;
     this.greeted = false;
     this.linesSinceName = Infinity;
   }
@@ -72,6 +104,11 @@ export class VesselAdvisor {
   setPersona(persona: Persona): void {
     this.persona = persona;
     this.queue.setWordsPerMinute(persona.speech.wordsPerMinute);
+  }
+
+  /** Whether the autopilot is flying a maneuver; status and quips wait until it is done. */
+  setManeuvering(busy: boolean): void {
+    this.maneuvering = busy;
   }
 
   /** What the AI calls the player in place of "Commander". */
@@ -88,9 +125,9 @@ export class VesselAdvisor {
       this.say({ id: 'status.online' }, snap, now);
     }
     this.hullMax = Math.max(this.hullMax, self.hp);
-    const dt = this.prev ? Math.max(0, snap.simTime - this.prev.simTime) : 0;
-    const burning = this.prev !== null && this.prev.self.throttle > 0;
+    this.reported ??= currentReadings(snap); // the starting orbit needs no report
 
+    let alarmLatched = false;
     for (const c of evaluateConditions(snap, this.cfg.thresholds)) {
       const latch = this.latches.get(c.id) ?? { latched: false, lastSaid: -Infinity };
       const spec = this.cfg.lines[c.id];
@@ -103,16 +140,67 @@ export class VesselAdvisor {
       } else {
         latch.latched = false;
       }
+      if (latch.latched && spec?.category === 'alarm') alarmLatched = true;
       this.latches.set(c.id, latch);
     }
 
-    const memory = { burnSeconds: this.burnSeconds + (burning ? dt : 0), hullMax: this.hullMax };
-    for (const cue of evaluateCues(snap, this.prev, this.cfg.thresholds, memory)) {
+    const cues = [
+      ...evaluateCues(snap, this.prev, this.cfg.thresholds, { hullMax: this.hullMax }),
+      ...evaluateManeuvers(snap, this.prev, this.tracks, this.cfg.thresholds),
+    ];
+    for (const cue of cues) {
+      if (cue.id === 'status.splash') this.lastKill = now;
       this.say(cue, snap, now);
     }
-    this.burnSeconds = self.throttle > 0 ? memory.burnSeconds : 0;
     this.prev = snap;
+
+    const steady = self.alive && self.throttle === 0 && !this.maneuvering;
+    if (!steady || alarmLatched || this.queue.has(...ACTION)) this.lastAction = now;
     this.flush(now);
+    if (steady) this.speakInLull(snap, now);
+  }
+
+  /**
+   * Status once the action has died down (or at once when the commander
+   * warps after changing orbit), then a quip if the quiet lasts.
+   */
+  private speakInLull(snap: VesselSnapshot, now: number): void {
+    const l = this.cfg.lull;
+    const quiet = now - this.lastAction;
+    if (this.statusNow || quiet >= l.quietSeconds) {
+      this.statusNow = false;
+      const { cues, reported } = evaluateStatus(snap, this.reported ?? currentReadings(snap), l);
+      this.reported = reported;
+      for (const cue of cues) this.say(cue, snap, now);
+    }
+    if (
+      quiet >= l.quipQuietSeconds &&
+      this.queue.size === 0 &&
+      now - this.lastQuip >= this.cfg.categories.quip.minGap
+    ) {
+      this.lastQuip = now;
+      const target = snap.entities.find((e) => e.id === snap.self.target);
+      const vars = target ? { target: entityName(target) } : undefined;
+      this.say({ id: this.quipPool(snap, now), vars }, snap, now);
+    }
+    this.flush(now);
+  }
+
+  private quipPool(snap: VesselSnapshot, now: number): string {
+    const { self } = snap;
+    const l = this.cfg.lull;
+    const target = snap.entities.find((e) => e.id === self.target && e.alive);
+    const fits: Record<(typeof QUIP_POOLS)[number], boolean> = {
+      'quip.damaged': this.hullMax > 0 && self.hp / this.hullMax < l.quipHullFraction,
+      'quip.victory': now - this.lastKill < l.quipVictorySeconds,
+      'quip.hunting': !!target && isHostile(self, target, this.cfg.thresholds),
+      'quip.warp': (snap.warp ?? 1) >= l.quipWarp,
+    };
+    const pools = QUIP_POOLS.filter((p) => fits[p] && this.variants(p).length > 0);
+    if (pools.length > 0 && this.random() < l.contextualQuipChance) {
+      return pools[Math.floor(this.random() * pools.length)];
+    }
+    return 'quip.idle';
   }
 
   /** Acknowledges an order the commander just gave. Call after `observe` has seen the ship. */
@@ -121,6 +209,12 @@ export class VesselAdvisor {
     if (action.id === 'restart')
       this.greeted = true; // the reset line doubles as the greeting
     else if (!self.alive) return;
+    // Flying the ship answers any pending next-step suggestion.
+    if (!NOT_HELM.test(action.id)) this.queue.dropTopics(['guide']);
+    if (action.id === 'warp-up' && action.ok && this.reported && snap.orbit) {
+      // Warping on after a burn: the commander wants the new orbit now, not after a lull.
+      this.statusNow = evaluateStatus(snap, this.reported, this.cfg.lull).cues.length > 0;
+    }
     let id = `ack.${action.id}`;
     const vars: Record<string, string> = {};
     if (action.id === 'fire-missile' && !action.ok) {
@@ -160,13 +254,40 @@ export class VesselAdvisor {
 
   /** Releases queued speech when the voice is free. Call every frame. */
   flush(now: number): void {
-    for (let ev = this.queue.next(now); ev; ev = this.queue.next(now)) this.channel.publish(ev);
+    for (let ev = this.queue.next(now); ev; ev = this.queue.next(now)) {
+      if (ACTION.includes(ev.category)) this.lastAction = now;
+      this.channel.publish(ev);
+    }
   }
 
   callsign(shipClass: number): string {
     const hull = SHIP_CLASS_NAMES[shipClass] ?? '';
     if (hull === PLAYER_HULL) return this.persona.callsign;
     return this.cfg.callsigns[hull] ?? this.cfg.defaultCallsign;
+  }
+
+  /** The persona's wording for a line, or the shipped text. */
+  private variants(id: string): string[] {
+    return this.persona.lines[id] ?? this.cfg.lines[id]?.text ?? [];
+  }
+
+  /** Variant index: quips draw from a shuffled bag so none repeats until all are used; others rotate. */
+  private pick(id: string, n: number, category: Category): number {
+    if (category !== 'quip') {
+      const turn = this.rotation.get(id) ?? 0;
+      this.rotation.set(id, turn + 1);
+      return turn % n;
+    }
+    let bag = this.bags.get(id);
+    if (!bag || bag.length === 0 || bag.some((i) => i >= n)) {
+      bag = [...Array(n).keys()];
+      for (let i = n - 1; i > 0; i--) {
+        const j = Math.floor(this.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      this.bags.set(id, bag);
+    }
+    return bag.pop() ?? 0;
   }
 
   private sayLatched(latch: Latch, cue: Cue, snap: VesselSnapshot, now: number): void {
@@ -178,15 +299,14 @@ export class VesselAdvisor {
     let cue = requested;
     if (!this.cfg.lines[cue.id] && cue.fallback) cue = { ...cue, id: cue.fallback };
     const spec: LineSpec | undefined = cue.text
-      ? { priority: 'advise', text: [cue.text] }
+      ? { priority: 'guide', category: 'helm', text: [cue.text] }
       : this.cfg.lines[cue.id];
-    if (!spec || spec.text.length === 0) return;
-    const variants = this.persona.lines[cue.id] ?? spec.text;
-    const turn = this.rotation.get(cue.id) ?? 0;
-    this.rotation.set(cue.id, turn + 1);
+    if (!spec) return;
+    const variants = cue.text ? spec.text : this.variants(cue.id);
+    if (variants.length === 0) return;
     const speaker = this.callsign(snap.self.shipClass);
     const text = this.addressPlayer(
-      fillTemplate(variants[turn % variants.length], {
+      fillTemplate(variants[this.pick(cue.id, variants.length, spec.category)], {
         callsign: speaker,
         name: this.commander,
         ...cue.vars,
@@ -197,6 +317,7 @@ export class VesselAdvisor {
       {
         id: cue.id,
         priority: spec.priority,
+        category: spec.category,
         topic: spec.topic,
         drops: spec.drops,
         ttl: spec.ttl,

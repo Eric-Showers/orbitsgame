@@ -59,7 +59,8 @@ describe('personas', () => {
         for (const used of placeholders(variants)) {
           expect(allowed.has(used), `${p.id}.${id} uses {${used}}`).toBe(true);
         }
-        // Every value the base line reports is still reported.
+        // Every value the base line reports is still reported (banter reports nothing).
+        if (id.startsWith('quip.')) continue;
         for (const need of placeholders(base.text)) {
           if (need === 'callsign') continue;
           for (const v of variants) expect(v, `${p.id}.${id}`).toContain(`{${need}}`);
@@ -97,7 +98,7 @@ describe('advisor persona wording', () => {
       entities: [],
     };
     adv.announce({ id: 'ap.assist.on' }, snap as never, 0);
-    adv.announce({ id: 'ap.phase.burn' }, snap as never, 10);
+    adv.announce({ id: 'ap.cancelled' }, snap as never, 10);
     expect(heard[0].text).toBe(marshal.lines['ap.assist.on'][0]);
     adv.setPersona(findPersona('argus'));
     adv.announce({ id: 'ap.assist.off' }, snap as never, 20);

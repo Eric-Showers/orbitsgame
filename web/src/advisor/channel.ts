@@ -1,4 +1,4 @@
-import type { Priority } from './config';
+import type { Category, Priority } from './config';
 
 /**
  * One spoken line from a vessel AI. Everything a listener needs is here, so a
@@ -10,6 +10,8 @@ export interface AdvisoryEvent {
   /** Line id from `voice.json`, e.g. `threat.missile`. */
   id: string;
   priority: Priority;
+  /** Kind of line (alarm, event, status, quip, helm); each is paced separately. */
+  category: Category;
   /** Rank of `priority` (0 = most urgent). */
   rank: number;
   text: string;

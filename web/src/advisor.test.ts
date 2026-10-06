@@ -3,10 +3,13 @@ import { VesselAdvisor } from './advisor/advisor';
 import { AdvisoryChannel, type AdvisoryEvent } from './advisor/channel';
 import { fillTemplate, VOICE, type VoiceConfig } from './advisor/config';
 import { guidanceAfter } from './advisor/guidance';
-import { findPersona } from './advisor/personas';
+import { findPersona, PERSONAS } from './advisor/personas';
 import { SpeechQueue, type PendingLine } from './advisor/queue';
 import {
+  currentReadings,
   evaluateConditions,
+  evaluateManeuvers,
+  evaluateStatus,
   evaluateCues,
   timeToRadius,
   type VesselSnapshot,
@@ -106,8 +109,8 @@ describe('vessel AI conditions', () => {
     expect(on(snap())).toEqual([]);
   });
 
-  it('warns of rising drive heat, then the limit instead', () => {
-    expect(on(snap({ self: ship({ heat: 600 }) }))).toEqual(['heat.high']);
+  it('alarms only at the drive heat limit (lower heat is status)', () => {
+    expect(on(snap({ self: ship({ heat: 600 }) }))).toEqual([]);
     expect(on(snap({ self: ship({ heat: 900, outputCap: 0.5 }) }))).toEqual(['heat.limit']);
     expect(on(snap({ self: ship({ heat: 100 }) }))).toEqual([]); // heat.derate is a one-shot cue
   });
@@ -181,19 +184,66 @@ describe('vessel AI cues', () => {
       entities: [me, drone],
       events: [ev(SimEventKind.ShipDestroyed, 3), ev(SimEventKind.Overheat, 0)],
     });
-    const cues = evaluateCues(s, snap(), T, { burnSeconds: 0, hullMax: 100 });
+    const cues = evaluateCues(s, snap(), T, { hullMax: 100 });
     expect(cues.map((c) => c.id)).toEqual(['status.splash', 'heat.derate', 'damage.hull']);
     expect(cues[0].vars?.target).toBe('Drone 3');
     expect(cues[2].vars?.hp).toBe('60%');
   });
 
-  it('reports the orbit after a real burn, not a tap', () => {
-    const prev = snap({ self: ship({ throttle: 1 }) });
-    const now = snap();
-    expect(evaluateCues(now, prev, T, { burnSeconds: 10, hullMax: 100 }).map((c) => c.id)).toEqual([
-      'status.orbit',
-    ]);
-    expect(evaluateCues(now, prev, T, { burnSeconds: 1, hullMax: 100 })).toEqual([]);
+  it('calls out a contact burning toward us once it has spent real delta-v', () => {
+    const me = ship({ target: 3 });
+    const tracks = new Map();
+    // Drone 10 km ahead (+y), nose pointing back at us, engine lit.
+    const burning = (time: number): VesselSnapshot => {
+      const d = near(me, 10_000, {
+        id: 3,
+        team: 1,
+        shipClass: DRONE,
+        throttle: 1,
+        maxAccel: 5,
+        heading: { x: 0, y: -1, z: 0 },
+      });
+      return snap({ self: me, entities: [me, d], simTime: time });
+    };
+    let prev = burning(0);
+    const heard: string[] = [];
+    for (let t = 1; t <= 6; t++) {
+      const s = burning(t);
+      heard.push(...evaluateManeuvers(s, prev, tracks, T).map((c) => c.id));
+      prev = s;
+    }
+    expect(heard).toEqual(['event.maneuver.toward']); // 15 m/s spent after 3 s, called once
+  });
+
+  it('ignores burns by unwatched friendly ships', () => {
+    const me = ship();
+    const friend = near(me, 5_000, { id: 4, team: 0, throttle: 1, maxAccel: 50 });
+    const a = snap({ self: me, entities: [me, friend], simTime: 0 });
+    const b = snap({ self: me, entities: [me, friend], simTime: 10 });
+    expect(evaluateManeuvers(b, a, new Map(), T)).toEqual([]);
+  });
+});
+
+describe('status reports', () => {
+  const L = VOICE.lull;
+
+  it('reports only what changed since the last report', () => {
+    const base = snap();
+    const last = currentReadings(base);
+    expect(evaluateStatus(base, last, L).cues).toEqual([]);
+    const raised = snap({ orbit: ellipse(R + 80_000, R + 120_000, 0) });
+    const { cues, reported } = evaluateStatus(raised, last, L);
+    expect(cues.map((c) => c.id)).toEqual(['status.orbit']);
+    expect(cues[0].vars).toEqual({ pe: '80.0 km', ap: '120.0 km' });
+    expect(evaluateStatus(raised, reported, L).cues).toEqual([]);
+  });
+
+  it('reports drive heat, then that it has cooled', () => {
+    const last = currentReadings(snap());
+    const hot = evaluateStatus(snap({ self: ship({ heat: 500 }) }), last, L);
+    expect(hot.cues).toEqual([{ id: 'status.heat', vars: { pct: '50%' } }]);
+    const cool = evaluateStatus(snap(), hot.reported, L);
+    expect(cool.cues.map((c) => c.id)).toEqual(['status.heat_nominal']);
   });
 });
 
@@ -208,10 +258,15 @@ describe('time to radius', () => {
   });
 });
 
-function line(id: string, priority: PendingLine['priority']): PendingLine {
+function line(
+  id: string,
+  priority: PendingLine['priority'],
+  category: PendingLine['category'] = 'event',
+): PendingLine {
   return {
     id,
     priority,
+    category,
     rank: VOICE.priorities[priority].rank,
     text: 'one two three',
     vessel: 0,
@@ -232,9 +287,9 @@ describe('speech queue', () => {
 
   it('lets critical lines interrupt, drops stale lines and replaces duplicates', () => {
     const q = new SpeechQueue(VOICE);
-    q.push(line('s', 'status'), 0);
+    q.push(line('s', 'status', 'status'), 0);
     q.next(0);
-    q.push(line('c', 'critical'), 0.1);
+    q.push(line('c', 'critical', 'alarm'), 0.1);
     const c = q.next(0.1)!;
     expect(c.id).toBe('c');
     expect(c.interrupt).toBe(true);
@@ -269,23 +324,28 @@ describe('vessel advisor', () => {
     const { ai, heard } = rig();
     let t = 0;
     const feed = (heat: number): void =>
-      ai.observe(snap({ self: ship({ heat }), simTime: t }), (t += 5));
+      ai.observe(snap({ self: ship({ heat, throttle: 1 }), simTime: t }), (t += 5));
     feed(0);
-    feed(560);
-    feed(570);
-    feed(480); // inside hysteresis: still latched
-    feed(560);
-    expect(heard.map((e) => e.id)).toEqual(['status.online', 'heat.high']);
-    feed(300); // clears
-    feed(560); // re-arms, but the cooldown has not run out
-    expect(heard.filter((e) => e.id === 'heat.high')).toHaveLength(1);
+    feed(850);
+    feed(860);
+    feed(780); // inside hysteresis: still latched
+    feed(850);
+    expect(heard.map((e) => e.id)).toEqual(['status.online', 'heat.limit']);
+    feed(500); // clears
+    feed(850); // re-arms, but the cooldown has not run out
+    expect(heard.filter((e) => e.id === 'heat.limit')).toHaveLength(1);
     t += 100;
-    feed(300);
-    feed(560);
-    expect(heard.filter((e) => e.id === 'heat.high')).toHaveLength(2);
+    feed(500);
+    feed(850);
+    expect(heard.filter((e) => e.id === 'heat.limit')).toHaveLength(2);
     const ev = heard[1];
-    expect(ev).toMatchObject({ priority: 'warning', vessel: 0, speaker: 'ARGUS' });
-    expect(ev.text).toContain('56%');
+    expect(ev).toMatchObject({
+      priority: 'warning',
+      category: 'alarm',
+      vessel: 0,
+      speaker: 'ARGUS',
+    });
+    expect(ev.text).toContain('85%');
   });
 
   it('repeats an inbound-missile call while the threat lasts', () => {
@@ -301,14 +361,16 @@ describe('vessel advisor', () => {
     const s = snap();
     ai.observe(s, 0);
     ai.acknowledge({ id: 'fire-missile', ok: false }, s, 10);
-    ai.acknowledge({ id: 'target', ok: false }, s, 20);
+    ai.acknowledge({ id: 'drop-mine', ok: false }, s, 20);
+    // Engine and heading orders are not called out.
     ai.acknowledge({ id: 'prograde', ok: true }, s, 30);
-    ai.acknowledge({ id: 'warp-up', ok: true }, s, 40); // no line: stays quiet
+    ai.acknowledge({ id: 'throttle-full', ok: true }, s, 31);
+    ai.acknowledge({ id: 'target', ok: false }, s, 32);
+    ai.acknowledge({ id: 'warp-up', ok: true }, s, 40);
     expect(heard.map((e) => e.id)).toEqual([
       'status.online',
       'ack.fire-missile.no_target',
-      'ack.attitude.fail',
-      'ack.prograde',
+      'ack.drop-mine.fail',
     ]);
   });
 
@@ -443,8 +505,9 @@ describe('player and AI names', () => {
     for (const id of ['argus', 'halcyon', 'marshal', 'quill']) {
       const { ai, heard } = rig('Eric', id);
       ai.observe(snap(), 0);
-      expect(heard[0].speaker).toBe(id.toUpperCase());
-      expect(heard[0].text).toContain(id.toUpperCase());
+      const callsign = findPersona(id).callsign;
+      expect(heard[0].speaker).toBe(callsign);
+      expect(heard[0].text).toContain(callsign);
     }
   });
 
@@ -452,9 +515,9 @@ describe('player and AI names', () => {
     const { ai, heard } = rig('Eric');
     const s = snap();
     ai.observe(s, 0);
-    ai.acknowledge({ id: 'prograde', ok: true }, s, 10);
-    ai.acknowledge({ id: 'retrograde', ok: true }, s, 20);
-    ai.acknowledge({ id: 'hold', ok: true }, s, 30);
+    ai.acknowledge({ id: 'fire-missile', ok: false }, s, 10);
+    ai.acknowledge({ id: 'target-clear', ok: true }, s, 20);
+    ai.acknowledge({ id: 'drop-mine', ok: false }, s, 30);
     const named = heard.filter((e) => e.text.includes('Eric')).length;
     expect(named).toBeGreaterThanOrEqual(2);
     expect(named).toBeLessThan(heard.length + 1);
@@ -522,5 +585,115 @@ describe('next-step guidance', () => {
     ai.flush(200);
     expect(heard[0]).toMatchObject({ priority: 'guide', id: 'guide.designate' });
     expect(heard[0].text).toContain('Eric');
+  });
+});
+
+describe('dialogue categories and lulls', () => {
+  function rig(random = () => 0.99): { ai: VesselAdvisor; heard: AdvisoryEvent[] } {
+    const channel = new AdvisoryChannel();
+    const heard: AdvisoryEvent[] = [];
+    channel.subscribe((e) => heard.push(e));
+    return { ai: new VesselAdvisor(channel, VOICE, random), heard };
+  }
+  const raised = ellipse(R + 80_000, R + 150_000, 0);
+
+  it('gives every line exactly one known category', () => {
+    for (const [id, spec] of Object.entries(VOICE.lines)) {
+      expect(VOICE.categories[spec.category], id).toBeDefined();
+    }
+    for (const c of ['alarm', 'event', 'status', 'quip'] as const) {
+      expect(
+        Object.values(VOICE.lines).some((l) => l.category === c),
+        c,
+      ).toBe(true);
+    }
+  });
+
+  it('has no engine or heading call-outs', () => {
+    const banned =
+      /^(ack\.(prograde|retrograde|radial|hold|throttle|target$|anti-target|target-pro|target-retro)|ap\.phase\.)/;
+    expect(Object.keys(VOICE.lines).filter((id) => banned.test(id))).toEqual([]);
+  });
+
+  it('holds the new orbit report until the burn is over and the action dies down', () => {
+    const { ai, heard } = rig();
+    ai.observe(snap(), 0);
+    // Burning: the orbit changes but nothing is reported.
+    for (let t = 1; t <= 20; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    expect(heard.some((e) => e.category === 'status' && e.id !== 'status.online')).toBe(false);
+    // Engine off: still quiet until the lull is long enough.
+    ai.observe(snap({ orbit: raised }), 21);
+    expect(heard.some((e) => e.id === 'status.orbit')).toBe(false);
+    for (let t = 22; t <= 30; t++) ai.observe(snap({ orbit: raised }), t);
+    const report = heard.filter((e) => e.id === 'status.orbit');
+    expect(report).toHaveLength(1);
+    expect(report[0].timestamp).toBeGreaterThanOrEqual(20 + VOICE.lull.quietSeconds);
+    expect(report[0].category).toBe('status');
+  });
+
+  it('reports at once when the commander warps after changing orbit', () => {
+    const { ai, heard } = rig();
+    ai.observe(snap(), 0);
+    for (let t = 1; t <= 10; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    const coasting = snap({ orbit: raised, warp: 10 });
+    ai.observe(coasting, 11);
+    ai.acknowledge({ id: 'warp-up', ok: true }, coasting, 11.2);
+    ai.observe(coasting, 11.3);
+    expect(heard.at(-1)).toMatchObject({ id: 'status.orbit', timestamp: 11.3 });
+  });
+
+  it('quips only in a lull, after the status report, at most once per 30 s', () => {
+    const { ai, heard } = rig();
+    ai.observe(snap(), 0);
+    for (let t = 1; t <= 5; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    for (let t = 6; t <= 120; t += 0.5) ai.observe(snap({ orbit: raised }), t);
+    const ids = heard.map((e) => e.id);
+    const firstQuip = ids.findIndex((id) => id.startsWith('quip.'));
+    expect(firstQuip).toBeGreaterThan(ids.indexOf('status.orbit'));
+    const quips = heard.filter((e) => e.category === 'quip');
+    expect(quips.length).toBeGreaterThanOrEqual(3);
+    for (let i = 1; i < quips.length; i++) {
+      expect(quips[i].timestamp - quips[i - 1].timestamp).toBeGreaterThanOrEqual(30);
+    }
+    // No quips while the engine is lit.
+    const n = quips.length;
+    for (let t = 121; t <= 200; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    expect(heard.filter((e) => e.category === 'quip')).toHaveLength(n);
+  });
+
+  it('picks quips that fit the moment and does not repeat until the pool is used', () => {
+    const { ai, heard } = rig(() => 0); // always prefer a fitting pool
+    const me = ship({ target: 3 });
+    const foe = near(me, 50_000, { id: 3, team: 1, shipClass: DRONE });
+    for (let t = 0; t <= 400; t++) ai.observe(snap({ self: me, entities: [me, foe] }), t);
+    const quips = heard.filter((e) => e.category === 'quip');
+    expect(quips.every((e) => e.id === 'quip.hunting')).toBe(true);
+    const pool = VOICE.lines['quip.hunting'].text.length;
+    const texts = quips.slice(0, pool).map((e) => e.text);
+    expect(new Set(texts).size).toBe(texts.length);
+    expect(texts.some((x) => x.includes('Drone 3'))).toBe(true);
+  });
+
+  it('paces each category on its own gap in the queue', () => {
+    const q = new SpeechQueue(VOICE);
+    q.push(line('q1', 'quip', 'quip'), 0);
+    expect(q.next(0)?.id).toBe('q1');
+    q.push(line('q2', 'quip', 'quip'), 5);
+    q.push(line('e1', 'advise', 'event'), 5);
+    expect(q.next(5)?.id).toBe('e1');
+    expect(q.next(9)).toBeNull(); // the quip waits out its gap (and its TTL)
+  });
+
+  it('gives every character a big quip book', () => {
+    for (const p of PERSONAS) {
+      const count = Object.keys(VOICE.lines)
+        .filter((id) => id.startsWith('quip.'))
+        .reduce((n, id) => n + (p.lines[id] ?? VOICE.lines[id].text).length, 0);
+      expect(count, p.id).toBeGreaterThanOrEqual(40);
+    }
   });
 });

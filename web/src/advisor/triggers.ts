@@ -14,7 +14,7 @@ import {
   type Vec3,
 } from '../sim/bridge';
 import { fmtDistance, fmtPercent, fmtSpeed } from '../ui/format';
-import type { Thresholds } from './config';
+import type { LullSpec, Thresholds } from './config';
 
 /** Read-only view of the sim as one vessel's AI sees it. */
 export interface VesselSnapshot {
@@ -25,6 +25,8 @@ export interface VesselSnapshot {
   entities: readonly EntityView[];
   /** Sim events since the previous snapshot. */
   events: readonly SimEvent[];
+  /** Time warp in effect (1 when unknown). */
+  warp?: number;
 }
 
 /**
@@ -63,21 +65,13 @@ export function evaluateConditions(snap: VesselSnapshot, t: Thresholds): Conditi
   if (!self.alive) return [];
   const out: Condition[] = [];
 
-  // Drive heat: rising, then near the limit. The limit supersedes the early warning.
-  const load = self.heatCapacity > 0 ? self.heat / self.heatCapacity : 0;
-  const heatVars = { pct: fmtPercent(load), cap: fmtPercent(self.outputCap) };
-  const limit = load >= t.heatLimitFraction;
+  // Drive heat near the limit. Lower readings are status, reported in a lull.
+  const load = heatLoad(self);
   out.push({
     id: 'heat.limit',
-    on: limit,
+    on: load >= t.heatLimitFraction,
     hold: load >= t.heatLimitFraction - t.heatHysteresis,
-    vars: heatVars,
-  });
-  out.push({
-    id: 'heat.high',
-    on: !limit && load >= t.heatHighFraction,
-    hold: load >= t.heatHighFraction - t.heatHysteresis,
-    vars: heatVars,
+    vars: { pct: fmtPercent(load), cap: fmtPercent(self.outputCap) },
   });
 
   // Trajectory: impact, imminent impact, or merely a low periapsis.
@@ -166,7 +160,7 @@ export function evaluateCues(
   snap: VesselSnapshot,
   prev: VesselSnapshot | null,
   t: Thresholds,
-  memory: { burnSeconds: number; hullMax: number },
+  memory: { hullMax: number },
 ): Cue[] {
   const { self } = snap;
   const out: Cue[] = [];
@@ -205,21 +199,153 @@ export function evaluateCues(
     if (self.alive && self.hp < prev.self.hp) {
       out.push({ id: 'damage.hull', vars: { hp: fmtPercent(self.hp / memory.hullMax) } });
     }
-    // Report the resulting orbit when a real burn ends.
-    if (prev.self.throttle > 0 && self.throttle === 0 && self.alive && snap.orbit) {
-      if (
-        memory.burnSeconds >= t.burnReportMinSeconds &&
-        snap.orbit.periapsis > snap.planetRadius
-      ) {
-        out.push({
-          id: 'status.orbit',
-          vars: {
-            pe: fmtDistance(snap.orbit.periapsis - snap.planetRadius),
-            ap: fmtDistance(snap.orbit.apoapsis - snap.planetRadius),
-          },
-        });
-      }
+  }
+  return out;
+}
+
+function heatLoad(e: EntityView): number {
+  return e.heatCapacity > 0 ? e.heat / e.heatCapacity : 0;
+}
+
+/** Readings last spoken in a status report, so the next one only says what changed. */
+export interface Reported {
+  pe: number;
+  ap: number;
+  heat: number;
+  target: number | null;
+  targetRange: number;
+}
+
+export function currentReadings(snap: VesselSnapshot): Reported {
+  const { self, orbit } = snap;
+  const target = snap.entities.find((e) => e.id === self.target && e.alive);
+  return {
+    pe: orbit?.periapsis ?? NaN,
+    ap: orbit?.apoapsis ?? NaN,
+    heat: heatLoad(self),
+    target: target?.id ?? null,
+    targetRange: target ? len(sub(target.pos, self.pos)) : NaN,
+  };
+}
+
+/**
+ * Status lines for a lull: whatever changed since the last report. Returns
+ * the cues and the readings they cover; readings nobody needs to hear about
+ * (e.g. an impact orbit, which is an alarm) are absorbed without a line.
+ */
+export function evaluateStatus(
+  snap: VesselSnapshot,
+  last: Reported,
+  l: LullSpec,
+): { cues: Cue[]; reported: Reported } {
+  const now = currentReadings(snap);
+  const R = snap.planetRadius;
+  const cues: Cue[] = [];
+  const reported = { ...last };
+
+  const moved = (a: number, b: number): boolean =>
+    !Number.isFinite(b) ||
+    Math.abs(a - b) > Math.max(l.orbitChangeMeters, l.orbitChangeFraction * Math.abs(b - R));
+  if (snap.orbit && (moved(now.pe, last.pe) || moved(now.ap, last.ap))) {
+    reported.pe = now.pe;
+    reported.ap = now.ap;
+    if (now.pe > R) {
+      const escape = !Number.isFinite(now.ap);
+      cues.push({
+        id: escape ? 'status.escape' : 'status.orbit',
+        vars: { pe: fmtDistance(now.pe - R), ap: fmtDistance(now.ap - R) },
+      });
     }
+  }
+
+  if (now.heat >= l.heatReportFraction && Math.abs(now.heat - last.heat) >= l.heatReportStep) {
+    reported.heat = now.heat;
+    cues.push({ id: 'status.heat', vars: { pct: fmtPercent(now.heat) } });
+  } else if (now.heat < l.heatReportFraction && last.heat >= l.heatReportFraction) {
+    reported.heat = now.heat;
+    cues.push({ id: 'status.heat_nominal' });
+  }
+
+  const target = snap.entities.find((e) => e.id === now.target);
+  if (target && snap.self.alive) {
+    const changed =
+      now.target !== last.target ||
+      Math.abs(now.targetRange - last.targetRange) > l.targetRangeChange * last.targetRange;
+    if (changed) {
+      reported.target = now.target;
+      reported.targetRange = now.targetRange;
+      const c = closing(snap.self, target);
+      cues.push({
+        id:
+          Math.abs(c) < 1
+            ? 'status.target_holding'
+            : c > 0
+              ? 'status.target'
+              : 'status.target_opening',
+        vars: {
+          target: entityName(target),
+          range: fmtDistance(now.targetRange),
+          closing: fmtSpeed(Math.abs(c)),
+        },
+      });
+    }
+  } else {
+    reported.target = null;
+  }
+  return { cues, reported };
+}
+
+/** Per-contact burn tracking for maneuver call-outs. */
+export interface BurnTrack {
+  dv: number;
+  called: boolean;
+}
+
+/**
+ * Event cues for contacts making significant burns: the designated target,
+ * and hostile ships within range. Each burn is called once, after it has
+ * spent `maneuverDv`. `tracks` carries burn progress between snapshots.
+ */
+export function evaluateManeuvers(
+  snap: VesselSnapshot,
+  prev: VesselSnapshot | null,
+  tracks: Map<number, BurnTrack>,
+  t: Thresholds,
+): Cue[] {
+  const { self } = snap;
+  const dt = prev ? Math.max(0, snap.simTime - prev.simTime) : 0;
+  const out: Cue[] = [];
+  for (const e of snap.entities) {
+    if (e.kind !== EntityKind.Ship || e.id === self.id || !e.alive) continue;
+    const rel = sub(self.pos, e.pos);
+    const range = len(rel);
+    const watched = e.id === self.target || (isHostile(self, e, t) && range <= t.maneuverRange);
+    if (!watched || e.throttle <= 0) {
+      tracks.delete(e.id);
+      continue;
+    }
+    const track = tracks.get(e.id) ?? { dv: 0, called: false };
+    track.dv += e.throttle * e.maxAccel * dt;
+    tracks.set(e.id, track);
+    if (track.called || track.dv < t.maneuverDv) continue;
+    track.called = true;
+    const speed = len(e.vel);
+    const along = speed > 0 ? dot(e.heading, e.vel) / speed : 0;
+    const toward = range > 0 ? dot(e.heading, rel) / range : 0;
+    const kind =
+      toward > 0.7
+        ? 'toward'
+        : toward < -0.7
+          ? 'away'
+          : along > 0.7
+            ? 'prograde'
+            : along < -0.7
+              ? 'retrograde'
+              : 'turn';
+    out.push({
+      id: `event.maneuver.${kind}`,
+      vars: { target: entityName(e), range: fmtDistance(range) },
+    });
   }
   return out;
 }

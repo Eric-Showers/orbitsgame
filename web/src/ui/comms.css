@@ -147,3 +147,9 @@
 .voicebar-name::placeholder {
   color: var(--c-dim);
 }
+
+/* Banter reads as an aside, not a report. */
+.c-quip .comms-text {
+  font-style: italic;
+  color: var(--c-dim);
+}

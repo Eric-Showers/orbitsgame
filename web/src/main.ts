@@ -130,7 +130,7 @@ async function main(): Promise<void> {
   bindKeyboard(() => session, client);
   const consoleEl = document.querySelector<HTMLElement>('.console');
   const pilotPanel = new PilotPanel(
-    document.body,
+    consoleEl ?? document.body,
     () => pilot,
     () => session,
   );

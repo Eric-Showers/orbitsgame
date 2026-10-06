@@ -58,7 +58,7 @@ export class PilotPanel {
     }
     this.card = el('div', 'pilot-card');
     this.body.appendChild(this.card);
-    parent.appendChild(mod);
+    parent.prepend(mod);
 
     window.addEventListener('keydown', (ev) => {
       if (ev.target instanceof HTMLInputElement && ev.key !== 'Enter') return;

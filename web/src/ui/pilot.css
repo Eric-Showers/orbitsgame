@@ -1,14 +1,10 @@
-/* ARGUS pilot module, floating over the bottom-left above the console. Uses the console tokens from panel.css. */
+/* ARGUS pilot module, the leftmost module of the console (where NAV used to be). Uses the console tokens from panel.css. */
 
 .module.pilot {
-  position: fixed;
-  left: 8px;
-  bottom: calc(var(--console-h, 240px) + 8px);
-  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: min(330px, calc(100vw - 16px));
+  width: 300px;
   font-family: var(--font-ui);
   color: var(--c-text);
   user-select: none;

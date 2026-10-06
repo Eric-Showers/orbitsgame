@@ -174,13 +174,30 @@ describe('pickVoice', () => {
     const marshal = findPersona('marshal');
     const voices = [
       voice('Samantha', 'en-US'),
-      voice('Microsoft David', 'en-US'),
+      voice('Microsoft Mark', 'en-US'),
       voice('Amelie', 'fr-FR'),
     ];
-    expect(pickVoice(voices, marshal)?.name).toBe('Microsoft David');
+    expect(pickVoice(voices, marshal)?.name).toBe('Microsoft Mark');
     expect(pickVoice([voice('Amelie', 'fr-FR'), voice('Kate', 'en-GB')], marshal)?.name).toBe(
       'Kate',
     );
     expect(pickVoice([], marshal)).toBeNull();
+  });
+
+  it('keeps an alternate persona off the default voice (Firefox on Windows offers few)', () => {
+    const voices = [
+      voice('Microsoft David Desktop - English (United States)', 'en-US'),
+      voice('Microsoft Mark - English (United States)', 'en-US'),
+      voice('Microsoft Zira Desktop - English (United States)', 'en-US'),
+    ];
+    const argus = pickVoice(voices, findPersona('argus'));
+    expect(argus?.name).toContain('David');
+    const brass = pickVoice(voices, findPersona('marshal'), argus);
+    expect(brass?.name).toContain('Mark');
+    // Only the default's voice hinted: take another voice of the language rather than share.
+    const two = [voices[0], voice('Google UK English Male', 'en-GB')];
+    const a2 = pickVoice(two, findPersona('argus'));
+    expect(a2?.name).toBe('Google UK English Male');
+    expect(pickVoice(two, findPersona('marshal'), a2)?.name).toContain('David');
   });
 });

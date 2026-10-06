@@ -1,5 +1,5 @@
 import type { AdvisoryChannel, AdvisoryEvent } from '../advisor/channel';
-import { findPersona, type Persona } from '../advisor/personas';
+import { DEFAULT_PERSONA, findPersona, type Persona } from '../advisor/personas';
 
 const ENABLED_KEY = 'orbits.tts';
 const PERSONA_KEY = 'orbits.voicePersona';
@@ -32,20 +32,30 @@ function save(key: string, value: string): void {
   }
 }
 
-/** Picks the installed voice that best matches a persona's hints, or null for the browser default. */
+/**
+ * Picks the installed voice that best matches a persona's hints, or null for
+ * the browser default. A voice in `avoid` (another persona's) is passed over
+ * while any other hinted or same-language voice is available, so personas do
+ * not all collapse onto the one voice a browser offers first.
+ */
 export function pickVoice(
   voices: SpeechSynthesisVoice[],
   persona: Persona,
+  avoid: SpeechSynthesisVoice | null = null,
 ): SpeechSynthesisVoice | null {
   const lang = persona.voice.lang.toLowerCase();
   const pool = voices.filter((v) => v.lang.toLowerCase().startsWith(lang));
   const candidates = pool.length > 0 ? pool : voices;
-  for (const hint of persona.voice.hints) {
-    const h = hint.toLowerCase();
-    const found = candidates.find((v) => v.name.toLowerCase().includes(h));
-    if (found) return found;
-  }
-  return pool[0] ?? null;
+  const hinted = (allow: (v: SpeechSynthesisVoice) => boolean): SpeechSynthesisVoice | null => {
+    for (const hint of persona.voice.hints) {
+      const h = hint.toLowerCase();
+      const found = candidates.find((v) => allow(v) && v.name.toLowerCase().includes(h));
+      if (found) return found;
+    }
+    return null;
+  };
+  const fresh = (v: SpeechSynthesisVoice): boolean => v !== avoid;
+  return hinted(fresh) ?? pool.find(fresh) ?? hinted(() => true) ?? pool[0] ?? null;
 }
 
 /**
@@ -122,7 +132,10 @@ export class TtsPlayer {
     u.rate = s.rate;
     u.pitch = s.pitch;
     u.volume = s.volume;
-    const voice = pickVoice(this.synth.getVoices(), this.current);
+    const voices = this.synth.getVoices();
+    // Alternate personas keep clear of the default persona's voice where they can.
+    const base = this.current.id === DEFAULT_PERSONA.id ? null : pickVoice(voices, DEFAULT_PERSONA);
+    const voice = pickVoice(voices, this.current, base);
     if (voice) {
       u.voice = voice;
       u.lang = voice.lang;

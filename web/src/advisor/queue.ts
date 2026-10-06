@@ -31,6 +31,8 @@ export class SpeechQueue {
   private speakingRank = Infinity;
   private wpm: number | undefined;
   private lastByCategory = new Map<string, number>();
+  /** The line released last; a non-alarm line never follows itself. */
+  private last: { id: string; text: string } | null = null;
 
   constructor(private cfg: VoiceConfig) {}
 
@@ -48,6 +50,7 @@ export class SpeechQueue {
     this.busyUntil = -Infinity;
     this.speakingRank = Infinity;
     this.lastByCategory.clear();
+    this.last = null;
   }
 
   /** True when a line of `category` (or any of `categories`) is waiting. */
@@ -94,6 +97,16 @@ export class SpeechQueue {
     this.items = this.items.filter(
       (q) => now - q.at <= (q.line.ttl ?? this.cfg.priorities[q.line.priority].ttl),
     );
+    // Saying the same thing twice running sounds broken; only alarms may repeat back to back.
+    // Quip ids name a pool, so for them only the wording counts.
+    const last = this.last;
+    if (last) {
+      this.items = this.items.filter(
+        (q) =>
+          q.line.category === 'alarm' ||
+          (q.line.text !== last.text && (q.line.category === 'quip' || q.line.id !== last.id)),
+      );
+    }
     // The most urgent line whose category is not still pacing itself.
     const head = this.items.find(
       (q) =>
@@ -109,6 +122,7 @@ export class SpeechQueue {
     if (busy && !interrupt) return null;
     this.items = this.items.filter((q) => q !== head);
     this.lastByCategory.set(head.line.category, now);
+    this.last = { id: head.line.id, text: head.line.text };
     const duration = speechSeconds(head.line.text, this.cfg, this.wpm);
     this.busyUntil = now + duration + this.cfg.speech.gapSeconds;
     this.speakingRank = head.line.rank;

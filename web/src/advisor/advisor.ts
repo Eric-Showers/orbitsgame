@@ -5,6 +5,7 @@ import type { AdvisoryChannel } from './channel';
 import { guidanceAfter } from './guidance';
 import {
   fillTemplate,
+  speakableVars,
   VOICE,
   type Category,
   type LineSpec,
@@ -323,7 +324,7 @@ export class VesselAdvisor {
       fillTemplate(variants[this.pick(cue.id, variants.length, spec.category)], {
         callsign: speaker,
         name: this.commander,
-        ...cue.vars,
+        ...speakableVars(cue.vars ?? {}),
       }),
       spec.priority,
     );

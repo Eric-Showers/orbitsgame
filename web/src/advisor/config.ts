@@ -137,3 +137,27 @@ export const VOICE = voiceData as VoiceConfig;
 export function fillTemplate(text: string, vars: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? m);
 }
+
+/** Variables that name things rather than measure them; their digits are never rounded. */
+const NAMES = new Set(['target', 'name', 'callsign', 'label']);
+
+/** Rounds a number to two significant figures, the precision speech needs. */
+export function twoSig(n: number): string {
+  if (!Number.isFinite(n) || n === 0) return String(n);
+  const mag = Math.floor(Math.log10(Math.abs(n)));
+  const step = 10 ** (mag - 1);
+  const rounded = Math.round(n / step) * step;
+  return rounded.toLocaleString('en-US', { maximumFractionDigits: Math.max(0, 1 - mag) });
+}
+
+/** Rounds every measurement in a line's variables to two significant figures ("25.4 km" says "25 km"). */
+export function speakableVars(vars: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vars)) {
+    out[k] =
+      NAMES.has(k) || v.includes(':')
+        ? v
+        : v.replace(/\d[\d,]*(?:\.\d+)?/g, (m) => twoSig(Number(m.replace(/,/g, ''))));
+  }
+  return out;
+}

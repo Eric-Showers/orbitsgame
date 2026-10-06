@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VesselAdvisor } from './advisor/advisor';
 import { AdvisoryChannel, type AdvisoryEvent } from './advisor/channel';
-import { fillTemplate, VOICE, type VoiceConfig } from './advisor/config';
+import { fillTemplate, speakableVars, twoSig, VOICE, type VoiceConfig } from './advisor/config';
 import { guidanceAfter } from './advisor/guidance';
 import { findPersona, PERSONAS } from './advisor/personas';
 import { SpeechQueue, type PendingLine } from './advisor/queue';
@@ -268,7 +268,7 @@ function line(
     priority,
     category,
     rank: VOICE.priorities[priority].rank,
-    text: 'one two three',
+    text: `${id} two three`,
     vessel: 0,
     speaker: 'ARGUS',
     simTime: 0,
@@ -695,5 +695,33 @@ describe('dialogue categories and lulls', () => {
         .reduce((n, id) => n + (p.lines[id] ?? VOICE.lines[id].text).length, 0);
       expect(count, p.id).toBeGreaterThanOrEqual(40);
     }
+  });
+});
+
+describe('speech polish', () => {
+  it('rounds spoken measurements to two significant figures, never names', () => {
+    expect(
+      ['25.4', '129.8', '1234', '0.43', '2.0', '100', '7'].map((n) => twoSig(Number(n))),
+    ).toEqual(['25', '130', '1,200', '0.43', '2', '100', '7']);
+    expect(
+      speakableVars({
+        range: '25.4 km',
+        relv: '83.8 m/s',
+        target: 'Drone 123',
+        band: '88.0 km to 91.0 km',
+      }),
+    ).toEqual({ range: '25 km', relv: '84 m/s', target: 'Drone 123', band: '88 km to 91 km' });
+  });
+
+  it('never says the same line twice running, except alarms', () => {
+    const q = new SpeechQueue(VOICE);
+    q.push(line('event.x', 'advise'), 0);
+    expect(q.next(0)?.id).toBe('event.x');
+    q.push({ ...line('event.x', 'advise'), text: 'different words' }, 5);
+    expect(q.next(5)).toBeNull();
+    q.push(line('threat.missile', 'critical', 'alarm'), 10);
+    expect(q.next(10)?.id).toBe('threat.missile');
+    q.push(line('threat.missile', 'critical', 'alarm'), 20);
+    expect(q.next(20)?.id).toBe('threat.missile');
   });
 });

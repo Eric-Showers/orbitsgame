@@ -375,7 +375,7 @@ describe('commander layer', () => {
     expect(ids).toContain('ap.start');
     expect(ids).toContain('ap.done.altitude');
     for (const e of spoken) expect(e.text).not.toMatch(/[{}]/);
-    expect(spoken.find((e) => e.id === 'ap.propose.altitude')!.text).toMatch(/140\.0 km/);
+    expect(spoken.find((e) => e.id === 'ap.propose.altitude')!.text).toMatch(/140 km/);
   });
 
   it('refuses out loud when assist is off', () => {

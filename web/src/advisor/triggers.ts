@@ -405,12 +405,11 @@ function meanAnomalyHyperbola(nu: number, e: number): number {
   return e * Math.sinh(F) - F;
 }
 
-/** Durations as a person would say them: "45 seconds", "3 minutes 10". */
+/** Durations as a person would say them, to two significant figures: "45 seconds", "13 minutes". */
 export function fmtSeconds(s: number): string {
   const t = Math.max(0, Math.round(s));
   if (t < 90) return `${t} second${t === 1 ? '' : 's'}`;
-  const m = Math.floor(t / 60);
-  const sec = t % 60;
-  if (m >= 60) return `${(m / 60).toFixed(1)} hours`;
-  return sec === 0 || m >= 10 ? `${m} minutes` : `${m} minutes ${sec}`;
+  const m = t / 60;
+  if (m < 90) return `${Math.round(m)} minutes`;
+  return `${(m / 60).toFixed(1).replace(/\.0$/, '')} hours`;
 }

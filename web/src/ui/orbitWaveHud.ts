@@ -1,23 +1,25 @@
 import type { Pilot } from '../autopilot/pilot';
 import type { FlightSession } from '../sim/session';
-import { fmtDuration } from './format';
+import { fmtDistance } from './format';
 import {
-  alignments,
-  phaseGap,
+  apoapsisOf,
+  periapsisOf,
   phaseOf,
-  phaseTrack,
-  plannedBurnsUsable,
-  WAVE_HORIZON,
-  WAVE_SAMPLES,
+  projectBurns,
+  sampleWave,
+  waveCrossings,
+  waveOf,
+  waveRadius,
+  type WaveOrbit,
 } from './orbitWave';
 import './orbitWave.css';
 
 export const WAVE_KEY = 'KeyO';
 const STORAGE_KEY = 'orbits.wave-visible';
-const TAU = Math.PI * 2;
 const W = 680;
 const H = 130;
-const PAD = { l: 36, r: 10, t: 16, b: 16 };
+const PAD = { l: 6, r: 6, t: 16, b: 16 };
+const SAMPLES = 181;
 const REFRESH_MS = 250;
 const CYAN = '#3fd2ff';
 const PINK = '#ff9ae9';
@@ -25,10 +27,16 @@ const RED = '#ff4d5e';
 const AMBER = '#ffb547';
 const DIM = '#5c8797';
 
+interface Layer {
+  wave: WaveOrbit;
+  color: string;
+  dashed: boolean;
+}
+
 /**
- * Beat-matching view: x is game time over the next three hours, y is each ship's angle around the
- * planet. Ships on a lower orbit sweep faster, so the lines drift apart or together, and where they
- * cross the two ships sit on the same bearing. Shown only while a target is selected. Read-only.
+ * Unrolled orbits, shown only while a target is selected: x is inertial angle over one turn, y is altitude, so every orbit is a wave whose
+ * crest is Ap and trough is Pe. Own ship, tracked target and the orbit a planned burn would leave us in
+ * share the plot; where waves cross, the orbits intersect. Read-only, like the rest of the HUD.
  */
 export class OrbitWaveHud {
   readonly root = document.createElement('div');
@@ -47,7 +55,7 @@ export class OrbitWaveHud {
     this.root.className = 'hud-side hud-wave';
     const head = document.createElement('div');
     head.className = 'wave-head';
-    head.innerHTML = `<span class="hud-label">ORBIT WAVES · NEXT 3 HOURS</span><span class="wave-legend"><i style="color:${CYAN}">YOU</i><i style="color:${PINK}">TGT</i><i style="color:${AMBER}">┄ AFTER BURN</i><b>${WAVE_KEY.slice(3)}</b></span>`;
+    head.innerHTML = `<span class="hud-label">ORBIT WAVES · ALTITUDE vs ANGLE</span><span class="wave-legend"><i style="color:${CYAN}">YOU</i><i style="color:${PINK}">TGT</i><i style="color:${AMBER}">┄ AFTER BURN</i><b>${WAVE_KEY.slice(3)}</b></span>`;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     this.canvas.width = W * dpr;
     this.canvas.height = H * dpr;
@@ -82,11 +90,11 @@ export class OrbitWaveHud {
     const tgt = me.alive ? s.entity(me.target) : null;
     const on = this.visible && tgt?.alive === true && s.orbit(me.id) !== null;
     this.setShown(on);
-    if (!on || !tgt || !this.ctx2d) return;
+    if (!on || !this.ctx2d) return;
     const now = performance.now();
     if (now - this.lastDraw < REFRESH_MS) return;
     this.lastDraw = now;
-    this.draw(this.ctx2d, s, me, tgt);
+    this.draw(this.ctx2d);
   }
 
   private setShown(on: boolean): void {
@@ -95,109 +103,177 @@ export class OrbitWaveHud {
     this.root.hidden = !on;
   }
 
-  private draw(
-    g: CanvasRenderingContext2D,
-    s: FlightSession,
-    me: ReturnType<FlightSession['player']>,
-    tgt: NonNullable<ReturnType<FlightSession['entity']>>,
-  ): void {
-    const mu = s.game.mu();
-    const hostile = tgt.team === 1;
-    const tgtColor = hostile ? RED : PINK;
-    const you = phaseTrack(mu, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON);
-    const them = phaseTrack(mu, tgt.pos, tgt.vel, WAVE_SAMPLES, WAVE_HORIZON);
-    const plan = this.pilot().proposal?.plan ?? null;
-    const burned =
-      plan?.feasible && plannedBurnsUsable(me.pos, me.vel, plan.nodes)
-        ? phaseTrack(mu, me.pos, me.vel, WAVE_SAMPLES, WAVE_HORIZON, {
-            now: s.time,
-            nodes: plan.nodes,
-          })
-        : null;
-
-    const X = (t: number): number => PAD.l + (t / WAVE_HORIZON) * (W - PAD.l - PAD.r);
-    const Y = (a: number): number => H - PAD.b - (a / TAU) * (H - PAD.t - PAD.b);
+  private draw(g: CanvasRenderingContext2D): void {
+    const s = this.session();
+    const me = s.player();
+    const R = s.planetRadius;
     g.clearRect(0, 0, W, H);
+    const ownO = me.alive ? s.orbit(me.id) : null;
+    if (!ownO) {
+      this.text(g, 'NO ORBIT SOLUTION', W / 2, H / 2, DIM, 'center');
+      this.readout.textContent = '';
+      return;
+    }
+    const own = waveOf(ownO);
+    const tgtEnt = s.entity(me.target);
+    const tgtO = tgtEnt?.alive ? s.orbit(tgtEnt.id) : null;
+    const tgt = tgtO ? waveOf(tgtO) : null;
+    const hostile = tgtEnt?.team === 1;
 
+    const pilot = this.pilot();
+    const plan = pilot.proposal?.plan ?? null;
+    const burns = plan?.feasible
+      ? projectBurns(s.game.mu(), me.pos, me.vel, s.time, plan.nodes)
+      : [];
+
+    const layers: Layer[] = [];
+    if (tgt) layers.push({ wave: tgt, color: hostile ? RED : PINK, dashed: false });
+    layers.push({ wave: own, color: CYAN, dashed: false });
+    for (const b of burns) layers.push({ wave: b.after, color: AMBER, dashed: true });
+
+    // Vertical range from every apsis shown; open orbits only contribute their periapsis.
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const { wave } of layers) {
+      lo = Math.min(lo, periapsisOf(wave));
+      const ap = apoapsisOf(wave);
+      if (ap !== null) hi = Math.max(hi, ap);
+    }
+    if (!Number.isFinite(hi)) hi = lo * 2;
+    if (hi - lo < 2_000) {
+      const mid = (hi + lo) / 2;
+      lo = mid - 1_000;
+      hi = mid + 1_000;
+    }
+    const span = hi - lo;
+    lo -= span * 0.08;
+    hi += span * 0.08;
+    const X = (th: number): number => PAD.l + (th / (Math.PI * 2)) * (W - PAD.l - PAD.r);
+    const Y = (r: number): number => H - PAD.b - ((r - lo) / (hi - lo)) * (H - PAD.t - PAD.b);
+
+    // Frame: surface line if on screen, quarter-turn ticks.
     g.lineWidth = 1;
     g.strokeStyle = 'rgba(29, 74, 94, 0.7)';
     for (let q = 0; q <= 4; q++) {
-      const y = Y((q * TAU) / 4);
       g.beginPath();
-      g.moveTo(PAD.l, y);
-      g.lineTo(W - PAD.r, y);
-      g.stroke();
-      this.text(g, `${q * 90}°`, PAD.l - 4, y + 3, DIM, 'right');
-    }
-    for (let m = 0; m <= 6; m++) {
-      const t = m * 1800;
-      g.beginPath();
-      g.moveTo(X(t), PAD.t);
-      g.lineTo(X(t), H - PAD.b);
+      g.moveTo(X((q * Math.PI) / 2), PAD.t);
+      g.lineTo(X((q * Math.PI) / 2), H - PAD.b);
       g.stroke();
       this.text(
         g,
-        m === 0 ? 'NOW' : `+${Math.floor(m / 2)}:${m % 2 ? '30' : '00'}`,
-        X(t),
+        `${q * 90}°`,
+        X((q * Math.PI) / 2),
         H - 4,
         DIM,
-        m === 0 ? 'left' : m === 6 ? 'right' : 'center',
+        q === 0 ? 'left' : q === 4 ? 'right' : 'center',
       );
     }
+    if (R >= lo && R <= hi) {
+      g.strokeStyle = 'rgba(255, 77, 94, 0.5)';
+      g.beginPath();
+      g.moveTo(PAD.l, Y(R));
+      g.lineTo(W - PAD.r, Y(R));
+      g.stroke();
+      this.text(g, 'SURFACE', W - PAD.r, Y(R) - 3, 'rgba(255,77,94,0.7)', 'right');
+    }
 
-    this.stroke(g, them, tgtColor, false, X, Y);
-    this.stroke(g, you, CYAN, false, X, Y);
-    if (burned) this.stroke(g, burned, AMBER, true, X, Y);
+    // Waves, back to front: target, own, post-burn.
+    for (const l of layers) this.stroke(g, l, X, Y, hi);
 
-    const meets = alignments(you, them, WAVE_HORIZON);
-    for (const t of meets) this.ring(g, X(t), Y(trackAt(you, t)), CYAN, fmtOffset(t));
-    const burnedMeets = burned ? alignments(burned, them, WAVE_HORIZON) : [];
-    for (const t of burnedMeets) this.ring(g, X(t), Y(trackAt(burned!, t)), AMBER, fmtOffset(t));
+    // Crossings with the target: now (own) and after the final burn (amber).
+    if (tgt) {
+      for (const th of waveCrossings(own, tgt))
+        this.ring(g, X(th), Y(waveRadius(own, th) ?? 0), CYAN);
+      const last = burns[burns.length - 1];
+      if (last) {
+        for (const th of waveCrossings(last.after, tgt))
+          this.ring(g, X(th), Y(waveRadius(last.after, th) ?? 0), AMBER);
+      }
+    }
 
-    this.dot(g, X(0), Y(you[0]), CYAN);
-    this.dot(g, X(0), Y(them[0]), tgtColor);
+    // Burn points on the wave they leave.
+    for (const b of burns) this.diamond(g, X(b.theta), Y(b.radius), AMBER);
 
-    const gap = phaseGap(phaseOf(tgt.pos), phaseOf(me.pos));
-    let readout = `PHASE ${gap >= 0 ? '+' : ''}${Math.round((gap * 180) / Math.PI)}° · TGT ${gap >= 0 ? 'AHEAD' : 'BEHIND'} · ${
-      meets.length ? `NEXT ALIGN ${fmtOffset(meets[0])}` : 'NO ALIGNMENT IN 3 H'
-    }`;
-    if (burned)
-      readout += ` · AFTER BURN ${burnedMeets.length ? `ALIGN ${fmtOffset(burnedMeets[0])}` : 'NO ALIGNMENT'}`;
+    // Apsis labels.
+    const ownTag = this.apsisLabels(g, own, R, CYAN, X, Y, false);
+    if (tgt) this.apsisLabels(g, tgt, R, hostile ? RED : PINK, X, Y, true);
+    const last = burns[burns.length - 1];
+    if (last) this.apsisLabels(g, last.after, R, AMBER, X, Y, null);
+
+    // Current positions.
+    const ownPhase = phaseOf(me.pos);
+    this.dot(g, X(ownPhase), Y(Math.hypot(me.pos.x, me.pos.y)), CYAN);
+    let readout = ownTag;
+    if (tgtEnt?.alive && tgt) {
+      const tp = phaseOf(tgtEnt.pos);
+      this.dot(g, X(tp), Y(Math.hypot(tgtEnt.pos.x, tgtEnt.pos.y)), hostile ? RED : PINK);
+      let d = ((tp - ownPhase + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      if (d < -Math.PI) d += Math.PI * 2;
+      const hiAlt = periapsisOf(tgt) > periapsisOf(own);
+      readout = `PHASE ${d >= 0 ? '+' : ''}${Math.round((d * 180) / Math.PI)}° · TGT ${hiAlt ? 'HIGHER' : 'LOWER'} PE · ${waveCrossings(own, tgt).length} CROSSING${waveCrossings(own, tgt).length === 1 ? '' : 'S'}`;
+    }
+    if (last && plan)
+      readout += ` · AFTER BURN PE ${fmtDistance(periapsisOf(last.after) - R)} AP ${apoapsisOf(last.after) === null ? 'ESCAPE' : fmtDistance((apoapsisOf(last.after) ?? 0) - R)}`;
     if (this.readout.textContent !== readout) this.readout.textContent = readout;
   }
 
-  /** One track as a line; where the angle wraps past 0/360 the line runs to the edge and restarts on the other. */
   private stroke(
     g: CanvasRenderingContext2D,
-    track: readonly number[],
-    color: string,
-    dashed: boolean,
+    l: Layer,
     X: (t: number) => number,
-    Y: (a: number) => number,
+    Y: (r: number) => number,
+    hiR: number,
   ): void {
-    const step = WAVE_HORIZON / (track.length - 1);
+    const pts = sampleWave(l.wave, SAMPLES, hiR * 1.5);
     g.save();
-    g.strokeStyle = color;
-    g.lineWidth = dashed ? 1.5 : 2;
-    g.shadowColor = color;
-    g.shadowBlur = dashed ? 0 : 5;
-    g.setLineDash(dashed ? [5, 4] : []);
+    g.strokeStyle = l.color;
+    g.lineWidth = l.dashed ? 1.5 : 2;
+    g.shadowColor = l.color;
+    g.shadowBlur = l.dashed ? 0 : 5;
+    g.setLineDash(l.dashed ? [5, 4] : []);
     g.beginPath();
-    g.moveTo(X(0), Y(track[0]));
-    for (let i = 1; i < track.length; i++) {
-      const prev = track[i - 1];
-      const cur = track[i];
-      if (Math.abs(cur - prev) > Math.PI) {
-        const up = prev > cur;
-        const span = up ? cur + TAU - prev : cur - TAU - prev;
-        const x = X((i - 1 + (up ? TAU - prev : -prev) / span) * step);
-        g.lineTo(x, Y(up ? TAU : 0));
-        g.moveTo(x, Y(up ? 0 : TAU));
+    let pen = false;
+    pts.forEach((r, i) => {
+      if (r === null) {
+        pen = false;
+        return;
       }
-      g.lineTo(X(i * step), Y(cur));
-    }
+      const x = X((Math.PI * 2 * i) / (SAMPLES - 1));
+      const y = Math.max(PAD.t - 6, Math.min(H - PAD.b + 6, Y(r)));
+      if (pen) g.lineTo(x, y);
+      else g.moveTo(x, y);
+      pen = true;
+    });
     g.stroke();
     g.restore();
+  }
+
+  /** Marks Pe and Ap on a wave; `below` puts the labels under the line (target) instead of over (own). */
+  private apsisLabels(
+    g: CanvasRenderingContext2D,
+    o: WaveOrbit,
+    R: number,
+    color: string,
+    X: (t: number) => number,
+    Y: (r: number) => number,
+    below: boolean | null,
+  ): string {
+    const pe = periapsisOf(o);
+    const ap = apoapsisOf(o);
+    const circular = o.e < 2e-3;
+    const peTxt = `PE ${fmtDistance(pe - R)}`;
+    const apTxt = ap === null ? '' : `AP ${fmtDistance(ap - R)}`;
+    if (!circular) {
+      const dy = below === null ? 0 : below ? 11 : -5;
+      const place = (th: number, r: number, t: string): void => {
+        const x = X(th);
+        const align = x < 60 ? 'left' : x > W - 60 ? 'right' : 'center';
+        this.text(g, t, x, Math.max(PAD.t - 4, Math.min(H - PAD.b - 2, Y(r) + dy)), color, align);
+      };
+      if (below !== null || ap === null) place(o.w, pe, peTxt);
+      if (ap !== null && below !== null) place(o.w + Math.PI, ap, apTxt);
+    }
+    return circular ? `CIRCULAR ${fmtDistance(pe - R)}` : `${apTxt} ${peTxt}`.trim();
   }
 
   private text(
@@ -219,34 +295,29 @@ export class OrbitWaveHud {
     g.strokeStyle = '#06121a';
     g.lineWidth = 2;
     g.beginPath();
-    g.arc(x, y, 4, 0, TAU);
+    g.arc(x, y, 4, 0, Math.PI * 2);
     g.stroke();
     g.fill();
   }
 
-  private ring(
-    g: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    color: string,
-    label: string,
-  ): void {
+  private ring(g: CanvasRenderingContext2D, x: number, y: number, color: string): void {
     g.strokeStyle = color;
     g.lineWidth = 1.5;
     g.beginPath();
-    g.arc(x, y, 5.5, 0, TAU);
+    g.arc(x, y, 5.5, 0, Math.PI * 2);
     g.stroke();
-    this.text(g, label, x, y < H / 2 ? y + 16 : y - 9, color, x > W - 50 ? 'right' : 'center');
   }
-}
 
-const fmtOffset = (t: number): string => `+${fmtDuration(t).replace(/^00:/, '')}`;
-
-/** Track value at an arbitrary offset, by nearest sample. */
-function trackAt(track: readonly number[], t: number): number {
-  return track[
-    Math.max(0, Math.min(track.length - 1, Math.round((t / WAVE_HORIZON) * (track.length - 1))))
-  ];
+  private diamond(g: CanvasRenderingContext2D, x: number, y: number, color: string): void {
+    g.fillStyle = color;
+    g.beginPath();
+    g.moveTo(x, y - 5);
+    g.lineTo(x + 4, y);
+    g.lineTo(x, y + 5);
+    g.lineTo(x - 4, y);
+    g.closePath();
+    g.fill();
+  }
 }
 
 function loadVisible(): boolean {

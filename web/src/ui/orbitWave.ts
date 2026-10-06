@@ -1,7 +1,7 @@
-// Altitude-vs-time math for the orbit wave panel: each ship's height over the next few hours.
+// Phase-vs-time math for the orbit wave panel: each ship's inertial angle over the next few hours.
 // Pure functions of state vectors; no sim handle in here.
 
-import { desiredDirection, propagate } from '../autopilot/orbitmath';
+import { desiredDirection, propagate, TAU, wrapTau } from '../autopilot/orbitmath';
 import type { BurnNode } from '../autopilot/types';
 import type { Vec3 } from '../sim/bridge';
 
@@ -9,18 +9,22 @@ import type { Vec3 } from '../sim/bridge';
 export const WAVE_HORIZON = 3 * 3600;
 export const WAVE_SAMPLES = 361;
 
-/** Height of a position above the surface (m); negative once a coasting orbit has dipped underground. */
-export const altitudeOf = (pos: Vec3, planetRadius: number): number =>
-  Math.hypot(pos.x, pos.y, pos.z) - planetRadius;
+/** Inertial angle of a position, in [0, 2pi). */
+export const phaseOf = (pos: Vec3): number => wrapTau(Math.atan2(pos.y, pos.x));
+
+/** Signed angle a - b folded into (-pi, pi]. */
+export function phaseGap(a: number, b: number): number {
+  const d = wrapTau(a - b);
+  return d > Math.PI ? d - TAU : d;
+}
 
 /**
- * Altitude above the surface at `n` evenly spaced moments from now to `horizon` seconds ahead, coasting along
- * the Kepler orbit (the ground is ignored, so a doomed orbit reads negative). Burns whose time falls inside the span are applied on the way; stops using them
+ * Inertial angle at `n` evenly spaced moments from now to `horizon` seconds ahead, coasting along
+ * the Kepler orbit. Burns whose time falls inside the span are applied on the way; stops using them
  * at the first node whose direction cannot be worked out from the orbit alone (target-relative modes).
  */
-export function altitudeTrack(
+export function phaseTrack(
   mu: number,
-  planetRadius: number,
   pos: Vec3,
   vel: Vec3,
   n: number,
@@ -51,7 +55,7 @@ export function altitudeTrack(
     }
     state = propagate(mu, state.pos, state.vel, at - t);
     t = at;
-    out.push(altitudeOf(state.pos, planetRadius));
+    out.push(phaseOf(state.pos));
   }
   return out;
 }
@@ -60,4 +64,22 @@ export function altitudeTrack(
 export function plannedBurnsUsable(pos: Vec3, vel: Vec3, nodes: readonly BurnNode[]): boolean {
   const first = [...nodes].sort((a, b) => a.time - b.time)[0];
   return first !== undefined && desiredDirection(first.mode, pos, vel) !== null;
+}
+
+/**
+ * Moments (seconds from now) where two tracks sit at the same angle, i.e. the ships line up
+ * along the same bearing from the planet. Found by sign changes of the wrapped gap.
+ */
+export function alignments(a: readonly number[], b: readonly number[], horizon: number): number[] {
+  const out: number[] = [];
+  const step = horizon / (a.length - 1);
+  let prev = phaseGap(b[0], a[0]);
+  for (let i = 1; i < a.length; i++) {
+    const d = phaseGap(b[i], a[i]);
+    // A jump of more than half a turn is the fold at +-pi, not a crossing.
+    if (prev !== 0 && prev * d <= 0 && Math.abs(d - prev) < Math.PI)
+      out.push((i - 1 + prev / (prev - d)) * step);
+    prev = d;
+  }
+  return out;
 }

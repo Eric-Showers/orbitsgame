@@ -1,3 +1,4 @@
+import type { ObjectiveView } from '../advisor/objectives';
 import type { Game } from '../wasm-pkg/orbit_wasm.js';
 import { EntityKind, len, SimEventKind, sub, type SimEvent } from '../sim/bridge';
 import { FlightSession } from '../sim/session';
@@ -81,6 +82,56 @@ export class MissionRun {
     const lines = this.coachLines;
     this.coachLines = [];
     return lines;
+  }
+
+  /** The first active objective, in the terms the ship AI advises on. */
+  objectiveView(): ObjectiveView | null {
+    const o = this.objectives.find((x) => x.status === 'active');
+    if (!o || this.outcome !== 'running') return null;
+    const d = o.def;
+    const named = (tag: string): { id: number; name: string } | null => {
+      const id = this.ids.get(tag);
+      return id === undefined ? null : { id, name: this.names.get(id) ?? tag };
+    };
+    switch (d.type) {
+      case 'orbit':
+        return { kind: 'orbit', pe: d.pe, ap: d.ap, hold: d.hold ?? 0, held: o.held };
+      case 'rendezvous': {
+        const t = named(d.target);
+        return t
+          ? {
+              kind: 'rendezvous',
+              target: t.id,
+              name: t.name,
+              range: d.range,
+              maxRelSpeed: d.maxRelSpeed,
+            }
+          : null;
+      }
+      case 'destroy': {
+        // Every active destroy objective with the same weapon rule counts: any of them is fair game.
+        const tags = this.objectives
+          .filter(
+            (x) =>
+              x.status === 'active' &&
+              x.def.type === 'destroy' &&
+              (x.def.by ?? 'any') === (d.by ?? 'any'),
+          )
+          .flatMap((x) => (x.def.type === 'destroy' ? x.def.targets : []));
+        return {
+          kind: 'destroy',
+          targets: tags.map(named).filter((t) => t !== null),
+          by: d.by ?? 'any',
+        };
+      }
+      case 'mineZone':
+        return { kind: 'mineZone', altitude: d.altitude, left: Math.max(0, d.count - o.count) };
+      case 'survive':
+        return {
+          kind: 'survive',
+          remaining: Math.max(0, d.seconds - (this.session.time - o.activatedAt)),
+        };
+    }
   }
 
   /** Display name of a ship (mission name, else its tag). */

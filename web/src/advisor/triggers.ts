@@ -15,6 +15,7 @@ import {
 } from '../sim/bridge';
 import { fmtDistance, fmtPercent, fmtSpeed } from '../ui/format';
 import type { LullSpec, Thresholds } from './config';
+import type { ObjectiveView } from './objectives';
 
 /** Read-only view of the sim as one vessel's AI sees it. */
 export interface VesselSnapshot {
@@ -27,6 +28,8 @@ export interface VesselSnapshot {
   events: readonly SimEvent[];
   /** Time warp in effect (1 when unknown). */
   warp?: number;
+  /** The mission objective being worked on, if flying a mission. */
+  objective?: ObjectiveView | null;
 }
 
 /**

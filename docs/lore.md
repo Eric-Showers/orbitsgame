@@ -34,6 +34,7 @@ Every line in `voice.json` has a `category`, and each category is paced on its o
 - **alarm**: danger now (ground intercept, inbound missile, mines, drive heat limit, hull damage). Spoken at once.
 - **event**: something just happened (missile away, splash, a launch, a contact making a significant burn, the AI coming online).
 - **status**: readings (orbit now X by Y, drive heat, target range). Held until a lull: no burn, no autopilot maneuver, no alarm and no event for `quietSeconds`; or at once when the commander raises time warp after changing orbit. Only what changed since the last report is said.
+- **objective**: what to do next for the active mission objective, read off the live situation ("lower our orbit to catch up", "raise our orbit to stay behind it", "climb into the lane before laying mines"). Lines are `obj.*`; distances are in `objective` in `voice.json`. Shares the lull slot with quips and wins it, but the same objective line is never said twice running; banter fills the gap until the situation changes.
 - **quip**: banter. Lull only, after status has been said, at most one per `categories.quip.minGap` (30 s). Situational pools (`quip.hunting`, `quip.victory`, `quip.damaged`, `quip.warp`) are mixed with `quip.idle`; a pool is used up before any line repeats.
 - **helm**: the autopilot conversation (`ap.*`), next-step guidance (`guide.*`) and mission coaching.
 

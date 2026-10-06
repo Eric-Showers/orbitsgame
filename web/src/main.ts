@@ -151,7 +151,7 @@ async function main(): Promise<void> {
       }
       view.showEvents(events);
       sound.onSimEvents(events);
-      const snap = playerSnapshot(session, events);
+      const snap = playerSnapshot(session, events, run?.objectiveView() ?? null);
       advisor.setManeuvering(pilot.busy);
       advisor.observe(snap, now / 1000);
       for (const text of run?.takeCoach() ?? [])

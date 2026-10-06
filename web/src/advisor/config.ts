@@ -8,9 +8,10 @@ export type Priority =
  * What kind of line it is, which decides when it may be said. Each category
  * has its own pacing in `voice.json` so their rates tune separately:
  * alarms (danger), events (something just happened), status (readings, held
- * for a lull), quips (banter, lulls only) and helm (the autopilot dialogue).
+ * for a lull), objective (what to do next for the mission, lulls only, ahead
+ * of quips), quips (banter, lulls only) and helm (the autopilot dialogue).
  */
-export type Category = 'alarm' | 'event' | 'status' | 'quip' | 'helm';
+export type Category = 'alarm' | 'event' | 'status' | 'objective' | 'quip' | 'helm';
 
 export interface CategorySpec {
   /** Real seconds between two lines of this category. */
@@ -94,6 +95,22 @@ export interface Thresholds {
   neutralTeams: number[];
 }
 
+/** Distances and speeds for mission-objective advice. */
+export interface ObjectiveSpec {
+  /** Inside this range the advice turns to matching speed and easing in. */
+  closeRange: number;
+  /** Inside this range, closing from below (or above), the advice is to climb (or drop) back. */
+  approachRange: number;
+  /** Relative speed (m/s) above which the advice inside `closeRange` is to match velocity. */
+  matchRelSpeed: number;
+  /** Semi-major axis difference (m) that counts as being on a lower or higher orbit. */
+  phasingMargin: number;
+  /** Range at which a destroy objective's tracked target counts as within missile reach. */
+  fireRange: number;
+  /** Targets on orbits more eccentric than this that cross our altitude are waited for, not chased. */
+  crossingEccentricity: number;
+}
+
 export interface VoiceConfig {
   callsigns: Record<string, string>;
   defaultCallsign: string;
@@ -108,6 +125,7 @@ export interface VoiceConfig {
   priorities: Record<Priority, PrioritySpec>;
   categories: Record<Category, CategorySpec>;
   lull: LullSpec;
+  objective: ObjectiveSpec;
   thresholds: Thresholds;
   lines: Record<string, LineSpec>;
 }

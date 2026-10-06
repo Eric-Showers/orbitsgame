@@ -11,6 +11,7 @@ import {
   type Priority,
   type VoiceConfig,
 } from './config';
+import { objectiveAdvice } from './objectives';
 import { DEFAULT_PERSONA, type Persona } from './personas';
 import { SpeechQueue } from './queue';
 import {
@@ -67,7 +68,9 @@ export class VesselAdvisor {
   private reported: Reported | null = null;
   /** Real time of the last burn, maneuver, alarm or event; lulls are measured from it. */
   private lastAction = -Infinity;
-  private lastQuip = -Infinity;
+  /** Real time of the last lull line (objective advice or quip); they share one slot. */
+  private lastSlot = -Infinity;
+  private lastObjectiveLine: string | null = null;
   private lastKill = -Infinity;
   private statusNow = false;
   private maneuvering = false;
@@ -93,8 +96,9 @@ export class VesselAdvisor {
     this.hullMax = 0;
     this.tracks.clear();
     this.reported = null;
-    this.lastAction = this.lastQuip = this.lastKill = -Infinity;
+    this.lastAction = this.lastSlot = this.lastKill = -Infinity;
     this.statusNow = false;
+    this.lastObjectiveLine = null;
     this.maneuvering = false;
     this.greeted = false;
     this.linesSinceName = Infinity;
@@ -176,9 +180,19 @@ export class VesselAdvisor {
     if (
       quiet >= l.quipQuietSeconds &&
       this.queue.size === 0 &&
-      now - this.lastQuip >= this.cfg.categories.quip.minGap
+      now - this.lastSlot >= this.cfg.categories.quip.minGap
     ) {
-      this.lastQuip = now;
+      this.lastSlot = now;
+      // Mission advice takes the slot ahead of banter, but never the same line twice running.
+      const advice = snap.objective
+        ? objectiveAdvice(snap, snap.objective, this.cfg.objective)
+        : null;
+      if (advice && advice.id !== this.lastObjectiveLine && this.cfg.lines[advice.id]) {
+        this.lastObjectiveLine = advice.id;
+        this.say(advice, snap, now);
+        this.flush(now);
+        return;
+      }
       const target = snap.entities.find((e) => e.id === snap.self.target);
       const vars = target ? { target: entityName(target) } : undefined;
       this.say({ id: this.quipPool(snap, now), vars }, snap, now);

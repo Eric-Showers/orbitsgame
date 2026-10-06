@@ -164,7 +164,56 @@
           "Hull breaches are temporary, if we are quick about it.",
           "Fine, that hurt. Let us make them regret it."
         ],
-        "status.target_holding": ["{target}, {range} out, holding steady."]
+        "status.target_holding": ["{target}, {range} out, holding steady."],
+        "obj.orbit.raise": ["We need {alt}. Burn prograde, Commander, and lift the far side."],
+        "obj.orbit.lower": [
+          "We are too high for {alt}. Burn retrograde and bring the far side down."
+        ],
+        "obj.orbit.circularize_up": [
+          "Apoapsis is right where we want it. Burn prograde at the top and round it out."
+        ],
+        "obj.orbit.circularize_down": [
+          "Periapsis is set. Burn retrograde at the bottom and pull apoapsis in."
+        ],
+        "obj.orbit.hold": ["We are in the band. {t} more. Steady hands."],
+        "obj.chase.lower": ["{target} is {range} ahead. Drop our orbit and we will run it down."],
+        "obj.chase.gaining": ["We are under {target} and reeling it in. {range} to go."],
+        "obj.chase.overtake": [
+          "We are coming up under {target}, {range} out. Climb now or we blow right past it."
+        ],
+        "obj.chase.raise": [
+          "{target} is {range} behind us. Go high, slow down, let it come to us."
+        ],
+        "obj.chase.waiting": [
+          "{target} is {range} astern and closing. Patience. It is coming to us."
+        ],
+        "obj.chase.drop_back": [
+          "{target} is closing from behind, {range}. Drop back to its orbit and meet it."
+        ],
+        "obj.chase.match": [
+          "{target} at {range}, but we are doing {relv} relative. Target retrograde, kill that speed."
+        ],
+        "obj.chase.ease": ["Speeds matched. Nudge us in. {range} to {target}."],
+        "obj.chase.hold": ["Right alongside {target}, {range}. Hold it there."],
+        "obj.destroy.designate": ["First things first. Press T and designate {target}."],
+        "obj.destroy.fire": ["{target} is in range, {range}. Take the shot."],
+        "obj.destroy.crossing": [
+          "{target} is coming across our altitude, {range} out. Sit tight and fire when it is in range."
+        ],
+        "obj.mine.raise": ["Mines ride our orbit. Climb into the {band} lane, then drop them."],
+        "obj.mine.lower": ["Mines ride our orbit. Drop into the {band} lane first."],
+        "obj.mine.circularize": [
+          "We are swinging {pe} by {ap}. Round it out inside {band} before we lay anything."
+        ],
+        "obj.mine.lay": ["We are in the {band} lane. Mine away with M. {left} to go."],
+        "obj.mine.wait": ["Field is set. Warp ahead and let them walk into it."],
+        "obj.survive": ["{t} more. We can do this."],
+        "obj.orbit.overshoot_high": [
+          "We went long on apoapsis, past {alt}. Small retrograde burn at periapsis to reel it in."
+        ],
+        "obj.orbit.overshoot_low": [
+          "Periapsis is short of {alt}. Little prograde burn at apoapsis and we are there."
+        ]
       },
       "callsign": "VALIANT"
     },
@@ -486,7 +535,68 @@
           "Damage report: bad. Mood report: worse.",
           "If we die, I want it known I was against this the whole time."
         ],
-        "status.target_holding": ["{target}, {range}, not moving. Neither am I, by preference."]
+        "status.target_holding": ["{target}, {range}, not moving. Neither am I, by preference."],
+        "obj.orbit.raise": [
+          "Objective says {alt}. Burn prograde. Raise the far side. It is not complicated."
+        ],
+        "obj.orbit.lower": [
+          "We are higher than {alt}. Burn retrograde. Even you can do retrograde."
+        ],
+        "obj.orbit.circularize_up": [
+          "Apoapsis is fine. Burn prograde at apoapsis to fix periapsis. You are welcome."
+        ],
+        "obj.orbit.circularize_down": [
+          "Periapsis is fine. Burn retrograde at periapsis and drag apoapsis down."
+        ],
+        "obj.orbit.hold": ["In the band. {t} more of doing nothing. My favourite."],
+        "obj.chase.lower": [
+          "{target} is {range} ahead. Lower the orbit to catch up. Lower is faster. Look it up."
+        ],
+        "obj.chase.gaining": [
+          "We are under {target} and gaining. {range}. Do nothing. You are good at that."
+        ],
+        "obj.chase.overtake": [
+          "We are gaining on {target} from below, {range}. Raise the orbit or we overshoot. Again."
+        ],
+        "obj.chase.raise": [
+          "{target} is {range} behind. Raise our orbit and let it catch up. Laziness, but scientific."
+        ],
+        "obj.chase.waiting": [
+          "{target} is {range} astern and catching up. We wait. My kind of plan."
+        ],
+        "obj.chase.drop_back": [
+          "{target} is catching up, {range}. Drop back to its orbit. Make it easy for everyone."
+        ],
+        "obj.chase.match": [
+          "{target} at {range}, relative speed {relv}. Burn target retrograde before we become a hood ornament."
+        ],
+        "obj.chase.ease": ["Speeds matched. Inch toward {target}. {range}. Inch, not lunge."],
+        "obj.chase.hold": [
+          "Alongside {target}, {range}. Hold still. Pretend you are me on a weekend."
+        ],
+        "obj.destroy.designate": [
+          "Designate {target} with T. I cannot shoot what you will not point at."
+        ],
+        "obj.destroy.fire": ["{target} in range at {range}. Fire. Then I get the salvage."],
+        "obj.destroy.crossing": [
+          "{target} crosses our altitude on its own, {range} out. We wait. Finally, a plan I like."
+        ],
+        "obj.mine.raise": ["Mines keep our orbit. Climb into the {band} lane, then dump them."],
+        "obj.mine.lower": ["Mines keep our orbit. Drop into the {band} lane, then dump them."],
+        "obj.mine.circularize": [
+          "Our orbit is {pe} by {ap}. Messy. Round it out inside {band} first."
+        ],
+        "obj.mine.lay": ["In the {band} lane. Press M. {left} to go. Littering, but legal."],
+        "obj.mine.wait": [
+          "Field is set. Warp and wait. Do not fly into our own mines. I am looking at you."
+        ],
+        "obj.survive": ["{t} more. Try not to die. I would have to fill out forms."],
+        "obj.orbit.overshoot_high": [
+          "Apoapsis is past {alt}. Overachiever. Retrograde at periapsis to fix it."
+        ],
+        "obj.orbit.overshoot_low": [
+          "Periapsis is under {alt}. Prograde at apoapsis. Gently. I said gently."
+        ]
       },
       "callsign": "RIVET"
     }

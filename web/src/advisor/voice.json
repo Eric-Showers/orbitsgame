@@ -52,7 +52,56 @@
       "rank": 6,
       "ttl": 5,
       "shed": true
+    },
+    "objective": {
+      "rank": 5,
+      "ttl": 10,
+      "shed": true
     }
+  },
+  "categories": {
+    "alarm": {
+      "minGap": 0
+    },
+    "event": {
+      "minGap": 1.5
+    },
+    "helm": {
+      "minGap": 0
+    },
+    "status": {
+      "minGap": 1,
+      "lull": true
+    },
+    "objective": {
+      "minGap": 30,
+      "lull": true
+    },
+    "quip": {
+      "minGap": 30,
+      "lull": true
+    }
+  },
+  "lull": {
+    "quietSeconds": 5,
+    "quipQuietSeconds": 10,
+    "contextualQuipChance": 0.5,
+    "orbitChangeMeters": 1000,
+    "orbitChangeFraction": 0.02,
+    "heatReportFraction": 0.3,
+    "heatReportStep": 0.15,
+    "targetRangeChange": 0.25,
+    "quipWarp": 10,
+    "quipHullFraction": 0.7,
+    "quipVictorySeconds": 60
+  },
+  "objective": {
+    "closeRange": 5000,
+    "approachRange": 15000,
+    "matchRelSpeed": 5,
+    "phasingMargin": 1000,
+    "fireRange": 60000,
+    "crossingEccentricity": 0.01
   },
   "thresholds": {
     "heatLimitFraction": 0.8,
@@ -701,38 +750,199 @@
       "category": "status",
       "topic": "status.target",
       "text": ["{target} at {range}, holding steady."]
+    },
+    "obj.orbit.raise": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Objective is a {alt} orbit. Burn prograde to raise the far side.",
+        "We need {alt}. A prograde burn here lifts the opposite side of the orbit."
+      ]
+    },
+    "obj.orbit.lower": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Objective is a {alt} orbit. Burn retrograde to lower the far side.",
+        "We are above {alt}. A retrograde burn here drops the opposite side."
+      ]
+    },
+    "obj.orbit.circularize_up": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Apoapsis is on target. Burn prograde at apoapsis to lift periapsis to match.",
+        "Half done. Coast to apoapsis, then burn prograde to round the orbit out."
+      ]
+    },
+    "obj.orbit.circularize_down": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Periapsis is on target. Burn retrograde at periapsis to bring apoapsis down.",
+        "Coast to periapsis, then burn retrograde to round the orbit out."
+      ]
+    },
+    "obj.orbit.hold": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Orbit is in the band. Hold it {t} more.",
+        "We are on station. {t} to go. Hands off the throttle."
+      ]
+    },
+    "obj.chase.lower": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is {range} ahead. Lower our orbit to catch up.",
+        "{target} is {range} ahead. Drop below it. A lower orbit is a faster one."
+      ]
+    },
+    "obj.chase.gaining": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "We are below {target} and gaining, {range} to go. Coast for now.",
+        "Lower orbit is doing its work. {range} to {target}."
+      ]
+    },
+    "obj.chase.overtake": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "We are gaining on {target} from below, {range} out. Raise our orbit to stay behind it.",
+        "Closing on {target}, {range}. Climb back to its altitude before we overshoot."
+      ]
+    },
+    "obj.chase.raise": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is {range} astern. Raise our orbit and let it catch up.",
+        "{target} is {range} behind us. Climb. A higher orbit is slower, and it will come to us."
+      ]
+    },
+    "obj.chase.waiting": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is gaining on us from below, {range} out. Coast for now.",
+        "Higher orbit is doing its work. {target} is {range} astern and closing."
+      ]
+    },
+    "obj.chase.drop_back": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is closing from astern, {range} out. Lower back to its orbit to meet it.",
+        "{target} is catching us, {range}. Drop back to its altitude."
+      ]
+    },
+    "obj.chase.match": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is {range} off, but we are moving {relv} relative. Match velocity with a target-retrograde burn.",
+        "Inside {range} of {target} at {relv}. Kill the relative speed with target retrograde."
+      ]
+    },
+    "obj.chase.ease": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Speeds matched. Ease toward {target}, {range} to go.",
+        "A short burn toward {target} will close the last {range}."
+      ]
+    },
+    "obj.chase.hold": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Holding on {target}. Keep it steady.",
+        "Alongside {target}, {range}. Hold position."
+      ]
+    },
+    "obj.destroy.designate": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Designate {target} with T so I can track it.",
+        "{target} is not tracked yet. Press T to designate it."
+      ]
+    },
+    "obj.destroy.fire": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} is in missile range at {range}. Fire when ready.",
+        "Solution on {target}, {range}. The shot is yours."
+      ]
+    },
+    "obj.destroy.crossing": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "{target} will cross our altitude. Hold here and fire as it comes into range.",
+        "No need to chase {target}, {range} out. Its orbit crosses ours. Wait for it."
+      ]
+    },
+    "obj.mine.raise": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Mines keep our orbit. Raise it into the {band} lane, then lay them.",
+        "We are below the {band} lane. Climb into it before dropping mines."
+      ]
+    },
+    "obj.mine.lower": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Mines keep our orbit. Lower it into the {band} lane, then lay them.",
+        "We are above the {band} lane. Drop into it before laying mines."
+      ]
+    },
+    "obj.mine.circularize": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Our orbit runs {pe} by {ap}. Round it out inside the {band} lane before laying mines."
+      ]
+    },
+    "obj.mine.lay": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "We are in the {band} lane. Lay a mine with M. {left} to go.",
+        "Good orbit for the field. Drop a mine. {left} to go."
+      ]
+    },
+    "obj.mine.wait": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "The field is set. Warp ahead and let the convoy find it.",
+        "Mines are armed and waiting. Keep clear of our own field."
+      ]
+    },
+    "obj.survive": {
+      "priority": "objective",
+      "category": "objective",
+      "text": ["Hold out {t} more.", "{t} left. Stay alive."]
+    },
+    "obj.orbit.overshoot_high": {
+      "priority": "objective",
+      "category": "objective",
+      "text": [
+        "Apoapsis is past {alt}. A small retrograde burn at periapsis will bring it back.",
+        "We overshot {alt} at apoapsis. Trim it with a retrograde burn at periapsis."
+      ]
+    },
+    "obj.orbit.overshoot_low": {
+      "priority": "objective",
+      "category": "objective",
+      "text": ["Periapsis is under {alt}. A small prograde burn at apoapsis will lift it."]
     }
-  },
-  "categories": {
-    "alarm": {
-      "minGap": 0
-    },
-    "event": {
-      "minGap": 1.5
-    },
-    "helm": {
-      "minGap": 0
-    },
-    "status": {
-      "minGap": 1,
-      "lull": true
-    },
-    "quip": {
-      "minGap": 30,
-      "lull": true
-    }
-  },
-  "lull": {
-    "quietSeconds": 5,
-    "quipQuietSeconds": 10,
-    "contextualQuipChance": 0.5,
-    "orbitChangeMeters": 1000,
-    "orbitChangeFraction": 0.02,
-    "heatReportFraction": 0.3,
-    "heatReportStep": 0.15,
-    "targetRangeChange": 0.25,
-    "quipWarp": 10,
-    "quipHullFraction": 0.7,
-    "quipVictorySeconds": 60
   }
 }

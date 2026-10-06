@@ -1,11 +1,13 @@
 import type { SimEvent } from '../sim/bridge';
 import type { FlightSession } from '../sim/session';
+import type { ObjectiveView } from './objectives';
 import type { VesselSnapshot } from './triggers';
 
 /** Copies what the player's AI may see out of a session. Read-only by construction. */
 export function playerSnapshot(
   session: FlightSession,
   events: readonly SimEvent[],
+  objective: ObjectiveView | null = null,
 ): VesselSnapshot {
   const self = session.player();
   return {
@@ -16,5 +18,6 @@ export function playerSnapshot(
     entities: session.all(),
     events,
     warp: session.effectiveWarp(),
+    objective,
   };
 }

@@ -173,14 +173,21 @@
       "name": "Brass",
       "blurb": "Self-declared tactical genius who calls every fight like a play-by-play announcer. Loud, wrong about history, right about the fundamentals.",
       "speech": {
-        "rate": 1.35,
-        "pitch": 0.7,
+        "rate": 1.6,
+        "pitch": 0.8,
         "volume": 1,
-        "wordsPerMinute": 235
+        "wordsPerMinute": 280
       },
       "voice": {
         "lang": "en",
-        "hints": ["Google UK English Male", "Microsoft David", "Alex", "Fred", "Male"]
+        "hints": [
+          "Microsoft Christopher",
+          "Microsoft Andrew",
+          "Microsoft Eric",
+          "Microsoft David",
+          "Alex",
+          "Fred"
+        ]
       },
       "lines": {
         "status.online": [
@@ -334,10 +341,10 @@
       "name": "Rivet",
       "blurb": "A logic engine with a salvage habit and no patience for organics. Precise, lazy, greedy and secretly fond of you.",
       "speech": {
-        "rate": 1.45,
+        "rate": 1.23,
         "pitch": 0.9,
         "volume": 1,
-        "wordsPerMinute": 250
+        "wordsPerMinute": 213
       },
       "voice": {
         "lang": "en",

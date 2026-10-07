@@ -175,9 +175,9 @@
         {
           "id": "dock",
           "type": "rendezvous",
-          "label": "Hold within 6 km of the beacon under 2 m/s",
+          "label": "Hold within 300 m of the beacon under 2 m/s",
           "target": "beacon",
-          "range": 6000,
+          "range": 300,
           "maxRelSpeed": 2,
           "hold": 10
         }
@@ -274,10 +274,89 @@
             "highlight": [".hud-target", ".module.target"],
             "flash": ["[data-action=\"warp-up\"]"],
             "until": {
+              "helmBusy": false
+            },
+            "hint": "If I stop short, press RENDEZVOUS again."
+          },
+          {
+            "say": "I have us about a kilometer out, matched in speed. The last stretch is yours. Press TARGET to point the nose at the beacon, and give it a few seconds to swing around.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target\"]"],
+            "until": {
+              "mode": "target"
+            },
+            "hint": "Press TARGET, or tap 7.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Now push toward it. Tap THR plus once, a quick click, and watch CLOSING in the target panel climb. Press CUT when it reads about 5 meters per second.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "closing": {
+                    "above": 4
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, once CLOSING reads about 5.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Coasting in. Speed up time if you like, and watch RANGE. When it reads about 450 meters I will tell you to brake.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 450
+              }
+            },
+            "hint": "Keep time moving with the fast-forward button."
+          },
+          {
+            "say": "Brake now. Press TGT RETROGRADE to point against your speed relative to the beacon.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target-retrograde\"]"],
+            "until": {
+              "mode": "target-retrograde"
+            },
+            "hint": "Press TGT RETROGRADE, or tap 0.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Tap THR plus once, a quick click, and watch REL VEL fall. Press CUT when it reads about zero. You should end within 300 meters.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "relSpeed": {
+                    "below": 0.7
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, when REL VEL reads about zero.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Matched. Hold within 300 meters, under 2 meters per second, until the objective completes.",
+            "highlight": [".module.target", ".mission-hud"],
+            "until": {
               "objective": "dock",
               "status": "done"
             },
-            "hint": "If I stop short of the beacon, press RENDEZVOUS again."
+            "hint": "If you stopped outside 300 meters, point TARGET and push gently in, then brake again.",
+            "warpGuard": "stop"
           }
         ]
       }
@@ -346,9 +425,9 @@
         {
           "id": "front",
           "type": "rendezvous",
-          "label": "Match the lead beacon: within 6 km, under 2 m/s",
+          "label": "Match the lead beacon: within 300 m, under 2 m/s",
           "target": "lead",
-          "range": 6000,
+          "range": 300,
           "maxRelSpeed": 2,
           "hold": 8
         },
@@ -357,7 +436,7 @@
           "type": "rendezvous",
           "label": "Then match the tail beacon",
           "target": "tail",
-          "range": 6000,
+          "range": 300,
           "maxRelSpeed": 2,
           "hold": 8,
           "after": "front"
@@ -426,10 +505,89 @@
             "highlight": [".hud-target", ".module.target"],
             "flash": ["[data-action=\"warp-up\"]"],
             "until": {
+              "helmBusy": false
+            },
+            "hint": "If I stop short, press RENDEZVOUS again."
+          },
+          {
+            "say": "I have us about a kilometer out, matched in speed. The last stretch is yours. Press TARGET to point the nose at the beacon, and give it a few seconds to swing around.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target\"]"],
+            "until": {
+              "mode": "target"
+            },
+            "hint": "Press TARGET, or tap 7.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Now push toward it. Tap THR plus once, a quick click, and watch CLOSING in the target panel climb. Press CUT when it reads about 5 meters per second.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "closing": {
+                    "above": 4
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, once CLOSING reads about 5.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Coasting in. Speed up time if you like, and watch RANGE. When it reads about 450 meters I will tell you to brake.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 450
+              }
+            },
+            "hint": "Keep time moving with the fast-forward button."
+          },
+          {
+            "say": "Brake now. Press TGT RETROGRADE to point against your speed relative to the beacon.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target-retrograde\"]"],
+            "until": {
+              "mode": "target-retrograde"
+            },
+            "hint": "Press TGT RETROGRADE, or tap 0.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Tap THR plus once, a quick click, and watch REL VEL fall. Press CUT when it reads about zero. You should end within 300 meters.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "relSpeed": {
+                    "below": 0.7
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, when REL VEL reads about zero.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Matched. Hold within 300 meters, under 2 meters per second, until the objective completes.",
+            "highlight": [".module.target", ".mission-hud"],
+            "until": {
               "objective": "front",
               "status": "done"
             },
-            "hint": "Press the fast-forward button, or tap the period key, to speed up time."
+            "hint": "If you stopped outside 300 meters, point TARGET and push gently in, then brake again.",
+            "warpGuard": "stop"
           },
           {
             "say": "Matched. The tail beacon is behind us, so now we do the opposite: climb higher, where you move slower, and let it catch up. Lock it with NEXT TARGET.",
@@ -473,10 +631,89 @@
             "highlight": [".hud-target", ".module.target"],
             "flash": ["[data-action=\"warp-up\"]"],
             "until": {
+              "helmBusy": false
+            },
+            "hint": "If I stop short, press RENDEZVOUS again."
+          },
+          {
+            "say": "I have us about a kilometer out, matched in speed. The last stretch is yours. Press TARGET to point the nose at the beacon, and give it a few seconds to swing around.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target\"]"],
+            "until": {
+              "mode": "target"
+            },
+            "hint": "Press TARGET, or tap 7.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Now push toward it. Tap THR plus once, a quick click, and watch CLOSING in the target panel climb. Press CUT when it reads about 5 meters per second.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "closing": {
+                    "above": 4
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, once CLOSING reads about 5.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Coasting in. Speed up time if you like, and watch RANGE. When it reads about 450 meters I will tell you to brake.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 450
+              }
+            },
+            "hint": "Keep time moving with the fast-forward button."
+          },
+          {
+            "say": "Brake now. Press TGT RETROGRADE to point against your speed relative to the beacon.",
+            "highlight": [".module.attitude", ".module.target"],
+            "flash": ["[data-action=\"target-retrograde\"]"],
+            "until": {
+              "mode": "target-retrograde"
+            },
+            "hint": "Press TGT RETROGRADE, or tap 0.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Tap THR plus once, a quick click, and watch REL VEL fall. Press CUT when it reads about zero. You should end within 300 meters.",
+            "highlight": [".module.engine", ".module.target"],
+            "flash": ["[data-action=\"throttle-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "relSpeed": {
+                    "below": 0.7
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Click THR plus once. Press CUT, or tap X, when REL VEL reads about zero.",
+            "warpGuard": "stop"
+          },
+          {
+            "say": "Matched. Hold within 300 meters, under 2 meters per second, until the objective completes.",
+            "highlight": [".module.target", ".mission-hud"],
+            "until": {
               "objective": "back",
               "status": "done"
             },
-            "hint": "If I stop short of the beacon, press RENDEZVOUS again."
+            "hint": "If you stopped outside 300 meters, point TARGET and push gently in, then brake again.",
+            "warpGuard": "stop"
           }
         ]
       }

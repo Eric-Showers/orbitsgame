@@ -131,11 +131,21 @@ describe('conditions', () => {
     expect(holds({ ap: { max: 91000 } }, world({ ap: null }), clock())).toBe(false);
     expect(holds({ throttle: 'off' }, world({ throttle: 0 }), clock())).toBe(true);
     expect(holds({ throttle: 'on' }, world({ throttle: 0.5 }), clock())).toBe(true);
-    const t = { tag: 'lead', range: 20000, closing: 10 };
+    const t = { tag: 'lead', range: 20000, closing: 10, relSpeed: 10 };
     expect(holds({ target: true }, world({ target: t }), clock())).toBe(true);
     expect(holds({ target: 'tail' }, world({ target: t }), clock())).toBe(false);
     expect(holds({ range: { below: 25000 } }, world({ target: t }), clock())).toBe(true);
     expect(holds({ range: { below: 25000 } }, world(), clock())).toBe(false);
+    expect(holds({ closing: { above: 4 } }, world({ target: { ...t, closing: 5 } }), clock())).toBe(
+      true,
+    );
+    expect(holds({ closing: { above: 4 } }, world({ target: { ...t, closing: 1 } }), clock())).toBe(
+      false,
+    );
+    expect(
+      holds({ relSpeed: { below: 0.7 } }, world({ target: { ...t, relSpeed: 0.2 } }), clock()),
+    ).toBe(true);
+    expect(holds({ relSpeed: { below: 0.7 } }, world(), clock())).toBe(false);
     const objectives = new Map([
       ['a', 'done' as const],
       ['b', 'active' as const],
@@ -157,9 +167,10 @@ describe('conditions', () => {
       WARP_LEVELS.length - 1,
     );
     expect(warpLimit({ say: '' }, near)).toBeNull();
-    const closing = world({ target: { tag: null, range: 30000, closing: 3000 } });
+    expect(warpLimit({ say: '', warpGuard: 'stop' }, world())).toBe(0);
+    const closing = world({ target: { tag: null, range: 30000, closing: 3000, relSpeed: 3000 } });
     expect(WARP_LEVELS[warpLimit({ say: '', warpGuard: 'target' }, closing)!]).toBe(2);
-    const receding = world({ target: { tag: null, range: 30000, closing: -50 } });
+    const receding = world({ target: { tag: null, range: 30000, closing: -50, relSpeed: 50 } });
     expect(warpLimit({ say: '', warpGuard: 'target' }, receding)).toBeNull();
   });
 
@@ -266,6 +277,9 @@ function playThrough(def: MissionDef): { run: MissionRun; finished: boolean; spo
     runner.press(id, true);
   };
   const pressedOnStep = new Set<string>();
+  const pushed = new Set<number>();
+  let stepIndex = -1;
+  let stepSince = 0;
   const dt = 0.1;
   let started = false;
   for (let t = 0; t < 4 * 3600 && run.outcome === 'running'; t += dt) {
@@ -276,6 +290,10 @@ function playThrough(def: MissionDef): { run: MissionRun; finished: boolean; spo
     } else {
       runner.update(w, dt);
     }
+    if (runner.index !== stepIndex) {
+      stepIndex = runner.index;
+      stepSince = session.time;
+    }
     const step = runner.step;
     if (step) {
       runner.guard(session, w, run.ids);
@@ -284,6 +302,28 @@ function playThrough(def: MissionDef): { run: MissionRun; finished: boolean; spo
       const intent = /data-intent="([^"]+)"/.exec(flash)?.[1];
       if (action === 'warp-up') {
         if (session.warpIndex < 5) press(action);
+      } else if (
+        action === 'throttle-up' ||
+        (action === 'throttle-full' && w.mode === 'target-retrograde')
+      ) {
+        // Manual final approach: nose swings round, a push at the speed ARGUS names, brake at 300 m.
+        const closing = w.target?.closing ?? 0;
+        const braking = w.mode === 'target-retrograde';
+        if (session.time - stepSince > 40) {
+          if (
+            w.throttle === 0 &&
+            (braking ? (w.target?.relSpeed ?? 0) > 0.7 : closing < 4) &&
+            !pushed.has(runner.index)
+          ) {
+            pushed.add(runner.index);
+            session.setThrottle(0.05);
+          } else if (
+            w.throttle > 0 &&
+            (braking ? (w.target?.relSpeed ?? 0) <= 0.5 : closing >= 5)
+          ) {
+            press('throttle-cut');
+          }
+        }
       } else if (action === 'target-next') {
         if (!(step.until && holds(step.until, w, { elapsed: 0, actions: none }))) press(action);
       } else if (action) {

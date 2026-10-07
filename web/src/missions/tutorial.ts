@@ -31,7 +31,7 @@ export interface TutorialWorld {
   apEta: number | null;
   peEta: number | null;
   /** The locked target, if alive. */
-  target: { tag: string | null; range: number; closing: number } | null;
+  target: { tag: string | null; range: number; closing: number; relSpeed: number } | null;
   warpIndex: number;
   assist: boolean;
   proposal: boolean;
@@ -60,7 +60,7 @@ export function readWorld(
     const relV = sub(t.vel, me.vel);
     let tag: string | null = null;
     for (const [k, id] of run?.ids ?? []) if (id === t.id) tag = k;
-    target = { tag, range, closing: range > 0 ? -dot(rel, relV) / range : 0 };
+    target = { tag, range, closing: range > 0 ? -dot(rel, relV) / range : 0, relSpeed: len(relV) };
   }
   return {
     mode: MODE_ACTION.get(me.mode) ?? null,
@@ -118,6 +118,22 @@ export function holds(cond: TutorialCond, w: TutorialWorld, c: Clock): boolean {
       (above === undefined || w.target.range >= above)
     );
   }
+  if ('closing' in cond) {
+    if (w.target === null) return false;
+    const { above, below } = cond.closing;
+    return (
+      (above === undefined || w.target.closing >= above) &&
+      (below === undefined || w.target.closing <= below)
+    );
+  }
+  if ('relSpeed' in cond) {
+    if (w.target === null) return false;
+    const { above, below } = cond.relSpeed;
+    return (
+      (above === undefined || w.target.relSpeed >= above) &&
+      (below === undefined || w.target.relSpeed <= below)
+    );
+  }
   if ('warp' in cond) return w.warpIndex > 0;
   if ('assist' in cond) return w.assist === cond.assist;
   if ('proposal' in cond) return w.proposal;
@@ -138,6 +154,7 @@ export function readingTime(text: string): number {
 /** The warp index the flight must not exceed so a step's event is not skipped, or null for no limit. */
 export function warpLimit(step: TutorialStep | null, w: TutorialWorld): number | null {
   if (!step?.warpGuard) return null;
+  if (step.warpGuard === 'stop') return 0;
   let eta: number | null;
   if (step.warpGuard === 'apoapsis') eta = w.apEta;
   else if (step.warpGuard === 'periapsis') eta = w.peEta;

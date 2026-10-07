@@ -165,6 +165,10 @@ export type TutorialCond =
   | { target: true | string }
   /** Range to the locked target, in metres. */
   | { range: { below?: number; above?: number } }
+  /** Closing speed on the locked target (m/s, positive = closing). */
+  | { closing: { above?: number; below?: number } }
+  /** Speed relative to the locked target (m/s). */
+  | { relSpeed: { above?: number; below?: number } }
   | { warp: true }
   | { assist: boolean }
   /** The ARGUS plan card is showing. */
@@ -180,7 +184,8 @@ export type TutorialCond =
   | { any: TutorialCond[] };
 
 /** Keeps the flight from skipping past something the step is waiting for. */
-export type WarpGuard = 'apoapsis' | 'periapsis' | 'target';
+/** `stop` drops the flight to normal speed for steps flown by hand. */
+export type WarpGuard = 'apoapsis' | 'periapsis' | 'target' | 'stop';
 
 export interface TutorialStep {
   /** What ARGUS says, and the caption on screen. Plain language, one or two sentences. */

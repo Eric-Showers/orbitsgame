@@ -6,10 +6,7 @@
       "id": "first-burn",
       "title": "Raising Station",
       "summary": "Raise your orbit to 120 km.",
-      "briefing": [
-        "Fleet Command wants you on a higher station before the exercise begins. Raise your orbit from 80 km to a circular 120 km.",
-        "Burn PROGRADE to lift the far side of the orbit. Coast half an orbit to the new apoapsis, then burn PROGRADE again to bring the periapsis up to match."
-      ],
+      "briefing": [],
       "player": {
         "class": "corvette",
         "orbit": {
@@ -57,16 +54,101 @@
           },
           "text": "On station. Remember: every burn takes effect half an orbit away."
         }
-      ]
+      ],
+      "tutorial": {
+        "steps": [
+          {
+            "say": "I am your ship AI. I will walk you through your first orbit change. Your orbit is the ring around the planet, and you are the dot on it.",
+            "highlight": [".comms"]
+          },
+          {
+            "say": "Your goal is up here: a circular orbit at 120 kilometers. You are at 80.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "These are the high and low points of your orbit. AP is the highest, PE the lowest. Both read 80, so you are on a perfect circle.",
+            "highlight": [".hud-own"]
+          },
+          {
+            "say": "Here is the one rule of orbits: a burn changes the opposite side of your orbit. Speed up here, and the point half an orbit away rises."
+          },
+          {
+            "say": "Step one: point the ship along its path. Press PROGRADE.",
+            "highlight": [".module.attitude"],
+            "flash": ["[data-action=\"prograde\"]"],
+            "until": {
+              "action": "prograde"
+            },
+            "hint": "Press PROGRADE, or tap 1 on the keyboard."
+          },
+          {
+            "say": "Now fire the engine. Press FULL. I will cut it for you when your high point reaches 120.",
+            "highlight": [".module.engine", ".hud-own"],
+            "flash": ["[data-action=\"throttle-full\"]"],
+            "cutAt": {
+              "ap": 120000
+            },
+            "until": {
+              "all": [
+                {
+                  "ap": {
+                    "min": 119000
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Press FULL, or tap Z. Watch AP climb."
+          },
+          {
+            "say": "Your high point is now 120, but your low point has not moved. Now we coast to the high point. Press the fast-forward button to speed up time. I will slow it down as we arrive.",
+            "highlight": [".module.time", ".hud-own"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "apoapsis",
+            "until": {
+              "apEtaBelow": 4
+            },
+            "hint": "Press the fast-forward button, or tap the period key, to speed up time."
+          },
+          {
+            "say": "We are at the high point. Burn prograde again: press FULL. I will cut it when your low point reaches 120.",
+            "highlight": [".module.engine", ".hud-own"],
+            "flash": ["[data-action=\"throttle-full\"]"],
+            "cutAt": {
+              "pe": 120000
+            },
+            "until": {
+              "all": [
+                {
+                  "pe": {
+                    "min": 119000
+                  }
+                },
+                {
+                  "throttle": "off"
+                }
+              ]
+            },
+            "hint": "Make sure PROGRADE is selected, then press FULL."
+          },
+          {
+            "say": "That is a circle at 120. Hold it for ten seconds. Remember: a burn changes the opposite side, so raising an orbit takes two. Next time you can hand it to me on the ARGUS HELM.",
+            "highlight": [".module.pilot"],
+            "until": {
+              "objective": "circularize",
+              "status": "done"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "beacon-rendezvous",
       "title": "Rendezvous at Station",
       "summary": "Close on the nav beacon 25 km ahead and match its speed.",
-      "briefing": [
-        "A navigation beacon holds your orbit 25 km ahead. Close to within 300 m and hold relative speed under 2 m/s for 10 seconds.",
-        "Speeding up raises your orbit and slows you down. To catch a contact ahead, drop slightly lower, let it come to you, then burn TGT RETROGRADE to match speed."
-      ],
+      "briefing": [],
       "player": {
         "class": "corvette",
         "orbit": {
@@ -93,9 +175,9 @@
         {
           "id": "dock",
           "type": "rendezvous",
-          "label": "Hold within 300 m of the beacon under 2 m/s",
+          "label": "Hold within 6 km of the beacon under 2 m/s",
           "target": "beacon",
-          "range": 300,
+          "range": 6000,
           "maxRelSpeed": 2,
           "hold": 10
         }
@@ -125,16 +207,86 @@
           },
           "text": "Still closing? Watch the range readout. Inside a few kilometres, start matching speed with target retrograde."
         }
-      ]
+      ],
+      "tutorial": {
+        "steps": [
+          {
+            "say": "A navigation beacon sits 25 kilometers ahead of you in the same orbit. Pull alongside it and match its speed.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "Lock it as your target. Press NEXT TARGET.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "until": {
+              "target": true
+            },
+            "hint": "Press NEXT TARGET, or tap T, to lock the nearest ship."
+          },
+          {
+            "say": "Range and relative speed to the beacon show here and at the top. Close the range and the relative speed together.",
+            "highlight": [".hud-target", ".module.target"]
+          },
+          {
+            "say": "Here is the catch. Pushing toward it only raises your orbit and slows you down. To catch something ahead, you drop lower, where you move faster. I can fly that for you."
+          },
+          {
+            "say": "First, make sure AI ASSIST is on. It lets me fly maneuvers for you.",
+            "highlight": [".module.pilot"],
+            "flash": [".pilot-toggle"],
+            "skipIf": {
+              "assist": true
+            },
+            "until": {
+              "assist": true
+            }
+          },
+          {
+            "say": "Press RENDEZVOUS to ask me for the approach.",
+            "highlight": [".module.pilot"],
+            "flash": ["[data-intent=\"rendezvous\"]"],
+            "until": {
+              "any": [
+                {
+                  "proposal": true
+                },
+                {
+                  "helmBusy": true
+                }
+              ]
+            },
+            "hint": "Press RENDEZVOUS on the helm. If I say we are already at that altitude, wait a few seconds and press it again."
+          },
+          {
+            "say": "That is my plan: the burns and when they happen. If it looks right, press CONFIRM and I will fly it.",
+            "highlight": [".pilot-card"],
+            "flash": [".pilot-card .pilot-go"],
+            "skipIf": {
+              "helmBusy": true
+            },
+            "until": {
+              "helmBusy": true
+            },
+            "hint": "Press CONFIRM, or tap Enter, to let me fly the plan."
+          },
+          {
+            "say": "Flying. I will drop us lower, let the beacon come to us, then match speed. Speed up time if you like, and watch RANGE shrink.",
+            "highlight": [".hud-target", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "until": {
+              "objective": "dock",
+              "status": "done"
+            },
+            "hint": "If I stop short of the beacon, press RENDEZVOUS again."
+          }
+        ]
+      }
     },
     {
       "id": "round-trip",
       "title": "Two-Beacon Patrol",
       "summary": "Rendezvous with two beacons, one ahead and one astern.",
-      "briefing": [
-        "Two navigation beacons share your orbit: one 25 km ahead, one 30 km astern. Rendezvous with the lead beacon first, then the tail beacon.",
-        "You have learned to overhaul a contact ahead by dropping lower. A contact astern is the mirror image: climb higher, slow down, and let it come to you. The skill is knowing which way to push, and when to stop."
-      ],
+      "briefing": [],
       "lesson": {
         "concept": "Phasing: pick your orbit to set the gap",
         "points": [
@@ -194,9 +346,9 @@
         {
           "id": "front",
           "type": "rendezvous",
-          "label": "Match the lead beacon: within 300 m, under 2 m/s",
+          "label": "Match the lead beacon: within 6 km, under 2 m/s",
           "target": "lead",
-          "range": 300,
+          "range": 6000,
           "maxRelSpeed": 2,
           "hold": 8
         },
@@ -205,7 +357,7 @@
           "type": "rendezvous",
           "label": "Then match the tail beacon",
           "target": "tail",
-          "range": 300,
+          "range": 6000,
           "maxRelSpeed": 2,
           "hold": 8,
           "after": "front"
@@ -214,16 +366,126 @@
       "score": {
         "parTime": 5000,
         "heatCeiling": 0.35
+      },
+      "tutorial": {
+        "steps": [
+          {
+            "say": "Two beacons share your orbit, one ahead and one astern. Meet the lead beacon first, then the tail beacon.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "Lock the lead beacon. Press NEXT TARGET until the readout shows about 25 kilometers.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "until": {
+              "target": "lead"
+            },
+            "hint": "Keep pressing NEXT TARGET, or T, until the lead beacon is selected."
+          },
+          {
+            "say": "First, make sure AI ASSIST is on. It lets me fly maneuvers for you.",
+            "highlight": [".module.pilot"],
+            "flash": [".pilot-toggle"],
+            "skipIf": {
+              "assist": true
+            },
+            "until": {
+              "assist": true
+            }
+          },
+          {
+            "say": "Press RENDEZVOUS. Same as before: I drop lower to catch it.",
+            "highlight": [".module.pilot"],
+            "flash": ["[data-intent=\"rendezvous\"]"],
+            "until": {
+              "any": [
+                {
+                  "proposal": true
+                },
+                {
+                  "helmBusy": true
+                }
+              ]
+            },
+            "hint": "Press RENDEZVOUS on the helm. If I say we are already at that altitude, wait a few seconds and press it again."
+          },
+          {
+            "say": "That is my plan: the burns and when they happen. If it looks right, press CONFIRM and I will fly it.",
+            "highlight": [".pilot-card"],
+            "flash": [".pilot-card .pilot-go"],
+            "skipIf": {
+              "helmBusy": true
+            },
+            "until": {
+              "helmBusy": true
+            },
+            "hint": "Press CONFIRM, or tap Enter, to let me fly the plan."
+          },
+          {
+            "say": "Flying. Drop lower to move forward. Speed up time if you like.",
+            "highlight": [".hud-target", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "until": {
+              "objective": "front",
+              "status": "done"
+            },
+            "hint": "Press the fast-forward button, or tap the period key, to speed up time."
+          },
+          {
+            "say": "Matched. The tail beacon is behind us, so now we do the opposite: climb higher, where you move slower, and let it catch up. Lock it with NEXT TARGET.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "until": {
+              "target": "tail"
+            },
+            "hint": "Keep pressing NEXT TARGET, or T, until the tail beacon is selected."
+          },
+          {
+            "say": "Press RENDEZVOUS again. This time I will climb.",
+            "highlight": [".module.pilot"],
+            "flash": ["[data-intent=\"rendezvous\"]"],
+            "until": {
+              "any": [
+                {
+                  "proposal": true
+                },
+                {
+                  "helmBusy": true
+                }
+              ]
+            },
+            "hint": "Press RENDEZVOUS on the helm. If I say we are already at that altitude, wait a few seconds and press it again."
+          },
+          {
+            "say": "That is my plan: the burns and when they happen. If it looks right, press CONFIRM and I will fly it.",
+            "highlight": [".pilot-card"],
+            "flash": [".pilot-card .pilot-go"],
+            "skipIf": {
+              "helmBusy": true
+            },
+            "until": {
+              "helmBusy": true
+            },
+            "hint": "Press CONFIRM, or tap Enter, to let me fly the plan."
+          },
+          {
+            "say": "Flying. Higher is slower, so the tail beacon overtakes us. Speed up time if you like.",
+            "highlight": [".hud-target", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "until": {
+              "objective": "back",
+              "status": "done"
+            },
+            "hint": "If I stop short of the beacon, press RENDEZVOUS again."
+          }
+        ]
       }
     },
     {
       "id": "live-fire",
       "title": "Live Fire",
       "summary": "Weapons qualification: two target drones, missiles only.",
-      "briefing": [
-        "Weapons are free. A target drone sits 15 km ahead in your orbit. Designate it with T and fire a missile with F.",
-        "A second drone will appear lower and astern once the first is down. Missiles hold a 400 m/s closing speed until their 800 m/s of delta-v is spent, so long shots are viable. You carry three."
-      ],
+      "briefing": [],
       "player": {
         "class": "corvette",
         "orbit": {
@@ -295,16 +557,82 @@
           },
           "text": "Weapons free. Designate the drone with T, then fire with F. It holds our orbit, so the missile will spend very little fuel closing."
         }
-      ]
+      ],
+      "tutorial": {
+        "steps": [
+          {
+            "say": "Weapons are free. A target drone floats 15 kilometers ahead. Shoot it down with a missile.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "First, lock it. Press NEXT TARGET.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "until": {
+              "target": true
+            },
+            "hint": "Press NEXT TARGET, or tap T, to lock the nearest ship."
+          },
+          {
+            "say": "Missiles carry their own fuel, so slow, matched shots are the easy ones. This drone shares your orbit, so this one is easy.",
+            "highlight": [".hud-target", ".module.target"]
+          },
+          {
+            "say": "Fire. Press MISSILE.",
+            "highlight": [".hud-resources"],
+            "flash": ["[data-action=\"fire-missile\"]"],
+            "until": {
+              "action": "fire-missile"
+            },
+            "hint": "You need a target locked first. Press T, then MISSILE."
+          },
+          {
+            "say": "Missile away. Watch it track across the display until it hits.",
+            "highlight": [".hud-munitions", ".hud-resources"],
+            "until": {
+              "objective": "first",
+              "status": "done"
+            },
+            "hint": "If it missed, lock the drone and fire again. You have three missiles."
+          },
+          {
+            "say": "Drone B is up, lower and astern. Lock it with NEXT TARGET.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "skipIf": {
+              "target": "drone2"
+            },
+            "until": {
+              "target": "drone2"
+            },
+            "hint": "Press NEXT TARGET, or T, until Drone B is selected."
+          },
+          {
+            "say": "Same again. Press MISSILE.",
+            "highlight": [".hud-resources"],
+            "flash": ["[data-action=\"fire-missile\"]"],
+            "until": {
+              "action": "fire-missile"
+            },
+            "hint": "You need a target locked first. Press T, then MISSILE."
+          },
+          {
+            "say": "Watch it fly in.",
+            "highlight": [".hud-munitions"],
+            "until": {
+              "objective": "second",
+              "status": "done"
+            },
+            "hint": "If it missed, lock the drone and fire again."
+          }
+        ]
+      }
     },
     {
       "id": "crossing-traffic",
       "title": "Crossing Traffic",
       "summary": "Two drones on elliptical orbits will cross your lane. Stand by.",
-      "briefing": [
-        "Two unarmed target drones are on elliptical orbits that cross your lane. They do not drift into range. They sweep through it, then swing away. Each pass lasts only minutes.",
-        "Use time warp to wait, but keep the range readout in view. When a drone closes inside about 30 km, designate it with T and fire. You have one missile per drone."
-      ],
+      "briefing": [],
       "lesson": {
         "concept": "Timing: wait for the geometry",
         "points": [
@@ -382,16 +710,88 @@
       "score": {
         "parTime": 2700,
         "heatCeiling": 0.3
+      },
+      "tutorial": {
+        "steps": [
+          {
+            "say": "Two drones are on oval orbits that cut across yours. They do not come to you right away. They sweep through your lane, then swing away.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "So we wait for them. I have locked Drone A for you, the one on the closer pass. Its range and speed show here.",
+            "highlight": [".module.target", ".hud-target"],
+            "lock": "cross1"
+          },
+          {
+            "say": "Now speed up time. Press the fast-forward button. I will slow it down before the drone gets close.",
+            "highlight": [".module.time", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 30000
+              }
+            },
+            "hint": "Still waiting. Keep time moving with the fast-forward button."
+          },
+          {
+            "say": "It is in range. Press MISSILE.",
+            "highlight": [".hud-resources"],
+            "flash": ["[data-action=\"fire-missile\"]"],
+            "until": {
+              "action": "fire-missile"
+            },
+            "hint": "You need a target locked first. Press T, then MISSILE."
+          },
+          {
+            "say": "Watch it fly in.",
+            "highlight": [".hud-munitions"],
+            "until": {
+              "done": 1
+            },
+            "hint": "If it missed, lock it again and fire your second missile."
+          },
+          {
+            "say": "One down. I have locked the other drone for you.",
+            "highlight": [".module.target", ".hud-target"],
+            "lock": "cross2"
+          },
+          {
+            "say": "Speed up time again until it closes in.",
+            "highlight": [".module.time", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 30000
+              }
+            },
+            "hint": "Keep time moving with the fast-forward button."
+          },
+          {
+            "say": "Fire. Press MISSILE.",
+            "highlight": [".hud-resources"],
+            "flash": ["[data-action=\"fire-missile\"]"],
+            "until": {
+              "action": "fire-missile"
+            },
+            "hint": "You need a target locked first. Press T, then MISSILE."
+          },
+          {
+            "say": "Watch it fly in.",
+            "highlight": [".hud-munitions"],
+            "until": {
+              "done": 2
+            }
+          }
+        ]
       }
     },
     {
       "id": "long-reach",
       "title": "Long Reach",
       "summary": "Target is beyond missile range. Close the distance first.",
-      "briefing": [
-        "A target drone sits 130 km ahead in your orbit. A missile fired from here will run dry before it arrives, and you carry only two.",
-        "Close the distance first, then fire. Dropping to a lower orbit shortens the gap. The pilot's INTERCEPT order will fly it and stop at missile range."
-      ],
+      "briefing": [],
       "lesson": {
         "concept": "Weapon geometry: every shot has a reach",
         "points": [
@@ -442,16 +842,103 @@
       "score": {
         "parTime": 2200,
         "heatCeiling": 0.3
+      },
+      "tutorial": {
+        "steps": [
+          {
+            "say": "A drone sits 130 kilometers ahead. That is beyond a missile's reach. A shot from here would run out of fuel.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "Lock it. Press NEXT TARGET.",
+            "highlight": [".module.target"],
+            "flash": ["[data-action=\"target-next\"]"],
+            "until": {
+              "target": true
+            },
+            "hint": "Press NEXT TARGET, or tap T, to lock the nearest ship."
+          },
+          {
+            "say": "Check the range here. A missile reaches roughly 85 kilometers on a shared orbit, so we must close the distance first.",
+            "highlight": [".hud-target", ".module.target"]
+          },
+          {
+            "say": "First, make sure AI ASSIST is on. It lets me fly maneuvers for you.",
+            "highlight": [".module.pilot"],
+            "flash": [".pilot-toggle"],
+            "skipIf": {
+              "assist": true
+            },
+            "until": {
+              "assist": true
+            }
+          },
+          {
+            "say": "Press INTERCEPT. I will fly us in and stop at missile range.",
+            "highlight": [".module.pilot"],
+            "flash": ["[data-intent=\"intercept\"]"],
+            "until": {
+              "any": [
+                {
+                  "proposal": true
+                },
+                {
+                  "helmBusy": true
+                }
+              ]
+            },
+            "hint": "Press INTERCEPT on the helm."
+          },
+          {
+            "say": "That is my plan: the burns and when they happen. If it looks right, press CONFIRM and I will fly it.",
+            "highlight": [".pilot-card"],
+            "flash": [".pilot-card .pilot-go"],
+            "skipIf": {
+              "helmBusy": true
+            },
+            "until": {
+              "helmBusy": true
+            },
+            "hint": "Press CONFIRM, or tap Enter, to let me fly the plan."
+          },
+          {
+            "say": "Closing in. Speed up time if you like.",
+            "highlight": [".hud-target", ".module.target"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "warpGuard": "target",
+            "until": {
+              "range": {
+                "below": 70000
+              }
+            },
+            "hint": "If I stopped early, press INTERCEPT again."
+          },
+          {
+            "say": "In range. Press MISSILE.",
+            "highlight": [".hud-resources"],
+            "flash": ["[data-action=\"fire-missile\"]"],
+            "until": {
+              "action": "fire-missile"
+            },
+            "hint": "You need a target locked first. Press T, then MISSILE."
+          },
+          {
+            "say": "Watch it fly in.",
+            "highlight": [".hud-munitions"],
+            "until": {
+              "objective": "kill",
+              "status": "done"
+            },
+            "hint": "If it missed, close in further and fire again."
+          }
+        ]
       }
     },
     {
       "id": "mine-corridor",
       "title": "Operation Minefield",
       "summary": "Seed the 88-91 km lane, then let the convoy find it.",
-      "briefing": [
-        "A two-drone convoy, 1.5 km apart, will transit the 86.5 km lane. Climb into the 88-91 km corridor above it and lay three mines. A mine only counts if its whole orbit stays inside the corridor, so circularize before you drop.",
-        "Mines lie dormant until an enemy passes within 5 km, then pursue. A mine that closes to 2.2 km releases a kinetic vehicle, and that vehicle does the killing. Lower orbits are faster, so the convoy will overtake your field from astern and below."
-      ],
+      "briefing": [],
       "player": {
         "class": "corvette",
         "orbit": {
@@ -527,7 +1014,103 @@
           },
           "text": "Minefield laid. Now we wait. Use time warp, but keep clear of our own mines."
         }
-      ]
+      ],
+      "tutorial": {
+        "steps": [
+          {
+            "say": "A convoy will soon pass below you. Mines can stop it, but only if they sit in its lane. You will lay three in the 88 to 91 kilometer band.",
+            "highlight": [".mission-hud"]
+          },
+          {
+            "say": "A mine drifts on its own orbit. A circle stays inside the band. An oval wanders out of it. So first, make your own orbit a circle inside the band."
+          },
+          {
+            "say": "First, make sure AI ASSIST is on. It lets me fly maneuvers for you.",
+            "highlight": [".module.pilot"],
+            "flash": [".pilot-toggle"],
+            "skipIf": {
+              "assist": true
+            },
+            "until": {
+              "assist": true
+            }
+          },
+          {
+            "say": "I have entered 89.5 kilometers for you. Press GO TO ALTITUDE.",
+            "highlight": [".module.pilot"],
+            "flash": ["[data-intent=\"set-altitude\"]"],
+            "until": {
+              "any": [
+                {
+                  "proposal": true
+                },
+                {
+                  "helmBusy": true
+                }
+              ]
+            },
+            "hint": "Press GO TO ALTITUDE on the helm.",
+            "prefill": {
+              "altitudeKm": 89.5
+            }
+          },
+          {
+            "say": "That is my plan: the burns and when they happen. If it looks right, press CONFIRM and I will fly it.",
+            "highlight": [".pilot-card"],
+            "flash": [".pilot-card .pilot-go"],
+            "skipIf": {
+              "helmBusy": true
+            },
+            "until": {
+              "helmBusy": true
+            },
+            "hint": "Press CONFIRM, or tap Enter, to let me fly the plan."
+          },
+          {
+            "say": "Two burns to get there. Speed up time while I fly.",
+            "highlight": [".module.time", ".hud-own"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "until": {
+              "all": [
+                {
+                  "helmBusy": false
+                },
+                {
+                  "pe": {
+                    "min": 88000
+                  }
+                },
+                {
+                  "ap": {
+                    "max": 91000
+                  }
+                }
+              ]
+            },
+            "hint": "If I stopped early, press GO TO ALTITUDE again."
+          },
+          {
+            "say": "You are in the lane. Drop three mines. Press MINE, three times, a few seconds apart.",
+            "highlight": [".hud-resources", ".hud-own"],
+            "flash": ["[data-action=\"drop-mine\"]"],
+            "until": {
+              "objective": "lay",
+              "status": "done"
+            },
+            "hint": "Press MINE, or tap M, until the objective shows three."
+          },
+          {
+            "say": "Mines laid. They sleep until an enemy passes within 5 kilometers. Now speed up time and wait. Keep well clear of your own mines.",
+            "highlight": [".module.time"],
+            "flash": ["[data-action=\"warp-up\"]"],
+            "until": {
+              "objective": "ambush",
+              "status": "done"
+            },
+            "hint": "Press the fast-forward button, or tap the period key, to speed up time."
+          }
+        ]
+      }
     },
     {
       "id": "minelayer",

@@ -45,10 +45,13 @@ export class MissionScreens {
     const card = this.card('OPERATIONS BOARD');
     const list = el('ol', 'mission-list');
     this.missions.forEach((m, i) => {
+      if (i === 0 || isTutorial(m) !== isTutorial(this.missions[i - 1])) {
+        list.appendChild(text('li', 'mission-group', isTutorial(m) ? 'TUTORIALS' : 'MISSIONS'));
+      }
       const locked = !this.progress.unlocked(this.missions, i);
       const item = el('li', `mission-item${locked ? ' locked' : ''}`);
       item.append(
-        text('span', 'mission-num', String(i + 1).padStart(2, '0')),
+        text('span', 'mission-num', this.numberOf(i)),
         text('span', 'mission-name', m.title),
         text('span', 'mission-sum', locked ? 'LOCKED · win the previous mission' : m.summary),
         text('span', 'mission-stars', starString(this.progress.stars(m.id))),
@@ -79,7 +82,7 @@ export class MissionScreens {
   showBriefing(index: number): void {
     const m = this.missions[index];
     this.screen = { kind: 'briefing', index };
-    const card = this.card(`MISSION ${String(index + 1).padStart(2, '0')} · ${m.title}`);
+    const card = this.card(`MISSION ${this.numberOf(index)} · ${m.title}`);
     for (const p of m.briefing) card.appendChild(text('p', 'mission-brief', p));
 
     if (m.lesson) {
@@ -145,8 +148,7 @@ export class MissionScreens {
       btn('BOARD', 'ESC', () => this.showBoard()),
       btn('RETRY', 'R', () => this.launch(index)),
     );
-    if (this.hasNext(index))
-      row.appendChild(btn('NEXT', 'ENTER', () => this.showBriefing(index + 1)));
+    if (this.hasNext(index)) row.appendChild(btn('NEXT', 'ENTER', () => this.enter(index + 1)));
     card.appendChild(row);
   }
 
@@ -174,8 +176,22 @@ export class MissionScreens {
       this.close();
       this.actions.freeFlight();
     } else if (this.progress.unlocked(this.missions, this.selected)) {
-      this.showBriefing(this.selected);
+      this.enter(this.selected);
     }
+  }
+
+  /** Tutorials skip the briefing and go straight to flight, where the ship AI takes over. */
+  private enter(index: number): void {
+    if (isTutorial(this.missions[index])) this.launch(index);
+    else this.showBriefing(index);
+  }
+
+  /** Tutorials are numbered T1, T2...; missions count on from 01 among themselves. */
+  private numberOf(index: number): string {
+    const tutorials = this.missions.filter(isTutorial).length;
+    return isTutorial(this.missions[index])
+      ? `T${index + 1}`
+      : String(index + 1 - tutorials).padStart(2, '0');
   }
 
   private highlight(): void {
@@ -223,7 +239,7 @@ export class MissionScreens {
       if (k === 'KeyR') this.launch(s.index);
       else if (k === 'Escape') this.showBoard();
       else if (enter) {
-        if (this.hasNext(s.index)) this.showBriefing(s.index + 1);
+        if (this.hasNext(s.index)) this.enter(s.index + 1);
         else this.launch(s.index);
       }
     }
@@ -288,6 +304,10 @@ export class MissionHud {
     }
     this.box.appendChild(hint('ESC operations board'));
   }
+}
+
+function isTutorial(m: MissionDef): boolean {
+  return m.tutorial !== undefined;
 }
 
 function starString(n: number): string {

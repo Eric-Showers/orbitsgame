@@ -1,0 +1,208 @@
+/* Guided tutorial: the "guide me?" question, the narrating callout, outlines and the arrow.
+   Uses the console tokens from panel.css. Sits above the HUD, below the mission screens. */
+
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  font-family: var(--font-ui);
+  color: var(--c-text);
+  user-select: none;
+}
+
+.tut[hidden] {
+  display: none;
+}
+
+.tut-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tut-arrow {
+  stroke: var(--c-amber);
+  stroke-width: 3;
+  stroke-dasharray: 10 6;
+  filter: drop-shadow(0 0 4px rgba(255, 181, 71, 0.8));
+  animation: tut-march 0.6s linear infinite;
+}
+
+.tut-head {
+  fill: var(--c-amber);
+}
+
+@keyframes tut-march {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.tut-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--c-glow);
+  border-radius: 3px;
+  box-shadow:
+    0 0 14px rgba(63, 210, 255, 0.7),
+    inset 0 0 12px rgba(63, 210, 255, 0.25);
+  animation: tut-pulse 1.4s ease-in-out infinite;
+}
+
+.tut-box[hidden] {
+  display: none;
+}
+
+.tut-box.flash {
+  border-color: var(--c-amber);
+  box-shadow:
+    0 0 18px rgba(255, 181, 71, 0.9),
+    inset 0 0 14px rgba(255, 181, 71, 0.35);
+  animation: tut-flash 0.8s steps(2, start) infinite;
+}
+
+@keyframes tut-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes tut-flash {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.tut-callout {
+  position: absolute;
+  /* Left of centre: the ship sits mid-screen and the bottom console holds the controls. */
+  top: clamp(130px, 18vh, 220px);
+  left: 16px;
+  width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 10px 14px 12px;
+  display: none;
+  background: var(--c-bg);
+  border: 1px solid var(--c-glow);
+  box-shadow:
+    0 0 24px rgba(63, 210, 255, 0.3),
+    inset 0 0 30px rgba(63, 210, 255, 0.1);
+  pointer-events: auto;
+}
+
+.tut-callout.show {
+  display: block;
+}
+
+.tut-head-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.tut-who {
+  font: 600 12px/1 var(--font-title);
+  letter-spacing: 0.2em;
+  color: var(--c-glow);
+}
+
+.tut-step {
+  flex: 1;
+  color: var(--c-dim);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.tut-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.tut-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.tut-foot:empty,
+.tut-next[hidden] {
+  display: none;
+}
+
+.tut-skip,
+.tut-next {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.tut-skip {
+  color: var(--c-dim);
+}
+
+.tut-ask {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 6, 12, 0.55);
+  pointer-events: auto;
+}
+
+.tut-ask.show {
+  display: flex;
+}
+
+.tut-ask > * {
+  width: min(460px, calc(100vw - 32px));
+  box-sizing: border-box;
+}
+
+.tut-ask-title {
+  margin: 0;
+  padding: 14px 20px 0;
+  background: var(--c-bg);
+  border: 1px solid var(--c-glow);
+  border-bottom: 0;
+  font: 600 14px/1.2 var(--font-title);
+  letter-spacing: 0.2em;
+  color: var(--c-glow);
+}
+
+.tut-ask-text {
+  margin: 0;
+  padding: 10px 20px 14px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-glow);
+  border-top: 0;
+  border-bottom: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.tut-ask-buttons {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 18px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-glow);
+  border-top: 0;
+  box-shadow: 0 0 30px rgba(63, 210, 255, 0.3);
+}
+
+.tut-ask-buttons .ctl {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 14px;
+}
+
+.tut-yes {
+  border-color: var(--c-green);
+  color: var(--c-green);
+}

@@ -76,6 +76,11 @@ export class PilotPanel {
     });
   }
 
+  /** Sets the altitude box (km), e.g. for a tutorial step that wants a particular orbit. */
+  setAltitude(km: number): void {
+    this.altitude.value = String(km);
+  }
+
   private altitudeInput(): HTMLInputElement {
     const input = el('input', 'pilot-alt');
     input.type = 'number';
@@ -90,6 +95,7 @@ export class PilotPanel {
     const b = el('button', 'ctl pilot-intent', intent.label);
     b.type = 'button';
     b.title = intent.title;
+    b.dataset.intent = intent.id;
     b.addEventListener('mousedown', (ev) => ev.preventDefault());
     b.addEventListener('click', () => this.request(intent));
     this.buttons.set(intent.id, b);

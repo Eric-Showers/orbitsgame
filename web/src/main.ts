@@ -10,6 +10,7 @@ import { playerSnapshot } from './advisor/snapshot';
 import { LOCK_PROGRESSION, loadMissions } from './missions/load';
 import { Progress } from './missions/progress';
 import { MissionRun } from './missions/run';
+import { readWorld } from './missions/tutorial';
 import { FlightView } from './render/view';
 import { InterceptLayer } from './render/intercepts';
 import { ZoneLayer } from './render/zones';
@@ -26,6 +27,7 @@ import { AudioPanel } from './ui/audio';
 import { PilotPanel } from './ui/pilot';
 import { FlightHud } from './ui/hud';
 import { AlarmIcons } from './ui/alarms';
+import { TutorialGuide } from './ui/tutorial';
 
 async function main(): Promise<void> {
   await init();
@@ -59,6 +61,14 @@ async function main(): Promise<void> {
     commander,
   );
   const clock = (): number => performance.now() / 1000;
+  // Tutorial levels: the ship AI offers a guided script. Built before the mission screens so its
+  // question gets the keyboard first.
+  let pilotPanel: PilotPanel | null = null;
+  const tutorial = new TutorialGuide(document.body, {
+    say: (id, text) => advisor.announce({ id, text }, playerSnapshot(session, []), clock()),
+    setAltitude: (km) => pilotPanel?.setAltitude(km),
+    onGuided: (on) => advisor.setGuided(on),
+  });
   // Sound: shipboard and cockpit buses, driven by sim events, the AI's voice and the pilot.
   const mixer = new AudioMixer();
   const sound = new SoundDirector(mixer);
@@ -97,10 +107,12 @@ async function main(): Promise<void> {
     runIndex = index;
     debriefed = false;
     switchTo(run.session);
+    tutorial.offer(missions[index]);
   };
   const freeFlight = (): void => {
     run = null;
     switchTo(new FlightSession(withSunFromConfig(new Game())));
+    tutorial.end();
   };
 
   const client: ClientControl = {
@@ -112,8 +124,10 @@ async function main(): Promise<void> {
     recentre: () => view.recentre(),
     setPan: (x, y) => view.setPan(x, y),
     restart: () => (run ? startMission(runIndex) : freeFlight()),
-    onAction: (action, ok) =>
-      advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock()),
+    onAction: (action, ok) => {
+      tutorial.press(action.id, ok);
+      advisor.acknowledge({ id: action.id, ok }, playerSnapshot(session, []), clock());
+    },
   };
   const panel = new ControlPanel(document.body, () => session, client);
   const flightHud = new FlightHud(
@@ -129,7 +143,7 @@ async function main(): Promise<void> {
   });
   bindKeyboard(() => session, client);
   const consoleEl = document.querySelector<HTMLElement>('.console');
-  const pilotPanel = new PilotPanel(
+  pilotPanel = new PilotPanel(
     consoleEl ?? document.body,
     () => pilot,
     () => session,
@@ -141,7 +155,7 @@ async function main(): Promise<void> {
     const dt = (now - last) / 1000;
     last = now;
     // The flight (and the advisor watching it) holds still while a mission screen is up.
-    if (!screens.open) {
+    if (!screens.open && !tutorial.asking) {
       let events;
       if (run) {
         events = run.update(dt);
@@ -154,14 +168,17 @@ async function main(): Promise<void> {
       const snap = playerSnapshot(session, events, run?.objectiveView() ?? null);
       advisor.setManeuvering(pilot.busy);
       advisor.observe(snap, now / 1000);
+      // A guided tutorial speaks its own script; the level's coaching lines would talk over it.
       for (const text of run?.takeCoach() ?? [])
-        advisor.announce({ id: 'coach', text }, snap, now / 1000);
+        if (!tutorial.guided) advisor.announce({ id: 'coach', text }, snap, now / 1000);
+      if (run && tutorial.guided)
+        tutorial.update(session, readWorld(session, pilot, run), run.ids, dt);
     }
     const me = session.player();
     sound.onFrame({
       dt,
       simTime: session.time,
-      paused: session.paused || screens.open,
+      paused: session.paused || screens.open || tutorial.asking,
       alive: me.alive,
       warp: session.effectiveWarp(),
       throttle: me.throttle,
@@ -171,6 +188,7 @@ async function main(): Promise<void> {
     });
     if (run && run.outcome !== 'running' && !debriefed) {
       debriefed = true;
+      tutorial.end();
       progress.record(run.def.id, run.stars());
       screens.showResult(run, runIndex);
     }

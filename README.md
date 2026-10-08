@@ -105,6 +105,21 @@ to the player), loadouts, hostile AI (`gunner`, `miner`, `evade`), objectives
 and references on start, and `npm test` flies each shipped mission's intended
 solution, so a balance change that makes a mission unwinnable fails a test.
 
+### Tutorials
+
+The first seven levels are tutorials. They have no written briefing: picking
+one drops straight into flight, and the ship AI asks whether you want the
+guided script. Accept, and a callout narrates each step while the relevant
+panel is outlined, the button to press flashes and an arrow points at it.
+Decline (or hit SKIP TUTORIAL), and the level is plain flight.
+
+A tutorial is a `tutorial: { steps }` list on the level in `missions.json`.
+Each step has the line the AI says, optional `highlight` / `flash` selectors,
+and an `until` condition (pressed an action, reached an orbit, locked a
+target, finished an objective...) that advances it; see `TutorialStep` and
+`TutorialCond` in `types.ts`. `npm test` plays every tutorial by following its
+steps and checks the level is won.
+
 ## License
 
 Copyright (C) 2026 Eric-Showers. Orbits is free software: you can redistribute

@@ -275,3 +275,14 @@
   margin: 4px 0 0;
   padding-left: 18px;
 }
+
+.mission-group {
+  margin: 10px 0 4px;
+  font: 600 11px/1 var(--font-title);
+  letter-spacing: 0.25em;
+  color: var(--c-dim);
+}
+
+.mission-group:first-child {
+  margin-top: 0;
+}

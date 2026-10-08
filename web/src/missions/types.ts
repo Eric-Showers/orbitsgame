@@ -141,13 +141,88 @@ export interface LessonDef {
   points: string[];
 }
 
+/** Inclusive altitude bounds in metres; either side may be left open. */
+export interface AltRange {
+  min?: number;
+  max?: number;
+}
+
+/**
+ * A test on the flight that a tutorial step waits for (or is skipped by). Pure
+ * data: `tutorial.ts` evaluates it against a snapshot of the world.
+ */
+export type TutorialCond =
+  /** The commander pressed this control action (button or key) during the step. */
+  | { action: string | string[] }
+  /** The ship is pointed in this attitude mode, named by its control action id (e.g. `prograde`). */
+  | { mode: string }
+  | { throttle: 'on' | 'off' }
+  | { ap?: AltRange; pe?: AltRange }
+  /** Seconds until apoapsis (or periapsis) is at most this. */
+  | { apEtaBelow: number }
+  | { peEtaBelow: number }
+  /** A live target is locked; with a tag, that particular ship. */
+  | { target: true | string }
+  /** Range to the locked target, in metres. */
+  | { range: { below?: number; above?: number } }
+  /** Closing speed on the locked target (m/s, positive = closing). */
+  | { closing: { above?: number; below?: number } }
+  /** Speed relative to the locked target (m/s). */
+  | { relSpeed: { above?: number; below?: number } }
+  | { warp: true }
+  | { assist: boolean }
+  /** The ARGUS plan card is showing. */
+  | { proposal: true }
+  /** The helm is (or is not) flying a maneuver. */
+  | { helmBusy: boolean }
+  | { objective: string; status: 'active' | 'done' }
+  /** This many objectives are done. */
+  | { done: number }
+  /** Real seconds since the step began. */
+  | { seconds: number }
+  | { all: TutorialCond[] }
+  | { any: TutorialCond[] };
+
+/** Keeps the flight from skipping past something the step is waiting for. */
+/** `stop` drops the flight to normal speed for steps flown by hand. */
+export type WarpGuard = 'apoapsis' | 'periapsis' | 'target' | 'stop';
+
+export interface TutorialStep {
+  /** What ARGUS says, and the caption on screen. Plain language, one or two sentences. */
+  say: string;
+  /** CSS selectors of interface parts to outline. Missing or hidden ones are ignored. */
+  highlight?: string[];
+  /** Selectors of buttons to flash. The first of `flash` (else `highlight`) also gets the arrow. */
+  flash?: string[];
+  /** When the step is complete. Omitted: it advances on its own after a reading pause. */
+  until?: TutorialCond;
+  /** The step is skipped if this already holds when it begins. */
+  skipIf?: TutorialCond;
+  /** Repeated if the step lingers, e.g. when the player undid something. */
+  hint?: string;
+  /** Cuts the engine when the orbit reaches these altitudes (m): a safety net for fast burns. */
+  cutAt?: { ap?: number; pe?: number };
+  warpGuard?: WarpGuard;
+  /** The ship AI locks this ship (by mission tag) as the player's target when the step begins. */
+  lock?: string;
+  /** Fills the helm's altitude box (km) when the step begins. */
+  prefill?: { altitudeKm: number };
+}
+
+/** A guided walkthrough: ordered steps, each teaching one control or idea. */
+export interface TutorialDef {
+  steps: TutorialStep[];
+}
+
 export interface MissionDef {
   id: string;
   title: string;
   /** Short tag line on the mission list. */
   summary: string;
-  /** Briefing paragraphs. */
+  /** Briefing paragraphs. Empty for tutorials: they launch straight into flight. */
   briefing: string[];
+  /** Present on tutorial levels. The ship AI offers this script when the level starts. */
+  tutorial?: TutorialDef;
   lesson?: LessonDef;
   coach?: CoachDef[];
   player: { class: ShipClassName; orbit: OrbitDef; loadout?: LoadoutDef; name?: string };

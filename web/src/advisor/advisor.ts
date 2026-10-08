@@ -77,6 +77,7 @@ export class VesselAdvisor {
   private maneuvering = false;
   private bags = new Map<string, number[]>();
   private greeted = false;
+  private guided = false;
   private persona: Persona = DEFAULT_PERSONA;
   private commander = DEFAULT_COMMANDER;
   private linesSinceName = Infinity;
@@ -116,6 +117,11 @@ export class VesselAdvisor {
     this.maneuvering = busy;
   }
 
+  /** A guided tutorial is running: the AI drops its greeting, status and banter and speaks the script. */
+  setGuided(on: boolean): void {
+    this.guided = on;
+  }
+
   /** What the AI calls the player in place of "Commander". */
   setCommander(name: string): void {
     this.commander = name;
@@ -127,7 +133,7 @@ export class VesselAdvisor {
     if (this.prev && this.prev.self.id !== self.id) this.reset();
     if (!this.greeted) {
       this.greeted = true;
-      this.say({ id: 'status.online' }, snap, now);
+      if (!this.guided) this.say({ id: 'status.online' }, snap, now);
     }
     this.hullMax = Math.max(this.hullMax, self.hp);
     this.reported ??= currentReadings(snap); // the starting orbit needs no report
@@ -162,7 +168,7 @@ export class VesselAdvisor {
     const steady = self.alive && self.throttle === 0 && !this.maneuvering;
     if (!steady || alarmLatched || this.queue.has(...ACTION)) this.lastAction = now;
     this.flush(now);
-    if (steady) this.speakInLull(snap, now);
+    if (steady && !this.guided) this.speakInLull(snap, now);
   }
 
   /**

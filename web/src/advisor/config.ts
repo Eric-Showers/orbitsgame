@@ -2,7 +2,7 @@ import voiceData from './voice.json';
 
 /** Speech priority classes, most urgent first. Ranks and TTLs live in `voice.json`. */
 export type Priority =
-  'critical' | 'warning' | 'order' | 'ack' | 'advise' | 'status' | 'guide' | 'quip';
+  'critical' | 'warning' | 'order' | 'ack' | 'advise' | 'status' | 'guide' | 'quip' | 'debrief';
 
 /**
  * What kind of line it is, which decides when it may be said. Each category
@@ -26,8 +26,6 @@ export interface LullSpec {
   quietSeconds: number;
   /** Real seconds without action before a quip may follow. */
   quipQuietSeconds: number;
-  /** Chance a quip comes from a pool that fits the moment rather than general banter. */
-  contextualQuipChance: number;
   /** An apsis must move this many metres (or this fraction of its altitude) to be re-reported. */
   orbitChangeMeters: number;
   orbitChangeFraction: number;
@@ -55,6 +53,60 @@ export interface PrioritySpec {
   shed?: boolean;
 }
 
+/** Tag test against the situation: every `all`, at least one `any` (if given), and no `none`. */
+export interface TagExpr {
+  all?: string[];
+  any?: string[];
+  none?: string[];
+}
+
+/** A line variant that only fits some situations. Plain strings in `text` fit any. */
+export interface TextVariant {
+  t: string;
+  when?: TagExpr;
+  /** Base preference, default 1. */
+  weight?: number;
+  /** Real seconds before this exact variant may be chosen again. */
+  cooldown?: number;
+  /** Said at most once per flight. */
+  once?: boolean;
+  /** Only these personas say it (ids from `personas.json`). */
+  persona?: string[];
+}
+
+/** Situation thresholds for tagging; see `situation.ts`. */
+export interface SituationSpec {
+  circularEccentricity: number;
+  lowAltitude: number;
+  highAltitude: number;
+  heatHigh: number;
+  heatCool: number;
+  hullCritical: number;
+  /** Real seconds without a ship action before the player counts as idle for a long time. */
+  idleLongSeconds: number;
+  /** Real seconds that count as "just now" for kills, misses, damage and burns. */
+  recentSeconds: number;
+  killStreak: number;
+  /** Variants used within this many real seconds are passed over for fresh ones. */
+  repeatWindow: number;
+  /** The selector draws at random among this many best-fitting variants. */
+  topChoices: number;
+  /** Tags that mean something is happening; lines that use them outrank background banter. */
+  salientTags: string[];
+}
+
+/** Wording and thresholds for the post-burn debrief. */
+export interface DebriefSpec {
+  /** Longest look-ahead for the next close approach, in orbits of our own. */
+  orbitsAhead: number;
+  /** Look-ahead cap in sim seconds. */
+  maxHorizon: number;
+  /** An approach this close counts as inside rendezvous range (m). */
+  rendezvousRange: number;
+  /** Relative speed (m/s) under which an approach is gentle enough to rendezvous. */
+  gentleRelSpeed: number;
+}
+
 export interface LineSpec {
   priority: Priority;
   category: Category;
@@ -72,6 +124,10 @@ export interface LineSpec {
   shed?: boolean;
   /** Variants, used in rotation. `{name}` placeholders are filled from the cue. */
   text: string[];
+  /** Variants that fit only some situations (tagged), chosen by `select.ts`. */
+  variants?: TextVariant[];
+  /** Tags the whole line needs; applies to every variant of the line. */
+  when?: TagExpr;
 }
 
 export interface Thresholds {
@@ -125,6 +181,8 @@ export interface VoiceConfig {
   priorities: Record<Priority, PrioritySpec>;
   categories: Record<Category, CategorySpec>;
   lull: LullSpec;
+  situation: SituationSpec;
+  debrief: DebriefSpec;
   objective: ObjectiveSpec;
   thresholds: Thresholds;
   lines: Record<string, LineSpec>;

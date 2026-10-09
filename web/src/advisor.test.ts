@@ -389,7 +389,7 @@ describe('vessel advisor', () => {
 describe('voice data', () => {
   it('has text, a known priority and only valid timings for every line', () => {
     for (const [id, spec] of Object.entries(VOICE.lines)) {
-      expect(spec.text.length, id).toBeGreaterThan(0);
+      expect(spec.text.length + (spec.variants?.length ?? 0), id).toBeGreaterThan(0);
       expect(VOICE.priorities[spec.priority], id).toBeDefined();
       expect(spec.cooldown ?? 0, id).toBeGreaterThanOrEqual(0);
     }
@@ -624,12 +624,55 @@ describe('dialogue categories and lulls', () => {
     expect(heard.some((e) => e.category === 'status' && e.id !== 'status.online')).toBe(false);
     // Engine off: still quiet until the lull is long enough.
     ai.observe(snap({ orbit: raised }), 21);
-    expect(heard.some((e) => e.id === 'status.orbit')).toBe(false);
+    expect(heard.some((e) => e.id.startsWith('debrief.'))).toBe(false);
     for (let t = 22; t <= 30; t++) ai.observe(snap({ orbit: raised }), t);
-    const report = heard.filter((e) => e.id === 'status.orbit');
+    const report = heard.filter((e) => e.id === 'debrief.orbit');
     expect(report).toHaveLength(1);
     expect(report[0].timestamp).toBeGreaterThanOrEqual(20 + VOICE.lull.quietSeconds);
     expect(report[0].category).toBe('status');
+  });
+
+  it('debriefs a finished burn one line at a time, then quips only after the last', () => {
+    const { ai, heard } = rig();
+    const me = ship({ target: 3 });
+    const friend = near(me, 40_000, { id: 3, team: 0 });
+    const burn = (t: number) =>
+      ai.observe(snap({ self: { ...me, throttle: 1 }, orbit: raised, entities: [me, friend] }), t);
+    ai.observe(snap({ self: me, entities: [me, friend] }), 0);
+    for (let t = 1; t <= 5; t++) burn(t);
+    for (let t = 6; t <= 80; t += 0.5)
+      ai.observe(snap({ self: me, orbit: raised, entities: [me, friend] }), t);
+    const ids = heard.map((e) => e.id);
+    const debrief = ids.filter((id) => id.startsWith('debrief.'));
+    expect(debrief[0]).toBe('debrief.orbit');
+    expect(debrief.some((id) => id.startsWith('debrief.next_'))).toBe(true);
+    expect(debrief.some((id) => id.startsWith('debrief.approach.'))).toBe(true);
+    expect(ids).not.toContain('status.orbit');
+    const lastDebrief = ids
+      .map((id, i) => (id.startsWith('debrief.') ? i : -1))
+      .reduce((a, b) => Math.max(a, b));
+    const firstQuip = ids.findIndex((id) => id.startsWith('quip.'));
+    expect(firstQuip === -1 || firstQuip > lastDebrief).toBe(true);
+    // Spoken in the persona's order, never overlapping.
+    const lines = heard.filter((e) => e.id.startsWith('debrief.'));
+    for (let i = 1; i < lines.length; i++)
+      expect(lines[i].timestamp).toBeGreaterThanOrEqual(
+        lines[i - 1].timestamp + lines[i - 1].duration,
+      );
+  });
+
+  it('drops an unfinished debrief when the next burn starts', () => {
+    const { ai, heard } = rig();
+    ai.observe(snap(), 0);
+    for (let t = 1; t <= 5; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    for (let t = 6; t <= 11; t += 0.5) ai.observe(snap({ orbit: raised }), t);
+    for (let t = 12; t <= 60; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    const n = heard.filter((e) => e.id.startsWith('debrief.')).length;
+    for (let t = 61; t <= 70; t++)
+      ai.observe(snap({ self: ship({ throttle: 1 }), orbit: raised }), t);
+    expect(heard.filter((e) => e.id.startsWith('debrief.'))).toHaveLength(n);
   });
 
   it('reports at once when the commander warps after changing orbit', () => {
@@ -641,7 +684,7 @@ describe('dialogue categories and lulls', () => {
     ai.observe(coasting, 11);
     ai.acknowledge({ id: 'warp-up', ok: true }, coasting, 11.2);
     ai.observe(coasting, 11.3);
-    expect(heard.at(-1)).toMatchObject({ id: 'status.orbit', timestamp: 11.3 });
+    expect(heard.at(-1)).toMatchObject({ id: 'debrief.orbit', timestamp: 11.3 });
   });
 
   it('quips only in a lull, after the status report, at most once per 30 s', () => {
@@ -652,7 +695,7 @@ describe('dialogue categories and lulls', () => {
     for (let t = 6; t <= 120; t += 0.5) ai.observe(snap({ orbit: raised }), t);
     const ids = heard.map((e) => e.id);
     const firstQuip = ids.findIndex((id) => id.startsWith('quip.'));
-    expect(firstQuip).toBeGreaterThan(ids.indexOf('status.orbit'));
+    expect(firstQuip).toBeGreaterThan(ids.indexOf('debrief.orbit'));
     const quips = heard.filter((e) => e.category === 'quip');
     expect(quips.length).toBeGreaterThanOrEqual(3);
     for (let i = 1; i < quips.length; i++) {
@@ -671,11 +714,12 @@ describe('dialogue categories and lulls', () => {
     const foe = near(me, 50_000, { id: 3, team: 1, shipClass: DRONE });
     for (let t = 0; t <= 400; t++) ai.observe(snap({ self: me, entities: [me, foe] }), t);
     const quips = heard.filter((e) => e.category === 'quip');
-    expect(quips.every((e) => e.id === 'quip.hunting')).toBe(true);
-    const pool = VOICE.lines['quip.hunting'].text.length;
-    const texts = quips.slice(0, pool).map((e) => e.text);
+    // Lines tagged for the hunt lead (other fitting lines mix in), and none repeats while fresh ones remain.
+    const fits = (id: string): boolean => id === 'quip.hunting' || id === 'quip.combat';
+    expect(quips.slice(0, 8).filter((e) => fits(e.id)).length).toBeGreaterThanOrEqual(4);
+    const texts = quips.slice(0, 8).map((e) => e.text);
     expect(new Set(texts).size).toBe(texts.length);
-    expect(texts.some((x) => x.includes('Drone 3'))).toBe(true);
+    expect(quips.some((e) => e.text.includes('Drone 3'))).toBe(true);
   });
 
   it('paces each category on its own gap in the queue', () => {
@@ -692,7 +736,14 @@ describe('dialogue categories and lulls', () => {
     for (const p of PERSONAS) {
       const count = Object.keys(VOICE.lines)
         .filter((id) => id.startsWith('quip.'))
-        .reduce((n, id) => n + (p.lines[id] ?? VOICE.lines[id].text).length, 0);
+        .reduce(
+          (n, id) =>
+            n +
+            (p.lines[id] ?? VOICE.lines[id].text).length +
+            (VOICE.lines[id].variants ?? []).filter((v) => !v.persona || v.persona.includes(p.id))
+              .length,
+          0,
+        );
       expect(count, p.id).toBeGreaterThanOrEqual(40);
     }
   });

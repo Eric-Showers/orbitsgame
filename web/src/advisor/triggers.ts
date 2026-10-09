@@ -52,6 +52,8 @@ export interface Cue {
   vars?: Record<string, string>;
   /** Literal text to speak instead of a voice-file line (mission coaching). */
   text?: string;
+  /** Wording already chosen by the line selector, spoken as is (slots still filled). */
+  chosen?: string;
 }
 
 export function isHostile(self: EntityView, other: EntityView, t: Thresholds): boolean {
@@ -360,7 +362,7 @@ function closing(self: EntityView, other: EntityView): number {
 }
 
 /** Gravitational parameter recovered from h² = μp. */
-function mu(self: EntityView, orbit: OrbitView): number {
+export function mu(self: EntityView, orbit: OrbitView): number {
   const h = cross(self.pos, self.vel);
   return (h * h) / orbit.semiLatusRectum;
 }

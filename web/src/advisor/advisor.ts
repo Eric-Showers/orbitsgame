@@ -12,9 +12,12 @@ import {
   type Priority,
   type VoiceConfig,
 } from './config';
+import { evaluateDebrief } from './debrief';
 import { objectiveAdvice } from './objectives';
 import { DEFAULT_PERSONA, type Persona } from './personas';
 import { SpeechQueue } from './queue';
+import { candidatesFor, LineSelector, type Candidate } from './select';
+import { buildSituation, type Situation } from './situation';
 import {
   currentReadings,
   entityName,
@@ -22,7 +25,6 @@ import {
   evaluateCues,
   evaluateManeuvers,
   evaluateStatus,
-  isHostile,
   type BurnTrack,
   type Cue,
   type Reported,
@@ -38,8 +40,6 @@ const NAMEABLE = new Set<string>(['ack', 'advise', 'order', 'status', 'guide']);
 const ACTION: Category[] = ['alarm', 'event', 'helm'];
 /** Client actions that are not flying the ship (time, camera). */
 const NOT_HELM = /^(pause|warp|zoom|focus|camera|recentre|pan|free|restart)/;
-/** Situational quip pools, tried before general banter when they fit. */
-const QUIP_POOLS = ['quip.damaged', 'quip.victory', 'quip.hunting', 'quip.warp'] as const;
 
 interface Latch {
   latched: boolean;
@@ -76,6 +76,16 @@ export class VesselAdvisor {
   private statusNow = false;
   private maneuvering = false;
   private bags = new Map<string, number[]>();
+  private selector: LineSelector;
+  private kills = 0;
+  private lastMiss = -Infinity;
+  private lastDamage = -Infinity;
+  private lastBurnEnd = -Infinity;
+  private wasBurning = false;
+  /** A burn just ended: the next orbit report becomes a debrief. */
+  private debriefDue = false;
+  /** Debrief lines still to say, one at a time as the voice frees up. */
+  private pendingDebrief: Cue[] = [];
   private greeted = false;
   private guided = false;
   private persona: Persona = DEFAULT_PERSONA;
@@ -88,6 +98,14 @@ export class VesselAdvisor {
     private random: () => number = Math.random,
   ) {
     this.queue = new SpeechQueue(cfg);
+    this.selector = new LineSelector(
+      {
+        repeatWindow: cfg.situation.repeatWindow,
+        topChoices: cfg.situation.topChoices,
+        salient: cfg.situation.salientTags,
+      },
+      random,
+    );
   }
 
   /** Forget everything (new flight). Queued lines are dropped. */
@@ -104,6 +122,11 @@ export class VesselAdvisor {
     this.maneuvering = false;
     this.greeted = false;
     this.linesSinceName = Infinity;
+    this.selector.reset();
+    this.kills = 0;
+    this.lastMiss = this.lastDamage = this.lastBurnEnd = -Infinity;
+    this.wasBurning = this.debriefDue = false;
+    this.pendingDebrief = [];
   }
 
   /** Switches the wording and reading pace to a voice persona. Lines already queued keep their text. */
@@ -160,10 +183,23 @@ export class VesselAdvisor {
       ...evaluateManeuvers(snap, this.prev, this.tracks, this.cfg.thresholds),
     ];
     for (const cue of cues) {
-      if (cue.id === 'status.splash') this.lastKill = now;
+      if (cue.id === 'status.splash') {
+        this.lastKill = now;
+        this.kills++;
+      }
+      if (cue.id === 'status.missile_lost') this.lastMiss = now;
+      if (cue.id === 'damage.hull') this.lastDamage = now;
       this.say(cue, snap, now);
     }
     this.prev = snap;
+
+    const burning = self.alive && (self.throttle > 0 || this.maneuvering);
+    if (this.wasBurning && !burning) {
+      this.lastBurnEnd = now;
+      this.debriefDue = true;
+    }
+    if (burning) this.pendingDebrief = [];
+    this.wasBurning = burning;
 
     const steady = self.alive && self.throttle === 0 && !this.maneuvering;
     if (!steady || alarmLatched || this.queue.has(...ACTION)) this.lastAction = now;
@@ -182,11 +218,27 @@ export class VesselAdvisor {
       this.statusNow = false;
       const { cues, reported } = evaluateStatus(snap, this.reported ?? currentReadings(snap), l);
       this.reported = reported;
+      // After a burn, the orbit report becomes a fuller debrief of what the burn did.
+      const orbitAt = cues.findIndex((c) => c.id === 'status.orbit');
+      if (this.debriefDue && orbitAt >= 0) {
+        cues.splice(orbitAt, 1);
+        this.pendingDebrief = evaluateDebrief(
+          snap,
+          this.cfg.debrief,
+          this.cfg.thresholds,
+          this.cfg.situation.circularEccentricity,
+        );
+      }
+      this.debriefDue = false;
       for (const cue of cues) this.say(cue, snap, now);
     }
+    // One debrief line at a time, as the voice frees up.
+    const nextDebrief = this.queue.size === 0 ? this.pendingDebrief.shift() : undefined;
+    if (nextDebrief) this.say(nextDebrief, snap, now);
     if (
       quiet >= l.quipQuietSeconds &&
       this.queue.size === 0 &&
+      this.pendingDebrief.length === 0 &&
       now - this.lastSlot >= this.cfg.categories.quip.minGap
     ) {
       this.lastSlot = now;
@@ -200,28 +252,42 @@ export class VesselAdvisor {
         this.flush(now);
         return;
       }
-      const target = snap.entities.find((e) => e.id === snap.self.target);
-      const vars = target ? { target: entityName(target) } : undefined;
-      this.say({ id: this.quipPool(snap, now), vars }, snap, now);
+      const sit = this.situation(snap, now);
+      const pick = this.selector.choose(this.quipCandidates(sit), now);
+      if (pick) this.say({ id: pick.id, chosen: pick.text, vars: sit.vars }, snap, now);
     }
     this.flush(now);
   }
 
-  private quipPool(snap: VesselSnapshot, now: number): string {
-    const { self } = snap;
-    const l = this.cfg.lull;
-    const target = snap.entities.find((e) => e.id === self.target && e.alive);
-    const fits: Record<(typeof QUIP_POOLS)[number], boolean> = {
-      'quip.damaged': this.hullMax > 0 && self.hp / this.hullMax < l.quipHullFraction,
-      'quip.victory': now - this.lastKill < l.quipVictorySeconds,
-      'quip.hunting': !!target && isHostile(self, target, this.cfg.thresholds),
-      'quip.warp': (snap.warp ?? 1) >= l.quipWarp,
-    };
-    const pools = QUIP_POOLS.filter((p) => fits[p] && this.variants(p).length > 0);
-    if (pools.length > 0 && this.random() < l.contextualQuipChance) {
-      return pools[Math.floor(this.random() * pools.length)];
+  /** The tags and values describing this moment, for choosing lines that fit it. */
+  private situation(snap: VesselSnapshot, now: number): Situation {
+    return buildSituation(
+      snap,
+      {
+        now,
+        quiet: now - this.lastAction,
+        hullMax: this.hullMax,
+        lastKill: this.lastKill,
+        kills: this.kills,
+        lastMiss: this.lastMiss,
+        lastDamage: this.lastDamage,
+        lastBurnEnd: this.lastBurnEnd,
+        persona: this.persona.id,
+      },
+      this.cfg,
+    );
+  }
+
+  /** Every quip the persona could say in this situation. */
+  private quipCandidates(sit: Situation): Candidate[] {
+    const out: Candidate[] = [];
+    for (const [id, spec] of Object.entries(this.cfg.lines)) {
+      if (spec.category !== 'quip') continue;
+      out.push(
+        ...candidatesFor(id, spec, this.persona.lines[id] ?? spec.text, this.persona.id, sit),
+      );
     }
-    return 'quip.idle';
+    return out;
   }
 
   /** Acknowledges an order the commander just gave. Call after `observe` has seen the ship. */
@@ -323,11 +389,11 @@ export class VesselAdvisor {
       ? { priority: 'guide', category: 'helm', text: [cue.text] }
       : this.cfg.lines[cue.id];
     if (!spec) return;
-    const variants = cue.text ? spec.text : this.variants(cue.id);
+    const variants = cue.text ? spec.text : cue.chosen ? [cue.chosen] : this.variants(cue.id);
     if (variants.length === 0) return;
     const speaker = this.callsign(snap.self.shipClass);
     const text = this.addressPlayer(
-      fillTemplate(variants[this.pick(cue.id, variants.length, spec.category)], {
+      fillTemplate(variants[cue.chosen ? 0 : this.pick(cue.id, variants.length, spec.category)], {
         callsign: speaker,
         name: this.commander,
         ...speakableVars(cue.vars ?? {}),

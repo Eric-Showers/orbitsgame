@@ -1,3 +1,4 @@
+import { spoken } from '../advisor/spoken';
 import type { AdvisoryChannel, AdvisoryEvent } from '../advisor/channel';
 import { DEFAULT_PERSONA, selectablePersona, type Persona } from '../advisor/personas';
 
@@ -127,7 +128,7 @@ export class TtsPlayer {
 
   private utter(text: string): void {
     if (!this.synth) return;
-    const u = this.makeUtterance(text);
+    const u = this.makeUtterance(spoken(text));
     const s = this.current.speech;
     u.rate = s.rate;
     u.pitch = s.pitch;

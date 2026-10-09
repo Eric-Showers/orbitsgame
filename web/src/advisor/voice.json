@@ -57,6 +57,10 @@
       "rank": 5,
       "ttl": 10,
       "shed": true
+    },
+    "debrief": {
+      "rank": 4,
+      "ttl": 25
     }
   },
   "categories": {
@@ -85,7 +89,6 @@
   "lull": {
     "quietSeconds": 5,
     "quipQuietSeconds": 10,
-    "contextualQuipChance": 0.5,
     "orbitChangeMeters": 1000,
     "orbitChangeFraction": 0.02,
     "heatReportFraction": 0.3,
@@ -710,7 +713,10 @@
         "Warp is high. If anything interesting happens, I will tell you before it finishes happening.",
         "Accelerating time is not logical for organics, Commander. You only get so much of it.",
         "We are skipping the uneventful part. I approve. I was going to skip it anyway."
-      ]
+      ],
+      "when": {
+        "all": ["warp.high"]
+      }
     },
     "quip.hunting": {
       "priority": "quip",
@@ -722,7 +728,10 @@
         "The odds favour us. I will not quote them. You dislike it when I quote them.",
         "{target} has made a logical error. It came near us.",
         "Patience is a weapon too, Commander. Ours is fully loaded."
-      ]
+      ],
+      "when": {
+        "all": ["hostile.hunting"]
+      }
     },
     "quip.victory": {
       "priority": "quip",
@@ -733,7 +742,10 @@
         "Another one. I have started a tally. I am pretending it is for the logs.",
         "A clean kill. Logic and luck in roughly equal measure. Do not tell Fleet Command about the luck.",
         "Well flown. If I could smile, this would be the moment."
-      ]
+      ],
+      "when": {
+        "all": ["player.just_killed"]
+      }
     },
     "quip.damaged": {
       "priority": "quip",
@@ -743,7 +755,10 @@
         "The hull has holes it did not have this morning. I am disappointed in them.",
         "Our condition is suboptimal. Survival remains the most probable outcome. Narrowly.",
         "I can feel the breaches, in a manner of speaking. Let us not add more."
-      ]
+      ],
+      "when": {
+        "all": ["hull.damaged"]
+      }
     },
     "status.target_holding": {
       "priority": "status",
@@ -943,6 +958,618 @@
       "priority": "objective",
       "category": "objective",
       "text": ["Periapsis is under {alt}. A small prograde burn at apoapsis will lift it."]
+    },
+    "debrief.orbit": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Burn complete. Low point {pe}, high point {ap}, and one lap takes {period}.",
+        "Orbit updated. We now swing between {pe} and {ap}, and a full lap takes {period}.",
+        "Burn complete, Commander. The new orbit runs from {pe} up to {ap}, one lap every {period}."
+      ]
+    },
+    "debrief.orbit_circular": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Burn complete. We are on a near circular orbit at {alt}, one lap every {period}.",
+        "Circular orbit at {alt}. Steady and efficient, and a full lap takes {period}."
+      ]
+    },
+    "debrief.next_periapsis": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Next pass through the low point is in {when}.",
+        "We reach the low point of this orbit in {when}."
+      ]
+    },
+    "debrief.next_apoapsis": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Next pass through the high point is in {when}.",
+        "We reach the high point of this orbit in {when}."
+      ]
+    },
+    "debrief.approach.close": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Next closest approach to {target} is {miss}, in {orbits}, about {span} from now. That is inside rendezvous range.",
+        "On this orbit we pass {target} at {miss} in {orbits}. Close enough to rendezvous."
+      ]
+    },
+    "debrief.approach.weapons": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Next closest approach to {target} is {miss}, in {orbits}, about {span} from now. That is inside missile range.",
+        "{target} passes within {miss} in {orbits}, about {span} from now. Missile range, if you want it."
+      ]
+    },
+    "debrief.approach.near": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": ["Next closest approach to {target} is {miss}, in {orbits}, about {span} from now."]
+    },
+    "debrief.approach.wide": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Next closest approach to {target} is only {miss}, in {orbits}, about {span} from now. That is wide. A rendezvous burn or an altitude change would close the gap.",
+        "On this orbit we pass {target} at {miss} in {orbits}. Too far to matter. Consider a rendezvous burn."
+      ]
+    },
+    "debrief.approach.none": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "No close approach to {target} within the next several orbits. We are not on a converging path.",
+        "{target} and we are not converging. Nothing closer than a wide pass within the next several orbits."
+      ]
+    },
+    "debrief.approach.better": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": ["A closer pass comes later: {miss}, in {orbits}, about {span} from now."]
+    },
+    "debrief.relspeed.gentle": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Relative speed there is only {relv}. Gentle enough to rendezvous.",
+        "We would be moving at only {relv} relative to the target. A comfortable approach."
+      ]
+    },
+    "debrief.relspeed.fast": {
+      "priority": "debrief",
+      "category": "status",
+      "topic": "debrief",
+      "text": [
+        "Relative speed there will be {relv}. Too fast to dock. Plan a speed matching burn.",
+        "We would be passing at {relv}. That is fast. Match speed before closing in."
+      ]
+    },
+    "quip.orbit": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "A circular orbit this low leaves little room for error. I admire the confidence.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.circular", "orbit.low"]
+          }
+        },
+        {
+          "t": "Altitude {altitude}. The ground has no opinion of us, but it is very firm about its position.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.circular", "orbit.low"]
+          }
+        },
+        {
+          "t": "From this height the planet fits in the window like a coin. I am enjoying the view.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.circular", "orbit.high"]
+          }
+        },
+        {
+          "t": "High orbit. Slow, patient, and hard to hit. Excellent choices all around.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.high"]
+          }
+        },
+        {
+          "t": "A clean circular orbit. Every point is the same distance from the ground, which I find restful.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.circular"]
+          }
+        },
+        {
+          "t": "Nothing in this orbit surprises me. I would like that noted as a compliment.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.circular"]
+          }
+        },
+        {
+          "t": "An elliptical orbit. We trade speed for height twice a lap, and neither is ever wasted.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.elliptical"]
+          }
+        },
+        {
+          "t": "Fast at the low point, slow at the high point. Orbital mechanics is generous with predictability.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.elliptical"]
+          }
+        },
+        {
+          "t": "Our low point is close to the ground. I have taken a keen interest in that number.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.elliptical", "orbit.low"]
+          }
+        },
+        {
+          "t": "Wide orbit, long lap. Plenty of time to think, which I use for worrying quietly.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["orbit.elliptical", "orbit.high"]
+          }
+        }
+      ]
+    },
+    "quip.ship": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "The hull is undamaged. I am keeping it that way as a personal project.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.pristine", "mission.none"]
+          }
+        },
+        {
+          "t": "Every plate is where the builders left it. Let us not ruin the streak.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.pristine"]
+          }
+        },
+        {
+          "t": "The hull is in poor condition, Commander. I would like to discuss caution, briefly and firmly.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.critical"]
+          }
+        },
+        {
+          "t": "We are one bad decision from becoming a debris field. Let us make only good ones.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.critical"]
+          }
+        },
+        {
+          "t": "The drive is running hot. I recommend patience, which costs nothing and cools the engine.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["heat.high"]
+          }
+        },
+        {
+          "t": "Drive temperature is comfortable. Thrust is available whenever you would like it.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["heat.cool"]
+          }
+        },
+        {
+          "t": "The drive is cool and the ship is quiet. I could get used to this, within reason.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["heat.cool", "player.idle_long"]
+          }
+        },
+        {
+          "t": "No hostiles in range, and the hull is damaged. This is a good time to be careful rather than clever.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.damaged", "hostile.none"]
+          }
+        },
+        {
+          "t": "A hot drive and a hostile nearby. I recommend letting one of those problems solve itself.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["heat.high", "hostile.near"]
+          }
+        },
+        {
+          "t": "{kills} kills and not a scratch on us. I will pretend that is normal.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hull.pristine", "player.kill_streak"]
+          }
+        }
+      ]
+    },
+    "quip.combat": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "Contact is close and in our sights. I am holding my opinions until you choose a course.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.near", "hostile.hunting"]
+          }
+        },
+        {
+          "t": "There is a hostile ship nearby. I will mention it once more when it becomes relevant.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.near"]
+          }
+        },
+        {
+          "t": "Hostiles remain, but they are far away. Distance is the cheapest armor there is.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.far"]
+          }
+        },
+        {
+          "t": "No hostile contacts. I am prepared to enjoy this, quietly and without celebration.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.none"]
+          }
+        },
+        {
+          "t": "The missile expired without a result. I will log it as a calibration exercise.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.just_missed"]
+          }
+        },
+        {
+          "t": "A miss. Missiles run out of fuel and patience at the same time. The lesson is range.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.just_missed"]
+          }
+        },
+        {
+          "t": "That is {kills} confirmed. I am updating the ship's log and my opinion of you.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.just_killed", "player.kill_streak"]
+          }
+        },
+        {
+          "t": "{kills} down. At this rate the logbook will need a second page.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.kill_streak"]
+          }
+        },
+        {
+          "t": "We took a hit recently. I am reminding the hull that it is meant to be on the outside.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.recent_damage"]
+          }
+        },
+        {
+          "t": "A mine is somewhere close. Mines are patient, and so am I. Let us not test which is better at it.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mine.near"]
+          }
+        },
+        {
+          "t": "A high orbit gives {target} plenty of time to see us coming. It also gives us time to see them.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.hunting", "orbit.high"]
+          }
+        },
+        {
+          "t": "We are low and {target} is in range of our attention. Low orbits are fast, which helps.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.hunting", "orbit.low"]
+          }
+        },
+        {
+          "t": "We are hurt and a hostile is near. I suggest we prefer geometry to bravery.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.near", "hull.damaged"]
+          }
+        },
+        {
+          "t": "Target designated at {range}. A long way off, and long ways make for thoughtful plans.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.far", "target.set"]
+          }
+        },
+        {
+          "t": "{target} is the objective. I have no further commentary, which is how I express confidence.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["hostile.hunting", "mission.destroy"]
+          }
+        },
+        {
+          "t": "One objective down. I would celebrate, but I am busy being professionally calm.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.just_killed", "mission.destroy"]
+          }
+        },
+        {
+          "t": "Mines and a low orbit share a neighborhood. I am watching both with equal affection.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mine.near", "orbit.low"]
+          }
+        }
+      ]
+    },
+    "quip.mission": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "Holding this orbit is the whole task. I recommend not improving it.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.orbit"]
+          }
+        },
+        {
+          "t": "The goal is a steady orbit. Steadiness is the one thing I am built to appreciate.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.orbit"]
+          }
+        },
+        {
+          "t": "A rendezvous is a conversation between two orbits. Let them agree on speed before they agree on position.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.rendezvous"]
+          }
+        },
+        {
+          "t": "Closing on the target is a matter of patience. The fast approach is rarely the successful one.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.rendezvous"]
+          }
+        },
+        {
+          "t": "Our objective is destruction. I will provide data, caution, and quiet encouragement, in that order.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.destroy"]
+          }
+        },
+        {
+          "t": "The hostile ships are far away. A good plan now saves a bad improvisation later.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.destroy", "hostile.far"]
+          }
+        },
+        {
+          "t": "We are laying mines in a defined zone. Precision is the entire point of the exercise.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.mineZone"]
+          }
+        },
+        {
+          "t": "The task is to survive. I have a strong, personal interest in that outcome.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.survive"]
+          }
+        },
+        {
+          "t": "We are intact and the clock is running. This is the best possible way to be surviving.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.survive", "hull.pristine"]
+          }
+        },
+        {
+          "t": "A rendezvous from a high orbit takes patience. I have plenty, and so does the orbit.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.rendezvous", "orbit.high"]
+          }
+        },
+        {
+          "t": "This orbit is not yet the one we need. I will say so only once.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.orbit", "orbit.elliptical"]
+          }
+        },
+        {
+          "t": "No hostiles near the mine zone. Mines are easier to place when nobody is watching.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.mineZone", "hostile.none"]
+          }
+        },
+        {
+          "t": "Survival is the task and a hostile is close. I am taking both very seriously.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["mission.survive", "hostile.near"]
+          }
+        }
+      ]
+    },
+    "quip.burn": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "That burn changed our orbit more than it changed my mood, which was already fine.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["burn.recent"]
+          }
+        },
+        {
+          "t": "A clean burn. The drive did its part, and now the orbit does the rest.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["burn.recent"]
+          }
+        },
+        {
+          "t": "That burn warmed the drive more than I would like. A pause helps.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["burn.recent", "heat.high"]
+          }
+        },
+        {
+          "t": "Burn finished. {target} is still where it was, which is the nice thing about orbits.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["burn.recent", "target.set"]
+          }
+        }
+      ]
+    },
+    "quip.idle_long": {
+      "priority": "quip",
+      "category": "quip",
+      "text": [],
+      "variants": [
+        {
+          "t": "The controls have been quiet a long while. I will take it as confidence.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long"]
+          }
+        },
+        {
+          "t": "No contacts and no orders. I am having what I believe humans call a peaceful afternoon.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "hostile.none"]
+          }
+        },
+        {
+          "t": "You have been still a long while with a hostile nearby. I assume that is deliberate.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "hostile.near"]
+          }
+        },
+        {
+          "t": "{target} is designated and we are waiting. Patience is a tactic.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "target.set"]
+          }
+        },
+        {
+          "t": "Free flight is wonderful. Nothing to defend, nothing to chase, and the planet keeps turning.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "mission.none"]
+          }
+        },
+        {
+          "t": "We have gone around several times with no change. That is either mastery or sleep.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "orbit.circular"]
+          }
+        },
+        {
+          "t": "At this time compression our orbit is a blur. I will keep track of the real clock for both of us.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["warp.high", "orbit.circular"]
+          }
+        },
+        {
+          "t": "We are drifting along an elliptical orbit. I am counting laps so you do not have to.",
+          "persona": ["argus"],
+          "when": {
+            "all": ["player.idle_long", "orbit.elliptical"]
+          }
+        }
+      ]
     }
+  },
+  "situation": {
+    "circularEccentricity": 0.02,
+    "lowAltitude": 40000,
+    "highAltitude": 200000,
+    "heatHigh": 0.6,
+    "heatCool": 0.2,
+    "hullCritical": 0.3,
+    "idleLongSeconds": 90,
+    "recentSeconds": 60,
+    "killStreak": 2,
+    "repeatWindow": 900,
+    "topChoices": 3,
+    "salientTags": [
+      "hostile.hunting",
+      "hostile.near",
+      "player.just_killed",
+      "player.kill_streak",
+      "player.just_missed",
+      "player.recent_damage",
+      "hull.damaged",
+      "hull.critical",
+      "warp.high",
+      "missile.inbound",
+      "mine.near",
+      "heat.high"
+    ]
+  },
+  "debrief": {
+    "orbitsAhead": 6,
+    "maxHorizon": 86400,
+    "rendezvousRange": 2000,
+    "gentleRelSpeed": 60
   }
 }
